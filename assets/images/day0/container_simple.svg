@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="460" viewBox="0 0 1200 460" role="img" aria-label="Simple container concept showing Docker Hub image, Podman, running container, and project folder">
+  <defs>
+    <style>.title{font:700 34px Arial,sans-serif;fill:#223047}.h{font:700 23px Arial,sans-serif;fill:#223047}.t{font:400 17px Arial,sans-serif;fill:#40506a}.small{font:400 15px Arial,sans-serif;fill:#40506a}.box{fill:white;stroke:#c7d7e8;stroke-width:2;rx:22}.img{fill:#eef6ff;stroke:#70a3ce;stroke-width:2;rx:22}.run{fill:#f4f0ff;stroke:#9e86d6;stroke-width:2;rx:22}.folder{fill:#fff8e8;stroke:#d6a84e;stroke-width:2;rx:22}.arrow{stroke:#6f80a8;stroke-width:4;fill:none;marker-end:url(#arr)}</style>
+    <marker id="arr" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M2,2 L10,6 L2,10 Z" fill="#6f80a8"/></marker>
+  </defs>
+  <rect width="1200" height="460" fill="#fbfcff"/>
+  <text class="title" x="60" y="62">Container idea for this workshop</text>
+  <rect class="img" x="70" y="125" width="230" height="180"/><text class="h" x="105" y="170">Docker Hub</text><text class="t" x="105" y="205">online image library</text><text class="small" x="105" y="242">examples: FastQC,</text><text class="small" x="105" y="266">STAR, BWA, R</text>
+  <rect class="box" x="370" y="125" width="210" height="180"/><text class="h" x="420" y="170">Podman</text><text class="t" x="415" y="205">runs images</text><text class="small" x="407" y="242">on your laptop</text>
+  <rect class="run" x="650" y="125" width="230" height="180"/><text class="h" x="695" y="170">Container</text><text class="t" x="692" y="205">temporary running</text><text class="small" x="702" y="242">software environment</text>
+  <rect class="folder" x="960" y="125" width="190" height="180"/><text class="h" x="1008" y="170">Folder</text><text class="t" x="997" y="205">your files stay</text><text class="small" x="1002" y="242">in your repo</text>
+  <path class="arrow" d="M300 215 L370 215"/><text class="small" x="315" y="196">pull</text>
+  <path class="arrow" d="M580 215 L650 215"/><text class="small" x="598" y="196">run</text>
+  <path class="arrow" d="M880 215 L960 215"/><text class="small" x="900" y="196">read/write</text>
+  <text class="t" x="70" y="370">An image is the software template. A container is a running copy of that template.</text>
+  <text class="t" x="70" y="400">The container should write outputs back to your normal project folder.</text>
+</svg>

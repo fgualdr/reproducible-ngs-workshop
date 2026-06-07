@@ -1,0 +1,30 @@
+---
+title: "Final 3-slide summary"
+format:
+  revealjs:
+    slide-number: true
+execute:
+  eval: false
+---
+
+## Data and design
+
+- Biological question: TODO.
+- Organism and dataset: TODO.
+- Assays and conditions: TODO.
+- Replicates and limitations: TODO.
+
+## Workflow and quality control
+
+- Retrieval/reference route: TODO.
+- RNA-seq workflow and key QC result: TODO.
+- ChIP-seq workflow and key QC result: TODO.
+- Checkpoints used, if any: TODO.
+
+## Biological result and interpretation
+
+- Main expression result: TODO.
+- Main peak or motif result: TODO.
+- Candidate direct targets: TODO.
+- Limitation and next validation step: TODO.
+

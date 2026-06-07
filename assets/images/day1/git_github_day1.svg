@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="430" viewBox="0 0 1200 430">
+  <rect width="1200" height="430" fill="#ffffff"/>
+  <text x="60" y="60" font-family="Arial" font-size="32" font-weight="700" fill="#1f2937">Daily Git/GitHub loop for this workshop</text>
+  <g font-family="Arial" font-size="18" fill="#1f2937">
+    <rect x="70" y="130" width="180" height="100" rx="18" fill="#f3f4f6" stroke="#9ca3af" stroke-width="2"/>
+    <text x="105" y="172" font-weight="700">Edit files</text><text x="95" y="202">README / scripts</text>
+    <rect x="300" y="130" width="180" height="100" rx="18" fill="#e0f2fe" stroke="#0284c7" stroke-width="2"/>
+    <text x="340" y="172" font-weight="700">git status</text><text x="334" y="202">check changes</text>
+    <rect x="530" y="130" width="180" height="100" rx="18" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+    <text x="580" y="172" font-weight="700">git add</text><text x="560" y="202">select changes</text>
+    <rect x="760" y="130" width="180" height="100" rx="18" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+    <text x="805" y="172" font-weight="700">commit</text><text x="795" y="202">save snapshot</text>
+    <rect x="990" y="130" width="150" height="100" rx="18" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+    <text x="1040" y="172" font-weight="700">push</text><text x="1020" y="202">to GitHub</text>
+  </g>
+  <g stroke="#6b7280" stroke-width="3" marker-end="url(#arrow)"><path d="M252 180 L292 180"/><path d="M482 180 L522 180"/><path d="M712 180 L752 180"/><path d="M942 180 L982 180"/></g>
+  <text x="90" y="315" font-family="Arial" font-size="20" fill="#374151">Commit often when a small step works: folder created, script written, metadata saved, QC completed.</text>
+  <defs><marker id="arrow" markerWidth="12" markerHeight="12" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#6b7280"/></marker></defs>
+</svg>

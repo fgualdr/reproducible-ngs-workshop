@@ -1,0 +1,24 @@
+name: ngs-cli
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bash
+  - coreutils
+  - curl
+  - wget
+  - pigz
+  - sra-tools
+  - seqtk
+  - fastqc
+  - multiqc
+  - fastp
+  - bowtie2
+  - samtools
+  - bedtools
+  - subread
+  - deeptools
+  - macs3
+  - meme
+  - pandas
+

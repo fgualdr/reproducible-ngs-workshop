@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="430" viewBox="0 0 1200 430" role="img" aria-labelledby="title desc">
+  <title id="title">RNA-seq concept flow</title>
+  <desc id="desc">RNA-seq workflow from FASTQ reads through QC, trimming, mapping, counting, and DESeq2 interpretation.</desc>
+  <rect width="1200" height="430" fill="#f8fafc"/>
+  <style>
+    .box{fill:#ffffff;stroke:#334155;stroke-width:2;rx:8}
+    .data{fill:#e0f2fe}
+    .tool{fill:#ecfdf5}
+    .result{fill:#fff7ed}
+    .txt{font-family:Arial,Helvetica,sans-serif;font-size:24px;fill:#0f172a}
+    .small{font-family:Arial,Helvetica,sans-serif;font-size:17px;fill:#334155}
+    .arrow{stroke:#475569;stroke-width:3;marker-end:url(#arrow)}
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#475569"/>
+    </marker>
+  </defs>
+  <text x="40" y="42" class="txt" font-weight="700">RNA-seq: from reads to gene-level evidence</text>
+  <rect x="40" y="85" width="160" height="95" class="box data"/>
+  <text x="120" y="122" text-anchor="middle" class="txt">FASTQ</text>
+  <text x="120" y="150" text-anchor="middle" class="small">sequenced reads</text>
+  <line x1="200" y1="132" x2="255" y2="132" class="arrow"/>
+  <rect x="255" y="85" width="160" height="95" class="box tool"/>
+  <text x="335" y="122" text-anchor="middle" class="txt">QC</text>
+  <text x="335" y="150" text-anchor="middle" class="small">quality patterns</text>
+  <line x1="415" y1="132" x2="470" y2="132" class="arrow"/>
+  <rect x="470" y="85" width="160" height="95" class="box tool"/>
+  <text x="550" y="122" text-anchor="middle" class="txt">Trim</text>
+  <text x="550" y="150" text-anchor="middle" class="small">remove adapters</text>
+  <line x1="630" y1="132" x2="685" y2="132" class="arrow"/>
+  <rect x="685" y="85" width="160" height="95" class="box tool"/>
+  <text x="765" y="122" text-anchor="middle" class="txt">Map</text>
+  <text x="765" y="150" text-anchor="middle" class="small">Bowtie2 alignment</text>
+  <line x1="845" y1="132" x2="900" y2="132" class="arrow"/>
+  <rect x="900" y="85" width="160" height="95" class="box data"/>
+  <text x="980" y="122" text-anchor="middle" class="txt">BAM</text>
+  <text x="980" y="150" text-anchor="middle" class="small">mapped reads</text>
+  <line x1="980" y1="180" x2="980" y2="235" class="arrow"/>
+  <rect x="800" y="235" width="360" height="85" class="box tool"/>
+  <text x="980" y="270" text-anchor="middle" class="txt">featureCounts</text>
+  <text x="980" y="298" text-anchor="middle" class="small">assign reads to annotated genes</text>
+  <line x1="800" y1="277" x2="630" y2="277" class="arrow"/>
+  <rect x="420" y="235" width="210" height="85" class="box data"/>
+  <text x="525" y="270" text-anchor="middle" class="txt">Raw counts</text>
+  <text x="525" y="298" text-anchor="middle" class="small">integer matrix</text>
+  <line x1="420" y1="277" x2="250" y2="277" class="arrow"/>
+  <rect x="40" y="235" width="210" height="85" class="box result"/>
+  <text x="145" y="270" text-anchor="middle" class="txt">DESeq2</text>
+  <text x="145" y="298" text-anchor="middle" class="small">model counts by condition</text>
+  <text x="40" y="378" class="small">Key idea: align reads to know where they came from, count reads per gene, then model raw counts across biological replicates.</text>
+</svg>

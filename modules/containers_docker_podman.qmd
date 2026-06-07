@@ -1,0 +1,30 @@
+---
+title: "Containers with Docker or Podman"
+format: html
+execute:
+  eval: false
+---
+
+## Runtime convention
+
+All course commands use one mounted working directory:
+
+```bash
+docker run --rm -it -v "$PWD":/work -w /work IMAGE bash
+podman run --rm -it -v "$PWD":/work -w /work IMAGE bash
+```
+
+## Why this matters
+
+The container provides software. The mounted project folder provides persistent files. This separation makes the analysis portable across macOS, Linux, and Windows WSL2.
+
+## Practical limits
+
+Use two threads by default:
+
+```bash
+THREADS=2
+```
+
+More threads can overload student laptops and make failures harder to debug.
+

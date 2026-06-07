@@ -1,0 +1,35 @@
+---
+title: "Reproducible NGS Analysis Report"
+format: html
+execute:
+  eval: false
+---
+
+## Question
+
+TODO.
+
+## Data and design
+
+TODO.
+
+## Workflow
+
+TODO.
+
+## Quality control
+
+TODO.
+
+## Results
+
+TODO.
+
+## Limitations
+
+TODO.
+
+## Reproducibility record
+
+TODO: backend, commands, checkpoints, software versions.
+

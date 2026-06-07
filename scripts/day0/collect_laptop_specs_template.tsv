@@ -1,0 +1,3 @@
+student_id	operating_system	ram_gb	cpu_cores	free_disk_gb	container_runtime	container_test_status	notes
+TODO_STUDENT	TODO_OS	TODO_RAM	TODO_CORES	TODO_DISK	docker_or_podman	TODO_STATUS	TODO_NOTES
+

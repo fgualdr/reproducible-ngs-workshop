@@ -1,0 +1,36 @@
+---
+title: "Public Data Retrieval"
+format: html
+execute:
+  eval: false
+---
+
+## Accession logic
+
+For GEO/SRA, teach the hierarchy:
+
+```text
+GSE study -> GSM sample -> SRP project -> SRX experiment -> SRR run
+```
+
+ENA and ArrayExpress may provide clearer FASTQ URLs for some datasets. Record the route used.
+
+## SRA route
+
+```bash
+prefetch SRR_ACCESSION
+fasterq-dump --split-files --threads 2 SRR_ACCESSION
+```
+
+## ENA route
+
+Use stable HTTPS/FTP links from ENA metadata when available:
+
+```bash
+wget -c -P data/raw_fastq URL_TO_FASTQ_GZ
+```
+
+## Reproducibility record
+
+Version the accession table. Do not version downloaded FASTQ files.
+

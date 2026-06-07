@@ -1,0 +1,38 @@
+---
+title: "Git and GitHub"
+format: html
+execute:
+  eval: false
+---
+
+## Purpose
+
+Git tracks the analysis logic: README notes, code, metadata tables, configuration, logs, and small final result tables. GitHub provides remote backup, collaboration, and submission infrastructure.
+
+## What to version
+
+- README and workflow notes.
+- Sample metadata and accession tables.
+- Scripts and command notes under `code/`.
+- Configuration files.
+- Small summary tables and final figures.
+
+## What not to version
+
+- FASTQ, BAM, BAI, CRAM, SRA, bigWig, large archives, temporary files, and tool caches.
+- Passwords, tokens, unpublished private data, or confidential student information.
+
+## Minimal commands
+
+```bash
+git init
+git status
+git add README.md code container results
+git commit -m "Initialize reproducible NGS project"
+git remote add origin git@github.com:USERNAME/PROJECT.git
+git push -u origin main
+```
+
+## Commit checkpoints
+
+Use small commits after meaningful stages: structure, metadata, retrieval plan, reference, RNA-seq, ChIP-seq, integration, and final slides.

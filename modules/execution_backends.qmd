@@ -1,0 +1,27 @@
+---
+title: "Execution Backends"
+format: html
+execute:
+  eval: false
+---
+
+## Invariant workflow
+
+The workflow is stable:
+
+```text
+metadata -> commands/scripts -> outputs -> report -> Git commit -> interpretation
+```
+
+The backend can vary:
+
+- Local Docker or Podman.
+- GitHub Codespaces for editing, rendering, and small downstream work.
+- Galaxy demonstration.
+- Instructor machine or VM.
+- Checkpoint mode.
+
+## Decision rule
+
+Use the simplest backend that lets the student document and interpret the workflow correctly.
+

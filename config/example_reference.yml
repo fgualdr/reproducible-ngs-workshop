@@ -1,0 +1,6 @@
+organism: "TODO_ORGANISM"
+genome_fasta_url: "TODO_REFERENCE_URL"
+annotation_gff_url: "TODO_ANNOTATION_URL"
+genome_size: "TODO_GENOME_SIZE"
+source: "TODO_SOURCE_AND_RELEASE"
+

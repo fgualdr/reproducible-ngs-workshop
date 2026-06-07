@@ -1,0 +1,21 @@
+---
+title: "RNA-seq Concepts"
+format: html
+execute:
+  eval: false
+---
+
+## Core model
+
+RNA-seq differential expression is count-based. DESeq2 estimates size factors, dispersions, and condition effects from raw integer counts.
+
+## Teaching caveats
+
+- Two replicates per condition are a minimal teaching design, not an ideal study.
+- PCA is a diagnostic for sample-level structure.
+- MA and volcano plots summarize effect size and uncertainty; neither replaces biological interpretation.
+
+## Common invalid inputs
+
+Do not use TPM, FPKM, CPM coverage, or bigWig values as DESeq2 input.
+

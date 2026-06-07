@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+title: "Reproducible NGS Data Analysis on Personal Laptops"
+message: "If you reuse these teaching materials, please cite the repository."
+type: educational-resource
+authors:
+  - family-names: "Gualdrini"
+    given-names: "Francesco"
+repository-code: "https://github.com/fgualdr/Reproducible_NGS_Workshop"
+url: "https://fgualdr.github.io/Reproducible_NGS_Workshop/"
+license: MIT

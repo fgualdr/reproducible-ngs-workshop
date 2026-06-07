@@ -1,0 +1,6 @@
+*.sh text eol=lf
+*.R text eol=lf
+*.qmd text eol=lf
+*.tsv text eol=lf
+*.yml text eol=lf
+

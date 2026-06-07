@@ -1,0 +1,4 @@
+sample_id	condition	assay	role	fastq_1	fastq_2	input_sample	notes
+ChIP_1	condition_A	ChIP	IP	TODO_ChIP_1.fastq.gz	NA	Input_1	placeholder
+Input_1	condition_A	input	input	TODO_Input_1.fastq.gz	NA	NA	placeholder
+

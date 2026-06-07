@@ -1,0 +1,25 @@
+---
+title: "Backend E - Checkpoint Mode"
+format: html
+execute:
+  eval: false
+---
+
+## Purpose
+
+Checkpoint mode guarantees that all students can complete interpretation and reporting even if local FASTQ processing fails.
+
+## Acceptable checkpoint inputs
+
+- Count matrices and sample metadata.
+- DESeq2 result tables.
+- peak BED/narrowPeak files.
+- bigWig tracks.
+- QC reports.
+- motif output.
+- annotation files.
+
+## Required documentation
+
+Students must state which steps they ran directly, which outputs were checkpoint-provided, and which inputs and parameters would reproduce the full workflow.
+

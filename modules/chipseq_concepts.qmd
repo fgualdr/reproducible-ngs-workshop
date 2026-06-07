@@ -1,0 +1,28 @@
+---
+title: "ChIP-seq Concepts"
+format: html
+execute:
+  eval: false
+---
+
+## Experimental logic
+
+ChIP-seq measures enrichment of protein-associated DNA fragments. Input controls estimate background from chromatin accessibility, mappability, and library biases.
+
+## Peak types
+
+This workshop focuses on narrow peaks typical of transcription factors or sigma-factor-like binding. 
+Histone marks may require broad peak methods and different interpretation.
+
+## Coding Pitfalls
+
+- Wrong genome
+- Wrong type of expected peaks affecting peak calling
+- Filtering proper reads
+
+## Experimental problems
+
+- Low signal to noise
+- Chip-seq that did not produced enrichments leads to low number of recovered peaks and little recovery of mapped reads within peaks.
+- Low quality Chip-seq present a high phantom peak in strand cross-correlation (when peak offset  match exactly the sequencing read length)
+- Contaminants 

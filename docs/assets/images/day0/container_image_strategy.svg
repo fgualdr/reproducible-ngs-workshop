@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="560" viewBox="0 0 1200 560">
+  <rect width="1200" height="560" fill="#fbfffc"/>
+  <text x="60" y="65" font-family="Arial" font-size="32" font-weight="700" fill="#1f2937">Container strategy for Days 2-4</text>
+  <rect x="70" y="130" width="470" height="300" rx="22" fill="#eaf2ff" stroke="#4f7ecb" stroke-width="2"/>
+  <text x="105" y="180" font-family="Arial" font-size="26" font-weight="700" fill="#244477">Use existing images</text>
+  <text x="105" y="220" font-family="Arial" font-size="18" fill="#374151">For standard command-line tools:</text>
+  <text x="120" y="260" font-family="Arial" font-size="18" fill="#374151">• FASTQ retrieval</text>
+  <text x="120" y="290" font-family="Arial" font-size="18" fill="#374151">• Falco QC</text>
+  <text x="120" y="320" font-family="Arial" font-size="18" fill="#374151">• Bowtie2 mapping</text>
+  <text x="120" y="350" font-family="Arial" font-size="18" fill="#374151">• featureCounts / MACS3</text>
+  <text x="120" y="380" font-family="Arial" font-size="18" fill="#374151">• samtools / bedtools</text>
+  <rect x="660" y="130" width="470" height="300" rx="22" fill="#f5efff" stroke="#8b5cf6" stroke-width="2"/>
+  <text x="695" y="180" font-family="Arial" font-size="26" font-weight="700" fill="#5b21b6">Use one R/Bioconductor image</text>
+  <text x="695" y="220" font-family="Arial" font-size="18" fill="#374151">For R/Bioconductor analysis:</text>
+  <text x="710" y="260" font-family="Arial" font-size="18" fill="#374151">• DESeq2 and RNA-seq plots</text>
+  <text x="710" y="290" font-family="Arial" font-size="18" fill="#374151">• GenomicRanges / annotation</text>
+  <text x="710" y="320" font-family="Arial" font-size="18" fill="#374151">• ComplexHeatmap / ggplot2</text>
+  <text x="710" y="350" font-family="Arial" font-size="18" fill="#374151">• integration of gene and peak results</text>
+  <path d="M545 280 L650 280" stroke="#6b7280" stroke-width="4" marker-end="url(#arrow)"/>
+  <text x="265" y="500" font-family="Arial" font-size="22" font-weight="700" fill="#111827">Existing images for upstream tools + one documented R image for downstream interpretation</text>
+  <defs><marker id="arrow" markerWidth="12" markerHeight="12" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#6b7280"/></marker></defs>
+</svg>

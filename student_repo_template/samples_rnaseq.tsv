@@ -1,0 +1,6 @@
+sample_id	condition	replicate	fastq_1	fastq_2	notes
+TODO_RNA_1	control	1	TODO_RNA_1_R1.fastq.gz	NA	TODO
+TODO_RNA_2	control	2	TODO_RNA_2_R1.fastq.gz	NA	TODO
+TODO_RNA_3	treatment	1	TODO_RNA_3_R1.fastq.gz	NA	TODO
+TODO_RNA_4	treatment	2	TODO_RNA_4_R1.fastq.gz	NA	TODO
+

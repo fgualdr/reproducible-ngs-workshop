@@ -1,0 +1,23 @@
+candidates:
+  - name: "E_coli_FNR_regulon"
+    organism: "Escherichia coli"
+    status: "teaching_safe_candidate"
+    accessions:
+      geo_superseries: "GSE41195"
+      rnaseq: "GSE41190"
+      chipseq: "GSE41187"
+    notes: "Classic RNA-seq plus ChIP-seq integration candidate; validate current accessions before teaching."
+  - name: "H_pylori_HP1021"
+    organism: "Helicobacter pylori"
+    status: "modern_candidate_to_validate"
+    accessions:
+      rnaseq: "E-MTAB-13025"
+      chipseq: "E-MTAB-13026"
+    notes: "Local metadata folders exist in this workspace; ENA/ArrayExpress route rather than SRA-first."
+  - name: "H_pylori_NikR"
+    organism: "Helicobacter pylori"
+    status: "sra_candidate_to_validate"
+    accessions:
+      bioproject: "PRJNA313048"
+    notes: "Small-genome RNA-seq plus ChIP-seq candidate; validate size, replicates, and accessions."
+

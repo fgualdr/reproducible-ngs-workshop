@@ -1,0 +1,23 @@
+---
+title: "Reference Genomes"
+format: html
+execute:
+  eval: false
+---
+
+## Required files
+
+- Genome FASTA.
+- Gene annotation GFF3 or GTF.
+- Optional chromosome sizes file.
+- Bowtie2 index generated from the FASTA.
+
+## Pairing rule
+
+Use genome and annotation files from the same source and release whenever possible. Mismatched references are a common source of failed counting and broken interval annotation.
+
+## Bowtie2 index
+
+```bash
+bowtie2-build data/genome/genome.fa data/genome/bowtie2_index/genome
+```

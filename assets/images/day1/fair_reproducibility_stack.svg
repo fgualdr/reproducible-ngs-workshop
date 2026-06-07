@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="560" viewBox="0 0 1200 560">
+  <rect width="1200" height="560" fill="#fbfbff"/>
+  <text x="60" y="70" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="700" fill="#1f2937">Reproducible NGS analysis: two practical layers</text>
+  <text x="60" y="105" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#4b5563">FAIR principles become concrete when we track both the workflow and the computational environment.</text>
+  <rect x="70" y="160" width="480" height="260" rx="22" fill="#eaf2ff" stroke="#6b8fd6" stroke-width="2"/>
+  <text x="105" y="210" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" fill="#244477">Layer 1: workflow execution</text>
+  <text x="105" y="250" font-family="Arial, Helvetica, sans-serif" font-size="19" fill="#374151">What did we do, in which order?</text>
+  <text x="105" y="295" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#374151">• README notes</text>
+  <text x="105" y="325" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#374151">• shell / R / Python scripts</text>
+  <text x="105" y="355" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#374151">• parameters and logs</text>
+  <text x="105" y="385" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#374151">• Git commits + GitHub backup</text>
+  <rect x="650" y="160" width="480" height="260" rx="22" fill="#eef9f0" stroke="#62a66c" stroke-width="2"/>
+  <text x="685" y="210" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" fill="#2d6a3e">Layer 2: tool environment</text>
+  <text x="685" y="250" font-family="Arial, Helvetica, sans-serif" font-size="19" fill="#374151">Which exact tools ran the workflow?</text>
+  <text x="685" y="295" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#374151">• container image</text>
+  <text x="685" y="325" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#374151">• R / Bioconductor versions</text>
+  <text x="685" y="355" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#374151">• NGS tool versions</text>
+  <text x="685" y="385" font-family="Arial, Helvetica, sans-serif" font-size="18" fill="#374151">• image tags and build file</text>
+  <path d="M560 290 L630 290" stroke="#6b7280" stroke-width="4" marker-end="url(#arrow)"/>
+  <text x="520" y="475" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" fill="#111827">Reusable analysis = tracked steps + controlled software</text>
+  <defs><marker id="arrow" markerWidth="12" markerHeight="12" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#6b7280"/></marker></defs>
+</svg>

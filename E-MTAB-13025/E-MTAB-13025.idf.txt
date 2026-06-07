@@ -1,0 +1,45 @@
+Comment[ArrayExpressAccession]	E-MTAB-13025
+MAGE-TAB Version	1.1
+Comment[Submitted Name]	RNA-seq of Helicobacter pylori N6 wild-type and HP1021 deletion mutant under microaerophilic and aerobic conditions (optimal growth and oxidative stress conditions, respectively)
+Investigation Title	RNA-seq of Helicobacter pylori N6 wild-type and HP1021 deletion mutant under microaerophilic and aerobic conditions (optimal growth and oxidative stress conditions, respectively)
+Experiment Description	We performed transcriptome (RNA-seq) analyses for Helicobacter pylori N6 wild-type (WT) and HP1021 deletion mutant (ΔHP1021::aphA-3) under oxidative stress and optimal microaerobic growth conditions.  The expression of 411 genes was affected by oxidative stress in stressed wild-type cells (WTS) compared to non-stressed cells (WT). Interestingly, ΔHP1021 did not respond to oxidative stress. A comparison of genes expressed in the ΔHP1021 and WT strains under optimal growth conditions revealed 191 differently expressed genes. Moreover, transcriptional changes and overall final protein levels correlated across multiple genes.  The data were validated through RT-qPCR and phenotype experiments for selected processes.
+Experimental Design	genetic modification design	stimulus or stress design
+Experimental Design Term Source REF	EFO	EFO
+Experimental Design Term Accession Number	EFO:0001758	EFO:0001762
+Experimental Factor Name	genotype	environmental stress
+Experimental Factor Type	genotype	environmental stress
+Experimental Factor Term Source REF	EFO
+Experimental Factor Term Accession Number	EFO_0000513
+Person Last Name	Noszka
+Person First Name	Mateusz
+Person Mid Initials
+Person Email	mateusz.noszka@hirszfeld.pl
+Person Phone
+Person Fax
+Person Address	53-114 Wrocław, Poland
+Person Affiliation	Department of Microbiology Hirszfeld Institute of Immunology and Experimental Therapy Polish Academy of Sciences
+Person Roles	submitter
+Date of Experiment	2022-04-06
+Public Release Date	2023-09-23
+PubMed ID
+Publication DOI
+Publication Author List	Mateusz Noszka, Agnieszka Strzałka, Jakub Muraszko, Rafał Kolenda, Chen Meng, Christina Ludwig, Kerstin Stingl, Anna Zawilak-Pawlik
+Publication Title	Profiling of the Helicobacter pylori redox switch HP1021 regulon using a multi-omics approach
+Publication Status	submitted
+Publication Status Term Source REF	EFO
+Publication Status Term Accession Number	EFO_0001794
+Protocol Name	P-MTAB-133319	P-MTAB-133320	P-MTAB-133321	P-MTAB-133322	P-MTAB-133323	P-MTAB-133324
+Protocol Type	sample collection protocol	nucleic acid extraction protocol	nucleic acid library construction protocol	nucleic acid sequencing protocol	high throughput sequence alignment protocol	normalization data transformation protocol
+Protocol Term Source REF	EFO	EFO	EFO	EFO	EFO	EFO
+Protocol Term Accession Number	EFO_0005518	EFO_0002944	EFO_0004184	EFO_0004170	EFO_0004917	EFO_0003816
+Protocol Description	Bacterial cultures (12 ml BB-FBS) of Helicobacter pylori N6 wild-type and ΔHP1021 strains were grown under microaerobic conditions to OD600 of 0.8-1.0. Immediately after opening the jar, 1 ml of the non-stressed culture was added to 1 ml of the RNAprotect Bacteria Reagent (Qiagen), vortexed and incubated for 5 min at room temperature. In parallel, the cultures were moved to aerobic conditions for 25 min (air atmosphere, 37 °C, 140 rpm orbital shaking). After oxidative stress, samples were collected similarly to non-stressed cells. After 5 min incubation with RNAprotect Bacteria Reagent, bacteria were collected by centrifugation (7000 × g, 5 min, RT). RNA was isolated by GeneJET RNA Purification Kit (Thermo Fisher Scientific; K0731) according to the manufacturer’s protocol and treated with RNase-free DNase I (Thermo Fisher Scientific). Next, the subsequent purification by the GeneJET RNA Purification Kit was performed to remove DNase I. A NanoDrop Lite spectrophotometer, agarose gel electrophoresis and Agilent 4200 TapeStation System were used to determine the RNA quality and quantity. RNA was isolated immediately after bacteria collection, stored at -80 °C for up to one month and used for RNA sequencing. RNA was isolated from three independent cultures.	RNA was isolated by GeneJET RNA Purification Kit (Thermo Fisher Scientific; K0731) according to the manufacturer’s protocol and treated with RNase-free DNase I (Thermo Fisher Scientific). Next, the subsequent purification by the GeneJET RNA Purification Kit was performed to remove DNase I. A NanoDrop Lite spectrophotometer, agarose gel electrophoresis and Agilent 4200 TapeStation System were used to determine the RNA quality and quantity. RNA was isolated immediately after bacteria collection, stored at -80 °C for up to one month and used for RNA sequencing. RNA was isolated from three independent cultures (three biological replication).	The prokaryotic directional mRNA library preparation was performed at the Novogene Bioinformatics Technology Co. Ltd. (Cambridge, UK). The ribosomal RNA was removed from the total RNA, followed by ethanol precipitation. After fragmentation, the first strand of cDNA was synthesised using random hexamer primers. During the second strand cDNA synthesis, dUTPs were replaced with dTTPs in the reaction buffer. The directional library was ready after end repair, A-tailing, adapter ligation, size selection, USER enzyme digestion, amplification, and purification. The library was checked with Qubit, RT-qPCR for quantification and a bioanalyser for size distribution detection. 	The sequencing was performed at the Novogene Bioinformatics Technology Co. Ltd. (Cambridge, UK). The libraries were sequenced with the NovaSeq 6000 (Illumina), and 150 bp reads were produced.	The 150 bp paired reads were mapped to the Helicobacter pylori 26695 genome (NC_000915.1) using Bowtie2 software with local setting (v. 2.3.5.1).	Alignment files were sorted and indexed using samtools. Reads were counted and normalized using R package edgeR (v. 3.38).
+Protocol Hardware				Illumina NovaSeq 6000
+Protocol Software					Bowtie2	samtools, edgeR
+Term Source Name	EFO
+Term Source File	http://www.ebi.ac.uk/efo/
+Term Source Version
+Comment[AEExperimentType]	RNA-seq of coding RNA
+Comment[TemplateType]	High-throughput sequencing
+Comment[SecondaryAccession]	ERP147707
+Comment[SequenceDataURI]	http://www.ebi.ac.uk/ena/data/view/ERR11479310-ERR11479321
+SDRF File	E-MTAB-13025.sdrf.txt
