@@ -1,77 +1,115 @@
-# Reproducible NGS Data Analysis on Personal Laptops
+# Reproducible NGS Data Analysis
 
-Public teaching-material repository for a PhD practical workshop on reproducible public RNA-seq and ChIP-seq analysis using personal laptops, containers, Git/GitHub, Quarto, and checkpoint-based fallback files.
+A practical workshop on reproducible RNA-seq and ChIP-seq analysis using public sequencing datasets, containers, Git/GitHub, and modern bioinformatics workflows.
 
-This repository is the course website and instructor-administered source of teaching material. It is not a finished student analysis repository. Students create their own simpler GitHub repositories during the workshop.
+[![Course Website](https://img.shields.io/badge/Course%20Website-Visit-blue)](https://fgualdr.github.io/reproducible-ngs-workshop/)
 
-Author and maintainer: Francesco Gualdrini.
+---
 
-Repository:
+## Course Website
+
+The complete workshop material is available as a browsable website:
+
+👉 **https://fgualdr.github.io/reproducible-ngs-workshop/**
+
+The website contains all lessons, practical exercises, conceptual modules, workflow descriptions, supporting resources, and assessment guidelines.
+
+---
+
+## Overview
+
+This workshop introduces a reproducible approach to next-generation sequencing (NGS) data analysis using small-scale RNA-seq and ChIP-seq datasets.
+
+The material emphasizes:
+
+* Reproducible computational research
+* Git and GitHub for scientific projects
+* Containerized bioinformatics using Docker and Podman
+* Public sequencing repositories (GEO, SRA, ENA, ArrayExpress)
+* RNA-seq analysis and differential expression
+* ChIP-seq analysis, peak calling, and motif discovery
+* Genomic intervals and peak-to-gene integration
+* Scientific reporting and project documentation
+
+The practical examples focus on bacterial-scale datasets that can be explored on personal laptops while introducing concepts that readily scale to larger projects and institutional computing infrastructures.
+
+---
+
+## Workshop Structure
+
+| Day   | Topic                                                               |
+| ----- | ------------------------------------------------------------------- |
+| Day 0 | Technical setup and software installation                           |
+| Day 1 | Reproducible projects, public data retrieval, and reference genomes |
+| Day 2 | RNA-seq analysis                                                    |
+| Day 3 | ChIP-seq analysis                                                   |
+| Day 4 | Integration, visualization, and biological interpretation           |
+
+Additional modules provide background material on:
+
+* Git and GitHub
+* Containers
+* Public sequencing repositories
+* Reference genomes and annotations
+* RNA-seq concepts
+* ChIP-seq concepts
+* Genomic intervals
+* Alternative execution backends
+
+---
+
+## Repository Contents
 
 ```text
-https://github.com/fgualdr/reproducible-ngs-workshop
+days/                   Main workshop lessons
+modules/                Conceptual background material
+scripts/                Example workflow scripts
+containers/             Docker and Podman environments
+checkpoints/            Example outputs and fallback resources
+config/                 Metadata templates and examples
+student_repo_template/  Template repository for participants
+assessments/            Rubrics and submission material
+instructor/             Instructor notes and administration
 ```
 
-Published website:
+---
+
+## Example Datasets
+
+The workshop uses publicly available datasets and example metadata derived from small bacterial genomes suitable for laptop-scale analysis.
+
+Current example datasets include:
+
+* *Helicobacter pylori* RNA-seq (E-MTAB-13025)
+* *Helicobacter pylori* ChIP-seq (E-MTAB-13026)
+
+Additional datasets may be incorporated in future releases.
+
+---
+
+## Intended Audience
+
+This material is primarily aimed at:
+
+* PhD students
+* Early-career researchers
+* Bioinformaticians entering NGS analysis
+* Researchers interested in reproducible computational workflows
+
+A basic familiarity with molecular biology is assumed. No prior experience with command-line bioinformatics is required.
+
+---
+
+## Citation
+
+If you use or adapt this material, please refer to the citation information provided in:
 
 ```text
-https://fgualdr.github.io/reproducible-ngs-workshop/
+CITATION.cff
 ```
 
-## Student support
+---
 
-Students who can access GitHub should ask technical questions by opening Issues in their own workshop repositories. This keeps commands, logs, errors, and replies traceable.
+## License
 
-Students who cannot create or access a GitHub account can email:
-
-```text
-francesco.gualdrini@gmail.com
-```
-
-## Render the site
-
-```bash
-quarto render
-```
-
-The teaching site renders to:
-
-```text
-docs/index.html
-```
-
-The `docs/` directory is used so GitHub Pages can publish the rendered Quarto site directly from the `main` branch.
-
-If Quarto is unavailable, the files are still readable as plain Markdown/Quarto.
-
-## Lightweight validation
-
-```bash
-bash scripts_check_project.sh
-```
-
-## Main directories
-
-- `days/`: Day 0-Day 4 Quarto lessons.
-- `modules/`: reusable conceptual material.
-- `backends/`: execution backend pages.
-- `scripts/`: workflow script templates.
-- `student_repo_template/`: simple starter layout students copy into their own GitHub repositories.
-- `config/`: example metadata and candidate datasets.
-- `containers/`: Docker/Podman recipes, Dockerfiles, Containerfiles, and devcontainer material.
-- `checkpoints/`: fallback file manifests and documentation.
-- `assessments/`: rubrics and submission checklists.
-- `instructor/`: course administration notes kept out of the rendered public navigation unless explicitly linked.
-
-## Release model
-
-The public site should grow one workshop day at a time. Keep unreleased future day pages local or on a private branch, then render and push only the material that should be visible.
-
-```bash
-quarto render
-git add README.md _quarto.yml index.qmd days modules scripts student_repo_template docs
-git commit -m "Release Day 1 workshop material"
-git push
-```
-
-On GitHub, enable Pages from branch `main` and folder `/docs`.
+See the `LICENSE` file for licensing information.
