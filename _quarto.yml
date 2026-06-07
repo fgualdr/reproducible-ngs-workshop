@@ -15,12 +15,12 @@ project:
 
 website:
   title: "Reproducible NGS Data Analysis on Personal Laptops"
-  site-url: "https://fgualdr.github.io/Reproducible_NGS_Workshop/"
-  repo-url: "https://github.com/fgualdr/Reproducible_NGS_Workshop"
+  site-url: "https://fgualdr.github.io/reproducible-ngs-workshop/"
+  repo-url: "https://github.com/fgualdr/reproducible-ngs-workshop"
   repo-actions: [source, issue]
   page-footer:
     left: "Author: Francesco Gualdrini"
-    right: "Source: [github.com/fgualdr/Reproducible_NGS_Workshop](https://github.com/fgualdr/Reproducible_NGS_Workshop)"
+    right: "Source: [github.com/fgualdr/reproducible-ngs-workshop](https://github.com/fgualdr/reproducible-ngs-workshop)"
   sidebar:
     style: docked
     search: true

@@ -7,13 +7,13 @@ Author and maintainer: Francesco Gualdrini.
 Repository:
 
 ```text
-https://github.com/fgualdr/Reproducible_NGS_Workshop
+https://github.com/fgualdr/reproducible-ngs-workshop
 ```
 
 Published website:
 
 ```text
-https://fgualdr.github.io/Reproducible_NGS_Workshop/
+https://fgualdr.github.io/reproducible-ngs-workshop/
 ```
 
 ## Repository roles
@@ -66,7 +66,7 @@ In GitHub:
 The published URL will usually be:
 
 ```text
-https://fgualdr.github.io/Reproducible_NGS_Workshop/
+https://fgualdr.github.io/reproducible-ngs-workshop/
 ```
 
 ## Student daily commits

@@ -5,6 +5,6 @@ type: educational-resource
 authors:
   - family-names: "Gualdrini"
     given-names: "Francesco"
-repository-code: "https://github.com/fgualdr/Reproducible_NGS_Workshop"
-url: "https://fgualdr.github.io/Reproducible_NGS_Workshop/"
+repository-code: "https://github.com/fgualdr/reproducible-ngs-workshop"
+url: "https://fgualdr.github.io/reproducible-ngs-workshop/"
 license: MIT

@@ -15,11 +15,11 @@ Author and maintainer: **Francesco Gualdrini**.
 
 Public GitHub repository:
 
-[https://github.com/fgualdr/Reproducible_NGS_Workshop](https://github.com/fgualdr/Reproducible_NGS_Workshop)
+[https://github.com/fgualdr/reproducible-ngs-workshop](https://github.com/fgualdr/reproducible-ngs-workshop)
 
 Published course website:
 
-[https://fgualdr.github.io/Reproducible_NGS_Workshop/](https://fgualdr.github.io/Reproducible_NGS_Workshop/)
+[https://fgualdr.github.io/reproducible-ngs-workshop/](https://fgualdr.github.io/reproducible-ngs-workshop/)
 
 Students do **not** clone a finished analysis repository. They progressively create their own GitHub repositories, adding metadata, scripts, reports, figures, checkpoints, and interpretation as the course develops.
 
