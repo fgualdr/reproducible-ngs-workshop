@@ -1,6 +1,6 @@
 ---
-title: "Day 3 - ChIP-seq from reads to peaks"
-subtitle: "IP/input design, mapping, peak calling, signal tracks, and motif discovery"
+title: "Day 3 - ChIP-seq from mapping-ready reads to peaks"
+subtitle: "Mapping, input-free peak calling, signal tracks, and motif discovery"
 format: html
 execute:
   eval: false
@@ -8,27 +8,40 @@ execute:
 
 ## Overview
 
-Day 3 follows a transcription-factor ChIP-seq workflow on a small genome. The practical path is:
+Day 3 follows a transcription-factor ChIP-seq workflow on a small genome. Day 1 produced trimmed ChIP-seq FASTQ files and post-trim FastQC reports. Day 3 starts from those mapping-ready ChIP-seq FASTQ files:
 
 ```text
-FASTQ -> QC -> trimming -> mapping -> BAM -> peak calling -> peak files -> tracks -> motif input
+trimmed ChIP-seq FASTQ + post-trim QC -> mapping -> BAM -> peak calling -> peak files -> tracks -> motif input
 ```
 
-The central comparison is peak calling **with input control** versus peak calling **without input control**.
+For the HP1021 teaching subset, input-free MACS3 peak calling is the main route. Input controls remain conceptually important and are shown as an optional comparison if matched input samples are provided.
 
 ![ChIP-seq concept flow](../assets/images/day3/chipseq_concept_flow.svg){#fig-day3-chipseq-flow width="100%" fig-alt="ChIP-seq workflow showing IP and input reads mapped to the genome, peak calling, tracks, and motif discovery."}
+
+## Before you start
+
+Open the same `workshop_ngs` repository that you used on Day 1.
+
+- Windows users should open Visual Studio Code connected to Ubuntu WSL, open a WSL terminal, and run the commands there.
+- macOS and Linux users should open the `workshop_ngs` folder in Visual Studio Code and use the VS Code terminal or a normal terminal.
+- Before running commands, move to the repository root:
+
+```bash
+cd ~/workshop_ngs
+pwd
+```
+
+If your repository is stored somewhere else, replace this path with the location of your own `workshop_ngs` folder. The command `pwd` should end with `workshop_ngs`.
 
 ## Today's path: how your repository grows
 
 ```text
-data/raw_fastq/chipseq/ or ChIP-seq checkpoints
-  -> code/day3_chipseq/README.md
-  -> results/chipseq/qc/
-  -> data/trimmed_fastq/chipseq/
-  -> data/bam/chipseq/
-  -> results/chipseq/bigwig/
-  -> results/chipseq/peaks/
-  -> results/chipseq/motifs/
+results/day1_qc/trimmed_fastq/chipseq/ or ChIP-seq checkpoints
+  -> scripts/day3_chipseq/README.md
+  -> results/day3_chipseq/bam/
+  -> results/day3_chipseq/bigwig/
+  -> results/day3_chipseq/peaks/
+  -> results/day3_chipseq/motifs/
   -> results/logs/day3/
   -> commit and push
 ```
@@ -37,11 +50,11 @@ data/raw_fastq/chipseq/ or ChIP-seq checkpoints
 
 By the end of Day 3, students should be able to:
 
-- explain IP, input, background, enrichment, peaks, and summits;
+- explain IP, background, enrichment, peaks, and summits;
 - distinguish BAM alignments, bigWig signal tracks, BED/narrowPeak intervals, and motif FASTA files;
-- describe why input controls change peak calling;
-- run or interpret MACS3 peak calling with and without input;
-- generate or interpret IP and IP/input bigWig tracks;
+- describe why input controls can change peak calling;
+- run or interpret input-free MACS3 peak calling;
+- generate or interpret ChIP-seq bigWig tracks;
 - extract peak sequences and interpret basic motif discovery output;
 - document checkpoint use when local compute is not feasible.
 
@@ -49,11 +62,11 @@ By the end of Day 3, students should be able to:
 
 | Time | Activity |
 |---:|---|
-| 00:00-00:30 | ChIP-seq design, IP/input controls, and peak concepts |
-| 00:30-01:10 | QC, trimming, and mapping |
-| 01:10-01:50 | BAM processing and signal tracks |
+| 00:00-00:30 | Confirm Day 1 FASTQ readiness, ChIP design, and peak concepts |
+| 00:30-01:20 | Mapping ChIP reads |
+| 01:20-01:50 | BAM processing and signal tracks |
 | 01:50-02:05 | Break |
-| 02:05-02:50 | MACS3 peak calling with and without input |
+| 02:05-02:50 | MACS3 peak calling |
 | 02:50-03:30 | Peak files, summits, and motif input |
 | 03:30-03:50 | Motif discovery and interpretation |
 | 03:50-04:00 | Commit and push Day 3 material |
@@ -128,7 +141,7 @@ A peak file stores intervals. A bigWig stores continuous signal. They answer dif
 | Step | Tool examples | Main output | Bioinformatics concept |
 |---|---|---|---|
 | FASTQ QC | FastQC, Falco, MultiQC | QC reports | Base quality, adapters, composition biases |
-| Trimming | fastp, cutadapt | trimmed FASTQ | Remove adapters and poor-quality tails when needed |
+| Trimming | fastp | trimmed FASTQ | Already completed for RNA-seq and ChIP-seq on Day 1 |
 | Mapping | bowtie2, bwa | sorted BAM | Place ChIP and input reads on the reference genome |
 | BAM QC | samtools | flagstat/logs | Check mapping rate and usable reads |
 | Track generation | deepTools `bamCoverage`, `bamCompare` | bigWig | Coverage or log2 IP/input signal |
@@ -136,7 +149,86 @@ A peak file stores intervals. A bigWig stores continuous signal. They answer dif
 | Sequence extraction | bedtools getfasta | FASTA | Peak-associated DNA sequences |
 | Motif discovery | MEME-STREME | motif report | Overrepresented sequence patterns |
 
-FASTQ structure and base-quality encoding were introduced on Day 1. Today we focus on how mapped ChIP-seq reads become enrichment tracks and peak intervals.
+FASTQ structure, raw QC, trimming, and post-trim QC were introduced on Day 1. Today we focus on how mapped ChIP-seq reads become enrichment tracks and peak intervals.
+
+### Mapping theory for ChIP-seq
+
+Mapping starts from:
+
+- a ChIP-seq FASTQ file containing read identifiers, sequences, and Phred quality scores;
+- a reference genome FASTA indexed by the aligner so genome coordinates can be searched efficiently.
+
+For each read or read pair, the aligner asks where the sequence best fits in the indexed reference. The output records the contig/chromosome, coordinate, strand, mapping quality, CIGAR string, mate information, and optional aligner-specific tags.
+
+For ChIP-seq, mapping is not only a preprocessing step. The genomic distribution of mapped fragments becomes the signal used for bigWig tracks and peak calling. Bad mapping therefore becomes bad biology: wrong reference, repetitive regions, low-complexity libraries, or poor pairing can create false signal.
+
+Important mapping metrics include:
+
+| Metric | Meaning | ChIP-seq interpretation |
+|---|---|---|
+| Total reads or fragments | Number of input reads/read pairs processed | Should match expected sequencing depth |
+| Overall alignment rate | Fraction of reads with at least one alignment | Low values suggest wrong reference, contamination, or poor read quality |
+| Concordantly paired reads | Paired-end reads mapping with expected orientation/distance | Important because fragment locations drive ChIP signal |
+| MAPQ distribution | Confidence in reported genomic position | Low-MAPQ reads often come from repeats and can create artificial enrichment |
+| Multi-mapping | Reads compatible with multiple loci | Especially problematic for peak calling in repetitive regions |
+| Insert size or fragment length | Estimated DNA fragment size | Affects coverage shape and peak sharpness |
+| Duplication/complexity | Repeated identical fragment coordinates | Can indicate true enrichment or PCR bottleneck, depending on context |
+| FRiP-like summary | Fraction of reads in peaks, after peaks exist | A rough enrichment quality metric, not available before peak calling |
+
+### Common ChIP-seq aligners
+
+ChIP-seq reads are usually mapped to the genome, not to a transcriptome. The aligner should produce coordinate BAM files because downstream tools need genomic positions.
+
+| Tool | Type | Core idea | Advantages | Limitations | Typical use |
+|---|---|---|---|---|---|
+| Bowtie2 | Genome aligner | Align reads to an indexed genome | Fast, simple, widely used for ChIP-seq, good for small genomes | Does not solve repetitive regions by itself; parameter choices matter |
+| BWA-MEM/BWA-MEM2 | Genome aligner | Seed-and-extend genome alignment | Robust for longer DNA reads and general sequencing | More often used for DNA-seq; not necessary for this small bacterial example |
+| Bowtie1 | Genome aligner | Very fast ungapped/limited alignment | Historically common for short ChIP-seq reads | Less flexible for modern reads with indels or variable quality |
+| Minimap2 | Long-read/general aligner | Minimizer-based alignment | Excellent for long reads | Not the normal choice for short-read ChIP-seq |
+| STAR/HISAT2 | Splice-aware RNA-seq aligners | Model exon junctions | Appropriate for eukaryotic RNA-seq | Splice modeling is irrelevant for ChIP-seq |
+| Salmon/Kallisto | Pseudo-aligners | Estimate transcript abundance | Very fast for RNA-seq quantification | Not appropriate for ChIP-seq peak calling because they do not produce genome-coordinate enrichment signal |
+
+In this workshop we use Bowtie2 because the *H. pylori* genome is small, the reads are short-read DNA fragments, and all downstream ChIP-seq tools need genome-coordinate BAM files.
+
+### BAM files in ChIP-seq
+
+SAM is a text alignment format, and BAM is the compressed binary version. A coordinate-sorted BAM records every aligned fragment position. The BAI index lets IGV, samtools, deepTools, and peak callers access genomic regions efficiently.
+
+Main SAM/BAM fields:
+
+| Column | Meaning |
+|---|---|
+| `QNAME` | Read name from the FASTQ identifier |
+| `FLAG` | Bit-coded alignment status: paired, mapped, reverse strand, duplicate, secondary, supplementary, and related states |
+| `RNAME` | Reference sequence name |
+| `POS` | 1-based leftmost alignment coordinate |
+| `MAPQ` | Mapping quality score |
+| `CIGAR` | Alignment pattern |
+| `RNEXT`, `PNEXT`, `TLEN` | Mate reference, mate coordinate, and inferred fragment length |
+| `SEQ`, `QUAL` | Read sequence and base qualities |
+
+Optional tags such as `AS:i`, `NM:i`, and `MD:Z` report alignment score, edit distance, and mismatch details. These are useful for diagnostics but are usually not edited by hand.
+
+### BAM filtering before ChIP-seq signal and peaks
+
+The raw sorted BAM is kept for diagnostic checks. The working BAM is filtered before track generation and peak calling:
+
+```bash
+samtools view -b -q 10 -f 2 -F 2828 input.sorted.bam > input.filtered.bam
+```
+
+This keeps properly paired alignments with MAPQ at least 10 and removes unmapped, mate-unmapped, secondary, failed-QC, and supplementary alignments.
+
+Duplicate handling is more delicate in ChIP-seq than it first appears. Coordinate duplicates may represent PCR duplicates, but at a true strong binding site many independent fragments can share very similar coordinates, especially in a small bacterial genome. Removing duplicates mechanically can erase real enrichment; keeping all duplicates can preserve PCR artifacts. For this workshop we keep duplicates and discuss library complexity, read depth, peak shape, and input controls as part of interpretation. In a real analysis, duplicate policy should be justified from library complexity metrics and the experimental design.
+
+Filtered BAM files feed:
+
+```text
+filtered BAM -> bamCoverage -> bigWig signal
+filtered BAM -> MACS3 -> narrowPeak and summits
+```
+
+Unlike RNA-seq pseudo-aligners, ChIP-seq does not produce counts per gene as the primary object. The primary objects are genomic signal tracks and peak intervals.
 
 ### Motif discovery intuition
 
@@ -150,21 +242,51 @@ where $P_{\ell}(s_{\ell})$ is the probability of observing base $s$ at motif pos
 
 Motif enrichment supports biological interpretation, but it does not prove direct binding alone. It should be interpreted together with ChIP signal, peak quality, gene proximity, and RNA-seq results.
 
-## 1. Prepare Day 3 folders
+## 1. Confirm ChIP-seq FASTQ readiness
+
+Day 3 assumes that Day 1 produced trimmed ChIP-seq FASTQ files and post-trim QC reports:
+
+```text
+results/day1_qc/trimmed_fastq/chipseq/
+results/day1_qc/fastqc_trimmed/chipseq/
+results/logs/day1/fastp/
+```
+
+Check the inputs:
 
 ```bash
-mkdir -p code/day3_chipseq
-mkdir -p data/trimmed_fastq/chipseq
-mkdir -p data/bam/chipseq
-mkdir -p results/chipseq/qc
-mkdir -p results/chipseq/bigwig
-mkdir -p results/chipseq/peaks/no_input
-mkdir -p results/chipseq/peaks/with_input
-mkdir -p results/chipseq/motifs
+find results/day1_qc/trimmed_fastq/chipseq -maxdepth 1 -type f | sort
+find results/day1_qc/fastqc_trimmed/chipseq -maxdepth 1 -type f | sort | head
+find results/logs/day1/fastp -maxdepth 1 -type f | sort | head
+```
+
+Before mapping, confirm:
+
+- every expected ChIP-seq sample has a trimmed FASTQ file;
+- the metadata clearly records whether input controls are present;
+- paired-end samples still have synchronized `_R1` and `_R2` files;
+- post-trim FastQC reports are readable;
+- any remaining QC warnings are documented in `workflow_execution.md`;
+- checkpoint files are recorded if local trimming was skipped.
+
+::: {.callout-important}
+Do not start ChIP-seq mapping from raw FASTQ unless a raw-vs-trimmed comparison is assigned. The standard Day 3 input is the Day 1 trimmed FASTQ set or an equivalent checkpoint.
+:::
+
+## 2. Prepare Day 3 folders
+
+```bash
+mkdir -p scripts/day3_chipseq
+mkdir -p results/day1_qc/trimmed_fastq/chipseq
+mkdir -p results/day3_chipseq/bam
+mkdir -p results/day3_chipseq/qc
+mkdir -p results/day3_chipseq/bigwig
+mkdir -p results/day3_chipseq/peaks/no_input
+mkdir -p results/day3_chipseq/motifs
 mkdir -p results/logs/day3
 ```
 
-Create `code/day3_chipseq/README.md` in VS Code and paste:
+Create `scripts/day3_chipseq/README.md` in VS Code and paste:
 
 ```markdown
 # Day 3 - ChIP-seq
@@ -175,183 +297,155 @@ Execution route:
 - Full local execution / partial local execution / checkpoint route: to be recorded
 
 Main inputs:
-- sample metadata: code/day1/metadata/samples_chipseq.tsv
-- genome: data/genome/genome.fa
-- ChIP FASTQ or checkpoint files
+- sample metadata: raw_data/metadata/samples.csv, filtered to assay == chipseq
+- genome: reference_genome/genome.fa
+- trimmed ChIP-seq FASTQ: results/day1_qc/trimmed_fastq/chipseq/
+- Day 1 QC: results/day1_qc/fastqc_trimmed/chipseq/ and results/logs/day1/fastp/
 ```
 
-## 2. FASTQ QC and trimming
+## 3. How to create and run Day 3 scripts
 
-Run QC on available ChIP-seq FASTQ files:
+Each practical section below follows the same order:
+
+1. explanation of the ChIP-seq analysis step;
+2. the script to create in `scripts/day3_chipseq/`;
+3. the Docker command that runs that script inside the correct image.
+
+Create each file in VS Code, or open it with `nano`, paste the displayed code, save, and return to the terminal. The Docker run commands call these scripts with `bash` inside the container. Do not run shell scripts with `sh`, because they use Bash syntax.
+
+## 4. Mapping and BAM processing
+
+Use the Bowtie2 index created on Day 2. If Day 2 was skipped, create and run the Day 2 Bowtie2 index script first.
+
+Mapping converts the Day 1 trimmed ChIP-seq FASTQ files into sorted and filtered BAM files. The filtered BAMs are used for signal tracks and peak calling.
+
+Create `scripts/day3_chipseq/01_map_bowtie2_sort_index.sh`:
 
 ```bash
-fastqc data/raw_fastq/chipseq/*.fastq.gz \
-  -o results/chipseq/qc \
-  2>&1 | tee results/logs/day3/01_fastqc_raw.log
+{{< include ../scripts/day3_chipseq/01_map_bowtie2_sort_index.sh >}}
 ```
 
-Trim one IP sample:
+Run the ChIP-seq mapping script inside the Bowtie2/Samtools image:
 
 ```bash
-fastp \
-  -i data/raw_fastq/chipseq/TF_IP_1.fastq.gz \
-  -o data/trimmed_fastq/chipseq/TF_IP_1.trimmed.fastq.gz \
-  --thread 2 \
-  --html results/chipseq/qc/TF_IP_1.fastp.html \
-  --json results/chipseq/qc/TF_IP_1.fastp.json \
-  2>&1 | tee results/logs/day3/02_trim_fastp_TF_IP_1.log
+docker run --rm \
+  --platform linux/amd64 \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-bowtie2-samtools:latest \
+  bash scripts/day3_chipseq/01_map_bowtie2_sort_index.sh
 ```
 
-Repeat for the input sample or use the course scripts/checkpoints.
+Expected outputs:
 
-## 3. Mapping and BAM processing
+```text
+results/day3_chipseq/bam/*.sorted.bam
+results/day3_chipseq/bam/*.sorted.bam.bai
+results/day3_chipseq/bam/*.filtered.bam
+results/day3_chipseq/bam/*.filtered.bam.bai
+results/logs/day3/*.bowtie2.log
+results/logs/day3/*.flagstat.txt
+results/logs/day3/*.filtered.flagstat.txt
+```
 
-Build the index if it was not already built:
+## 5. Generate ChIP-seq bigWig tracks
+
+bigWig tracks summarize filtered ChIP-seq coverage across the genome for IGV inspection.
+
+Create `scripts/day3_chipseq/02_make_chipseq_bigwigs.sh`:
 
 ```bash
-bowtie2-build data/genome/genome.fa data/genome/genome_index
+{{< include ../scripts/day3_chipseq/02_make_chipseq_bigwigs.sh >}}
 ```
 
-Map IP:
+Run the bigWig script inside the deepTools image:
 
 ```bash
-bowtie2 \
-  -x data/genome/genome_index \
-  -U data/trimmed_fastq/chipseq/TF_IP_1.trimmed.fastq.gz \
-  -p 2 \
-  2> results/logs/day3/03_bowtie2_TF_IP_1.log \
-| samtools sort -@ 2 -o data/bam/chipseq/TF_IP_1.sorted.bam
-
-samtools index data/bam/chipseq/TF_IP_1.sorted.bam
+docker run --rm \
+  --platform linux/amd64 \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-deeptools:latest \
+  bash scripts/day3_chipseq/02_make_chipseq_bigwigs.sh
 ```
 
-Map input similarly:
+For the selected HP1021 subset this creates CPM-normalized ChIP-seq coverage tracks.
+
+## 6. Peak calling without input
+
+MACS3 scans the filtered BAM for local enrichment and writes peak intervals and summits.
+
+Create `scripts/day3_chipseq/03_call_peaks_macs3_no_input.sh`:
 
 ```bash
-bowtie2 \
-  -x data/genome/genome_index \
-  -U data/trimmed_fastq/chipseq/Input_1.trimmed.fastq.gz \
-  -p 2 \
-  2> results/logs/day3/04_bowtie2_Input_1.log \
-| samtools sort -@ 2 -o data/bam/chipseq/Input_1.sorted.bam
-
-samtools index data/bam/chipseq/Input_1.sorted.bam
+{{< include ../scripts/day3_chipseq/03_call_peaks_macs3_no_input.sh >}}
 ```
 
-Inspect mapping summaries:
+Run the no-input MACS3 script inside the MACS3 image:
 
 ```bash
-samtools flagstat data/bam/chipseq/TF_IP_1.sorted.bam \
-  > results/logs/day3/05_flagstat_TF_IP_1.txt
+docker run --rm \
+  --platform linux/amd64 \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-macs3:latest \
+  bash scripts/day3_chipseq/03_call_peaks_macs3_no_input.sh
 ```
 
-## 4. Generate ChIP-seq bigWig tracks
+Input-free peak calling is the main teaching route for the current subset. It is useful for learning the mechanics of ChIP-seq peak files, but it can overcall regions with unusual background or mappability.
 
-IP coverage track:
+## 7. Optional input-control comparison
+
+If matched input files are available in a future project, MACS3 can use them with `-c input.bam`. We do not use this as the main workshop route because the selected teaching subset is input-free.
+
+For a manual comparison, count peaks from any two peak folders:
 
 ```bash
-bamCoverage \
-  -b data/bam/chipseq/TF_IP_1.sorted.bam \
-  -o results/chipseq/bigwig/TF_IP_1.CPM.bw \
-  --normalizeUsing CPM \
-  --binSize 10 \
-  --numberOfProcessors 2 \
-  2>&1 | tee results/logs/day3/06_bamcoverage_TF_IP_1.log
+wc -l results/day3_chipseq/peaks/no_input/*_peaks.narrowPeak
 ```
 
-Input-normalized log2 track:
-
-```bash
-bamCompare \
-  -b1 data/bam/chipseq/TF_IP_1.sorted.bam \
-  -b2 data/bam/chipseq/Input_1.sorted.bam \
-  --operation log2 \
-  --normalizeUsing CPM \
-  --binSize 10 \
-  --numberOfProcessors 2 \
-  -o results/chipseq/bigwig/TF_IP_1.log2_IP_vs_input.bw \
-  2>&1 | tee results/logs/day3/07_bamcompare_TF_IP_1.log
-```
-
-The log2 IP/input signal is:
-
-$$
-\log_2\left(\frac{\mathrm{IP\ signal} + c}{\mathrm{Input\ signal} + c}\right)
-$$
-
-where $c$ is a small pseudocount used to avoid division by zero.
-
-## 5. Peak calling without input
-
-```bash
-macs3 callpeak \
-  -t data/bam/chipseq/TF_IP_1.sorted.bam \
-  -f BAM \
-  -g 1.7e6 \
-  -n TF_IP_1_no_input \
-  --outdir results/chipseq/peaks/no_input \
-  2>&1 | tee results/logs/day3/08_macs3_no_input.log
-```
-
-This demonstrates the behavior of peak calling when no explicit background sample is provided.
-
-## 6. Peak calling with input
-
-```bash
-macs3 callpeak \
-  -t data/bam/chipseq/TF_IP_1.sorted.bam \
-  -c data/bam/chipseq/Input_1.sorted.bam \
-  -f BAM \
-  -g 1.7e6 \
-  -n TF_IP_1_with_input \
-  --outdir results/chipseq/peaks/with_input \
-  2>&1 | tee results/logs/day3/09_macs3_with_input.log
-```
-
-Replace `1.7e6` with the approximate mappable genome size for the selected organism. For a bacterial teaching dataset, this value is usually close to the genome size in base pairs.
-
-## 7. Compare peak calls
-
-Count peaks:
-
-```bash
-wc -l results/chipseq/peaks/no_input/*_peaks.narrowPeak
-wc -l results/chipseq/peaks/with_input/*_peaks.narrowPeak
-```
-
-Compare overlaps:
-
-```bash
-bedtools intersect \
-  -a results/chipseq/peaks/with_input/TF_IP_1_with_input_peaks.narrowPeak \
-  -b results/chipseq/peaks/no_input/TF_IP_1_no_input_peaks.narrowPeak \
-  -u \
-  > results/chipseq/peaks/peaks_shared_with_no_input.bed
-```
-
-Interpret the comparison qualitatively: input controls can remove background-driven calls, but they may also change scores, summits, and border positions.
+Input controls can remove background-driven calls, but they may also change scores, summits, and peak borders.
 
 ## 8. Extract peak sequences
 
-Use peak summits or peak intervals. For motif discovery, summit-centered windows are often preferred for TF ChIP-seq.
+Motif discovery needs DNA sequences, not BED intervals. Use peak intervals from the main no-input route to extract FASTA sequences from the reference genome.
 
-Example using peak intervals:
+Create `scripts/day3_chipseq/04_extract_peak_sequences.sh`:
 
 ```bash
-bedtools getfasta \
-  -fi data/genome/genome.fa \
-  -bed results/chipseq/peaks/with_input/TF_IP_1_with_input_peaks.narrowPeak \
-  -fo results/chipseq/motifs/TF_IP_1_peak_sequences.fa \
-  2>&1 | tee results/logs/day3/10_getfasta_TF_IP_1.log
+{{< include ../scripts/day3_chipseq/04_extract_peak_sequences.sh >}}
+```
+
+Run the sequence-extraction script inside the BEDTools image:
+
+```bash
+docker run --rm \
+  --platform linux/amd64 \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-bedtools:latest \
+  bash scripts/day3_chipseq/04_extract_peak_sequences.sh
 ```
 
 ## 9. Motif discovery with STREME
 
+STREME searches the extracted peak sequences for enriched short DNA patterns.
+
+Create `scripts/day3_chipseq/05_run_streme.sh`:
+
 ```bash
-streme \
-  --p results/chipseq/motifs/TF_IP_1_peak_sequences.fa \
-  --oc results/chipseq/motifs/TF_IP_1_streme \
-  2>&1 | tee results/logs/day3/11_streme_TF_IP_1.log
+{{< include ../scripts/day3_chipseq/05_run_streme.sh >}}
+```
+
+Run the STREME script inside the STREME image:
+
+```bash
+docker run --rm \
+  --platform linux/amd64 \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-streme:latest \
+  bash scripts/day3_chipseq/05_run_streme.sh
 ```
 
 Interpret motif output in relation to:
@@ -360,11 +454,11 @@ Interpret motif output in relation to:
 - motif width;
 - enrichment statistic;
 - biological plausibility;
-- peak quality and input control.
+- peak quality and the lack of input control in the teaching subset.
 
 ## 10. Checkpoint route
 
-If FASTQ-to-BAM or MACS3 processing is not feasible locally, continue from:
+If mapping, BAM processing, or MACS3 peak calling is not feasible locally after Day 1 FASTQ preparation, continue from:
 
 ```text
 checkpoints/chipseq/peaks/*.narrowPeak
@@ -383,25 +477,24 @@ ChIP-seq mapping and peak calling were demonstrated in class. This repository us
 
 ```bash
 git status
-git add code/day3_chipseq results/chipseq/peaks results/chipseq/motifs results/logs/day3 README.md
+git add scripts/day3_chipseq results/day3_chipseq/peaks results/day3_chipseq/motifs results/logs/day3 README.md
 git commit -m "Add ChIP-seq peak calling and motif notes"
 git push
 ```
 
-Avoid committing BAM and bigWig files unless the instructor explicitly provides tiny files for demonstration.
+Avoid committing BAM and bigWig files unless tiny example files are explicitly assigned for demonstration.
 
 ## Expected outputs
 
 By the end of Day 3, you should have some combination of:
 
 ```text
-results/chipseq/qc/multiqc_report.html
+results/day3_chipseq/qc/multiqc_report.html
 results/logs/day3/*.log
-results/chipseq/peaks/no_input/*.narrowPeak
-results/chipseq/peaks/with_input/*.narrowPeak
-results/chipseq/peaks/with_input/*_summits.bed
-results/chipseq/bigwig/*.bw
-results/chipseq/motifs/TF_IP_1_streme/
+results/day3_chipseq/peaks/no_input/*.narrowPeak
+results/day3_chipseq/bigwig/*.bw
+results/day3_chipseq/motifs/*_peak_sequences.fa
+results/day3_chipseq/motifs/streme/
 ```
 
 ## Self-check questions
@@ -423,7 +516,7 @@ Include:
 - whether you used full local execution or checkpoint mode;
 - the command you ran;
 - the exact error message;
-- the relevant log file, for example `results/logs/day3/09_macs3_with_input.log`.
+- the relevant log file, for example `results/logs/day3/WT_1.filtered.flagstat.txt`.
 
 If you cannot create or access a GitHub account, email:
 

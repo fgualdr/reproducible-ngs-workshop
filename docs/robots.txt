@@ -1,1 +1,1 @@
-Sitemap: https://fgualdr.github.io/Reproducible_NGS_Workshop/sitemap.xml
+Sitemap: https://fgualdr.github.io/reproducible-ngs-workshop/sitemap.xml

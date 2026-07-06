@@ -41,17 +41,29 @@ By the end of Day 4, students should be able to:
 
 ## Before you start
 
+Open the same `workshop_ngs` repository that you used on Day 1.
+
+- Windows users should open Visual Studio Code connected to Ubuntu WSL, open a WSL terminal, and run the commands there.
+- macOS and Linux users should open the `workshop_ngs` folder in Visual Studio Code and use the VS Code terminal or a normal terminal.
+- Before running commands, move to the repository root:
+
+```bash
+cd ~/workshop_ngs
+pwd
+```
+
+If your repository is stored somewhere else, replace this path with the location of your own `workshop_ngs` folder. The command `pwd` should end with `workshop_ngs`.
+
 Use your own outputs or checkpoint files:
 
 ```text
-results/rnaseq/deseq2/deseq2_results.csv or .tsv
-results/chipseq/peaks/with_input/TF_IP_1_with_input_peaks.narrowPeak
-data/genome/annotation.gff3
-code/day1/metadata/samples_rnaseq.tsv
-code/day1/metadata/samples_chipseq.tsv
+results/day2_rnaseq/deseq2/deseq2_results.csv or .tsv
+results/day3_chipseq/peaks/no_input/WT_1_peaks.narrowPeak
+reference_genome/annotation.gff3
+raw_data/metadata/samples.csv
 ```
 
-If checkpoint files are used, record their source in `code/day4_integration/execution_note.md`.
+If checkpoint files are used, record their source in `scripts/day4_integration/execution_note.md`.
 
 ## Time plan
 
@@ -198,7 +210,7 @@ After interval operations, many outputs become regular tables: peak ID, nearest 
 
 ## Guided demonstration
 
-The instructor will show:
+In the guided demonstration, you will see:
 
 - importing a DESeq2 result table;
 - importing a `narrowPeak` file;
@@ -213,14 +225,14 @@ The instructor will show:
 Create folders:
 
 ```bash
-mkdir -p code/day4_integration
+mkdir -p scripts/day4_integration
 mkdir -p results/logs/day4
-mkdir -p results/integration/tables
-mkdir -p results/integration/plots
+mkdir -p results/day4_integration/tables
+mkdir -p results/day4_integration/plots
 mkdir -p slides
 ```
 
-Create `code/day4_integration/execution_note.md` in VS Code and paste:
+Create `scripts/day4_integration/execution_note.md` in VS Code and paste:
 
 ```markdown
 # Day 4 execution note
@@ -238,14 +250,16 @@ Create `code/day4_integration/execution_note.md` in VS Code and paste:
 - log2 fold-change threshold:
 
 ## Limitations
-- 
+-
 ```
 
-## R skeleton for interval integration
+## R script for interval integration
 
-Save as `code/day4_integration/peak_gene_integration.R` and adapt column names as needed:
+Create `scripts/day4_integration/peak_gene_integration.R` in VS Code, or open it with `nano`, paste this code, save, and adapt column names as needed:
 
 ```r
+#!/usr/bin/env Rscript
+
 suppressPackageStartupMessages({
   library(GenomicRanges)
   library(rtracklayer)
@@ -253,9 +267,9 @@ suppressPackageStartupMessages({
 })
 
 # Inputs
-peak_file <- "results/chipseq/peaks/with_input/TF_IP_1_with_input_peaks.narrowPeak"
-annotation_file <- "data/genome/annotation.gff3"
-deseq_file <- "results/rnaseq/deseq2/deseq2_results.tsv"
+peak_file <- "results/day3_chipseq/peaks/no_input/WT_1_peaks.narrowPeak"
+annotation_file <- "reference_genome/annotation.gff3"
+deseq_file <- "results/day2_rnaseq/deseq2/deseq2_results.tsv"
 
 # Import data
 peaks <- import(peak_file, format = "BED")
@@ -284,7 +298,7 @@ peak_gene <- tibble(
   peak_end = end(peaks)[queryHits(nearest_hits)]
 )
 
-write_tsv(peak_gene, "results/integration/tables/peak_nearest_gene.tsv")
+write_tsv(peak_gene, "results/day4_integration/tables/peak_nearest_gene.tsv")
 
 # Join with DESeq2 results. Adapt the gene ID column if needed.
 if (!"gene_id" %in% names(de)) {
@@ -302,13 +316,18 @@ combined <- peak_gene %>%
     )
   )
 
-write_tsv(combined, "results/integration/tables/peak_gene_deseq2_join.tsv")
+write_tsv(combined, "results/day4_integration/tables/peak_gene_deseq2_join.tsv")
 ```
 
-Run it:
+Run the script you just saved:
 
 ```bash
-Rscript code/day4_integration/peak_gene_integration.R \
+docker run --rm \
+  --platform linux/amd64 \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-r-bioc:latest \
+  Rscript scripts/day4_integration/peak_gene_integration.R \
   2>&1 | tee results/logs/day4/01_peak_gene_integration.log
 ```
 
@@ -319,7 +338,7 @@ Distance-to-gene plot:
 ```r
 library(tidyverse)
 
-peak_gene <- read_tsv("results/integration/tables/peak_nearest_gene.tsv")
+peak_gene <- read_tsv("results/day4_integration/tables/peak_nearest_gene.tsv")
 
 ggplot(peak_gene, aes(x = distance_to_gene)) +
   geom_histogram(bins = 40) +
@@ -330,24 +349,24 @@ ggplot(peak_gene, aes(x = distance_to_gene)) +
   ) +
   theme_bw()
 
-ggsave("results/integration/plots/peak_gene_distance_histogram.pdf", width = 7, height = 5)
+ggsave("results/day4_integration/plots/peak_gene_distance_histogram.pdf", width = 7, height = 5)
 ```
 
 Candidate-target table:
 
 ```r
-combined <- read_tsv("results/integration/tables/peak_gene_deseq2_join.tsv")
+combined <- read_tsv("results/day4_integration/tables/peak_gene_deseq2_join.tsv")
 
 candidate_targets <- combined %>%
   filter(!is.na(padj), padj < 0.05, abs(log2FoldChange) >= 1) %>%
   arrange(padj, desc(abs(log2FoldChange)))
 
-write_tsv(candidate_targets, "results/integration/tables/candidate_direct_targets.tsv")
+write_tsv(candidate_targets, "results/day4_integration/tables/candidate_direct_targets.tsv")
 ```
 
 ## Final three slides
 
-Prepare three slides in `slides/final_summary.qmd` or another slide format approved by the instructor.
+Prepare three slides in `slides/final_summary.qmd` or another slide format assigned for the course.
 
 ```text
 Slide 1 - Data and design
@@ -387,10 +406,10 @@ checkpoint-based downstream analysis
 Commit small outputs:
 
 ```text
-code/day4_integration/
+scripts/day4_integration/
 results/logs/day4/
-results/integration/tables/
-results/integration/plots/
+results/day4_integration/tables/
+results/day4_integration/plots/
 slides/final_summary.qmd or exported PDF
 README.md updated with final workflow summary
 ```
@@ -422,7 +441,7 @@ Your repository should contain:
 ## Final commit
 
 ```bash
-git add README.md code/day4_integration results/logs/day4 results/integration slides
+git add README.md scripts/day4_integration results/logs/day4 results/day4_integration slides
 git commit -m "Add Day 4 integration and final presentation"
 git push
 ```

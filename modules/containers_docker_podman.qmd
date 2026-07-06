@@ -1,5 +1,5 @@
 ---
-title: "Containers with Docker or Podman"
+title: "Containers with Docker"
 format: html
 execute:
   eval: false
@@ -7,16 +7,20 @@ execute:
 
 ## Runtime convention
 
-All course commands use one mounted working directory:
+All course scripts are meant to run inside the Docker image that contains the required tool. The script contains the analysis logic; the Docker command only chooses the software environment and mounts the project folder:
 
 ```bash
-docker run --rm -it -v "$PWD":/work -w /work IMAGE bash
-podman run --rm -it -v "$PWD":/work -w /work IMAGE bash
+docker run --rm \
+  --platform linux/amd64 \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-fastqc:latest \
+  bash scripts/day1/01_fastqc_raw.sh
 ```
 
 ## Why this matters
 
-The container provides software. The mounted project folder provides persistent files. This separation makes the analysis portable across macOS, Linux, and Windows WSL2.
+The image provides software. The mounted project folder provides persistent files. `docker run --rm` starts a temporary container, runs the script inside `/work`, writes outputs into the mounted project folder, and removes the container when the command finishes. This separation makes the analysis portable across macOS, Linux, and Windows WSL2.
 
 ## Practical limits
 
@@ -27,4 +31,3 @@ THREADS=2
 ```
 
 More threads can overload student laptops and make failures harder to debug.
-

@@ -1,10 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/../lib/common.sh"
-
-log "Checking host setup"
+printf '[%s] Checking host setup\n' "$(date '+%Y-%m-%d %H:%M:%S')"
 printf 'Shell: %s\n' "${SHELL:-unknown}"
 printf 'Working directory: %s\n' "$PWD"
 
@@ -28,5 +25,4 @@ else
   printf 'MISSING: podman\n'
 fi
 
-log "Host check complete"
-
+printf '[%s] Host check complete\n' "$(date '+%Y-%m-%d %H:%M:%S')"

@@ -6,160 +6,229 @@ execute:
   eval: false
 ---
 
-## Purpose of Day 0
+# Overview
 
-Day 0 is a self-paced setup activity. By the end of this page, your computer should be ready for the practical sessions and you should have a small GitHub repository that can receive commits from your laptop.
+This preparatory session ensures that every participant has a working computational environment before the start of the workshop.
+Personal computers are preferred, but if limitations or installation issues arise, participants will be able to use computers from the University.
 
-The workshop will use small bacterial examples and checkpoint files when needed. The aim of Day 0 is not to solve every computing problem, but to identify early which execution route is realistic for your laptop.
+The goal is not to learn bioinformatics yet. Instead, we will verify that the required software is installed correctly and that containers can access files on the local computer.
 
-::: {.callout-important}
-**Required before Day 1.**
+By the end of Day 0, you should be able to:
 
-You should have:
+- access GitHub;
+- access Docker Hub;
+- install and open Visual Studio Code;
+- install Git and verify that it works;
+- install Docker and verify that it can run a container;
+- install and open IGV.
 
-1. a GitHub account;
-2. a Docker Hub account;
-3. Git installed and configured;
-4. VS Code installed;
-5. Docker Desktop or Podman Desktop installed and tested;
-6. a working terminal that can run a container and mount a local folder;
-7. enough free disk space for the selected execution route;
-8. your own student repository created, cloned, committed, and pushed.
-:::
+These steps should be completed before the start of the workshop.
 
-![Reproducibility layers](../assets/images/day0/reproducibility_layers.svg){#fig-day0-repro-layers width="100%" fig-alt="Reproducibility layers linking project files, metadata, commands, software environment, and outputs."}
+For any problems, questions, or installation issues, please follow the issue-reporting instructions on the workshop home page.
 
-## Today's path: how your repository starts
+***
+
+# Conceptual background and setup checklist
+
+NGS analyses depend on many linked components: input data, reference files, software tools, command-line options, and output files. Small differences in any of these components can change the final results.
+
+For Day 0, the goal is to create accounts, install the required software, and verify the tools needed to work in a reproducible project folder. The table below combines the setup checklist with the reason each component matters.
+
+| Order | Action | Component | Basic idea | Why it matters |
+|---:|---|---|---|---|
+| 1 | Create or verify account | GitHub | Online platform for Git repositories. | Gives access to the workshop material and stores a remote copy of your work. |
+| 2 | Create or verify account | Docker Hub | Online registry for container images. | Provides access to container images used to run bioinformatics software. |
+| 3 | Install and open | Visual Studio Code | Code editor with an integrated terminal. | Provides one place to edit scripts, write notes, and run commands. |
+| 4 | Install and check | Git | Version-control tool for text files. | Records changes in scripts, metadata, and documentation. |
+| 5 | Install and check | Docker | Container engine used to run software images. | Keeps command-line tools and dependencies consistent across computers. |
+| 6 | Install and open | IGV | Genome browser for visual inspection of genomic data. | Allows inspection of aligned sequencing data and genomic regions. |
+
+The detailed repository structure will be covered in Day 1. For now, we will focus on the intuitive reasons why we use Git, containers, Visual Studio Code, and IGV in a reproducible NGS workflow.
+
+### Containers in one sentence
+
+A container is like a small virtual computer that already contains the command-line tools needed for the workshop.
+
+It is not a separate physical computer: it uses the computing power of the machine where it is running. The advantage is that the software inside the container stays consistent across Windows, macOS, and Linux.
+
+The container also needs to see the relevant folders from your computer. To do this, we will **mount** a folder from your computer into the container, similar to connecting an external USB drive:
 
 ```text
-accounts and software
-  -> Git identity
-  -> container smoke test
-  -> create GitHub repository
-  -> clone locally
-  -> create README, .gitignore, and simple folders
-  -> first commit and push
+your project folder on your computer  <->  /work inside the container
 ```
 
-## Learning outcomes
-
-After completing Day 0, you should be able to:
-
-- open a terminal from VS Code;
-- verify that Git can communicate with GitHub;
-- explain what belongs in a repository and what should stay out of version control;
-- run a Docker or Podman container from your project folder;
-- understand why we separate **analysis documentation** from **large sequencing data**;
-- report your laptop specifications and choose an appropriate execution route.
-
-## Conceptual background
-
-### Reproducibility in an NGS project
-
-An NGS analysis is reproducible only when three things are explicit:
-
-1. **Data provenance**: which samples, accessions, reference genome, and annotation were used.
-2. **Computational procedure**: which commands, scripts, parameters, and execution route were used.
-3. **Software environment**: which programs and versions produced the outputs.
-
-For this workshop, the student repository is the record of the analysis, not the storage location for heavy sequencing files. The repository should stay simple: `README.md`, `code/`, `container/`, `data/`, and `results/`. FASTQ, BAM, BAI, bigWig, SRA files, and large temporary outputs should normally be excluded by `.gitignore`.
-
-![Student repository structure](../assets/images/day0/student_repo_structure.svg){#fig-day0-repo-structure width="100%" fig-alt="Recommended student repository structure with README, code, container, data, and results folders."}
-
-### What the setup tools are doing
-
-![Git and GitHub workflow](../assets/images/day0/git_github_simple.svg){#fig-day0-git-github width="90%" fig-alt="Simple Git and GitHub workflow from local files to commits and remote backup."}
-
-| Tool | Role in the workshop | What we expect you to record |
-|---|---|---|
-| Git | Tracks changes in text files, scripts, metadata, and small results | Meaningful commits after each practical block |
-| GitHub | Stores a remote copy of your repository | A repository that can be inspected for assessment |
-| VS Code | Provides editor, terminal, and repository view | Commands are run from the project root |
-| Docker/Podman | Runs Linux software environments reproducibly | Image name, tag, command, and mounted folder |
-| README and notes | Document analysis and interpretation | Inputs, commands, outputs, decisions, and limitations |
-| IGV or genome browser | Visual inspection of genome tracks | Selected screenshots or notes, not huge track files |
-
-A container image contains a prepared software environment. A container is a running instance of that image. The practical consequence is that students with different operating systems can run the same Linux command-line tools through a shared image.
+Most practical analysis commands from Day 1 onward mount your project folder inside the container as `/work` and run from there.
 
 ![Container concept](../assets/images/day0/container_simple.svg){#fig-day0-container width="85%" fig-alt="Container concept showing host computer, mounted project folder, and reproducible software environment."}
 
-### R and Bioconductor will run through containers
+::: {.callout-note title="How this setup will be used"}
+We will use Visual Studio Code as the main working environment. VS Code is a versatile and widely used IDE that lets you organize files, browse folder contents, edit scripts and notes, open terminals, run container commands, and inspect outputs such as text files, PDFs, PNGs, and HTML reports.
 
-You do **not** need to install R or RStudio locally for this workshop. RNA-seq, ChIP-seq and integration steps that use R/Bioconductor will run through the course container image. This avoids differences caused by local R versions, compiler tools, package libraries and operating-system-specific installation problems.
+Because the software tools will be provided through Docker images, you do not need to install R, RStudio, Python, Bioconductor packages, or command-line bioinformatics tools directly on your computer for the workshop. Those programming languages and tools will run inside the relevant container image.
 
-If you already use RStudio for your own work, you may keep it installed. It is optional and not part of the required workshop setup.
-
-The most important technical action is the **bind mount**:
-
-```text
-host project folder  <->  /work inside the container
-```
-
-This makes the same project files visible both to your laptop and to the container. All workshop commands assume that the repository root is mounted as `/work`.
-
-::: {.callout-note}
-**Supported execution routes.**
-
-The preferred route is local Docker/Podman execution. If this fails, you may use a university Ubuntu workstation, a checkpoint-file route, or an instructor-supported backend. The assessment remains the same: document what was executed, what was provided as checkpoint data, and how the results were interpreted.
+The preferred route is to run the practical commands locally with Docker. If this is not possible because of laptop, storage, or installation limitations, we may provide University computers and checkpoint files so that you can still follow the workflow and document the analysis.
 :::
+
+***
 
 ## 1. Create online accounts
 
-### 1.1 GitHub account
+Before the workshop, create or verify access to the following online accounts using your web browser.
 
-Create or verify your GitHub account:
+| Account | Website | Instructions | What to check |
+|---|---|---|---|
+| GitHub | [github.com](https://github.com/) | [Create a GitHub account](https://docs.github.com/en/get-started/start-your-journey/creating-an-account-on-github) | You can log in, access your email, and complete two-factor authentication if requested. |
+| Docker Hub | [hub.docker.com](https://hub.docker.com/) | [Create a Docker account](https://docs.docker.com/accounts/create-account/) | You can log in with your Docker ID and access Docker Hub from your browser. |
+
+### GitHub account
+
+GitHub will be used to access the workshop material and to manage your own analysis repository.
+
+Use an email address that you can access during the workshop. GitHub may require email verification and two-factor authentication. If two-factor authentication is requested, complete the setup and save your recovery codes.
+
+Useful links:
+
+- GitHub: [github.com](https://github.com/)
+- Create a GitHub account: [GitHub account setup](https://docs.github.com/en/get-started/start-your-journey/creating-an-account-on-github)
+- GitHub two-factor authentication: [GitHub two-factor authentication](https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa)
+
+### Docker Hub account
+
+Docker Hub provides access to container images. During the workshop, you may need to download container images used for the practical sessions.
+
+Use an email address that you can access during the workshop, because account verification may be required.
+
+Useful links:
+
+- Docker Hub: [hub.docker.com](https://hub.docker.com/)
+- Create a Docker account: [Docker account setup](https://docs.docker.com/accounts/create-account/)
+
+## 2. Software installation
+
+Install or verify the software below before the workshop. These are the applications and command-line tools that students will actually use during the course.
+
+| Software | What it is used for | Practical note for this workshop |
+|---|---|---|
+| Visual Studio Code | Editing scripts, notes, configuration files, and Markdown/Quarto files. | Main editor for the workshop. Windows users should open the project through the WSL extension. |
+| Docker | Running container images that contain the bioinformatics software. | Docker is the supported route for the practical scripts. |
+| Git | Tracking project changes and synchronizing the repository with GitHub. | Required for the student analysis repository created on Day 1. |
+| IGV | Visual inspection of aligned reads, coverage tracks, and genomic regions. | Required for genome-browser inspection exercises. |
+
+### Supported installation routes
+
+Use the route for your operating system. Windows users need an Ubuntu Linux environment through WSL2 so that workshop commands run in a Linux shell while Docker Desktop provides the container engine. macOS users will use Homebrew where possible to simplify command-line tool installation and checks.
+
+| Operating system | Supported route                                      |
+| ---------------- | ---------------------------------------------------- |
+| [Windows 10/11](#windows-setup) | WSL2 + Ubuntu + Docker Desktop with WSL2 integration |
+| [macOS](#macos-setup) | VS Code + Homebrew + Docker Desktop for Mac          |
+| [Linux](#linux-setup) | Docker Engine                                        |
+
+Jump directly to your operating system:
+
+- [Windows 10/11 setup](#windows-setup)
+- [macOS setup](#macos-setup)
+- [Linux setup](#linux-setup)
+
+Do not install multiple container engines for this workshop unless you already know what you are doing. One working Docker installation is enough.
+
+### Docker Desktop licensing
+
+Docker Desktop is free for educational use under Docker’s current subscription terms. In this workshop, Docker Desktop is used for teaching and learning in a university context.
+
+If you are using your own laptop, Docker Desktop is the recommended route. If you are using an institutionally managed computer, check whether your institution has specific Docker Desktop installation or licensing rules.
+
+Useful reference: [Docker Desktop subscription terms](https://docs.docker.com/subscription/desktop-license/)
+
+### 2.1 Windows 10/11 {#windows-setup}
+
+The supported Windows route is:
 
 ```text
-https://github.com/
+Windows 10/11 -> WSL2 Ubuntu -> Docker Desktop with WSL2 integration -> VS Code connected to WSL -> IGV
 ```
 
-During the workshop you will create your own repository, push commits, and share the repository URL for assessment.
+The goal is to run all workshop commands from an Ubuntu Linux terminal, opened inside Visual Studio Code.
 
-### 1.2 Docker Hub account
+Windows will still be used for desktop applications such as Docker Desktop, Visual Studio Code, and IGV. The command-line analysis will run inside Ubuntu through WSL2.
 
-Create or verify a Docker Hub account:
+| Component | Where it runs | What it does |
+|---|---|---|
+| Visual Studio Code | Windows | The editor application. |
+| WSL extension for VS Code | Windows and WSL | Lets VS Code open files and terminals inside Ubuntu. |
+| Ubuntu WSL2 | Linux environment inside Windows | The place where workshop shell commands run. |
+| Docker Desktop | Windows, integrated with WSL2 | Provides the `docker` command inside Ubuntu. |
+| IGV Desktop | Windows | Genome browser used for visual inspection. |
+
+Do not run workshop commands from PowerShell, CMD, Git Bash, Anaconda Prompt, or a normal Windows terminal after setup. Use the VS Code terminal connected to Ubuntu WSL.
+
+The workshop project should be created inside the Ubuntu filesystem:
 
 ```text
-https://hub.docker.com/
+~/workshop_ngs
 ```
 
-The course may use images from Docker Hub or another image registry. Docker Hub is useful because it is the most common registry students will encounter after the workshop.
-
-## 2. Install VS Code
-
-Install VS Code from:
+Do not create the workshop project under:
 
 ```text
-https://code.visualstudio.com/
+/mnt/c/...
 ```
 
-Open VS Code and check that you can open a terminal:
+This avoids common path, permission, mount, and file-speed problems.
+
+Also avoid OneDrive, Dropbox, iCloud Drive, network-mounted folders, and paths with spaces for the main workshop project. These locations can cause slow file access, permission problems, and Docker mount errors.
+
+#### Step 1: install WSL2 and Ubuntu
+
+Open **Windows Terminal** or **PowerShell** as administrator.
+
+Run:
+
+```powershell
+wsl --install
+```
+
+This installs WSL and the default Ubuntu distribution. If this command is not available or does not work on your computer, follow the [official Microsoft WSL installation instructions](https://learn.microsoft.com/windows/wsl/install).
+
+If Windows asks you to restart, restart the computer.
+
+After restart, Ubuntu may open automatically. If not, open **Ubuntu** from the Windows Start menu. (Look for the Linux penguin icon)
+
+The first time Ubuntu starts, it will ask you to create:
+
+- a Linux username;
+- a Linux password.
+
+This password is used for Ubuntu commands such as `sudo`. It is not your Windows password and it is not your GitHub password.
+
+#### Step 2: check that Ubuntu uses WSL2
+
+Open **Windows Terminal** or **PowerShell** and check that Ubuntu is using WSL2:
+
+```powershell
+wsl -l -v
+```
+
+Expected output:
 
 ```text
-Terminal -> New Terminal
+  NAME      STATE           VERSION
+* Ubuntu    Running         2
 ```
 
-In the terminal, run:
+If Ubuntu shows version `1`, ask for help before continuing.
+
+#### Step 3: update Ubuntu and install basic command-line tools
+
+Open **Ubuntu** from the Windows Start menu.
+
+Run:
 
 ```bash
-pwd
+sudo apt update
+sudo apt upgrade -y
+sudo apt install -y git gawk curl wget ca-certificates unzip
 ```
-
-On Windows, use the supported WSL2/Ubuntu terminal route when possible. Avoid switching between PowerShell, Git Bash, CMD, and WSL during the workshop.
-
-## 3. Install and configure Git
-
-### Windows
-
-Install Git for Windows if needed, but the recommended workshop route for Windows is:
-
-```text
-Windows 10/11 + WSL2 + Ubuntu terminal + Docker Desktop
-```
-
-If using WSL2, install and configure Git inside the Ubuntu terminal.
-
-### macOS
 
 Check Git:
 
@@ -167,260 +236,560 @@ Check Git:
 git --version
 ```
 
-If it is missing, choose one of these routes:
+Expected output:
 
-- install the Xcode command-line tools;
-- install Git from the official installer at <https://git-scm.com/download/mac>;
-- use Homebrew, if Homebrew is already installed on your machine.
-
-```bash
-xcode-select --install
+```text
+git version 2.x.x
 ```
 
-Homebrew is convenient on macOS, but it is not required for this workshop. If you already use it:
+The exact version number may be different.
+
+#### Step 4: install Docker Desktop for Windows
+
+Install [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/). Depending on which version of Windows you are using, Docker Desktop may prompt you to turn on WSL 2 during installation. Read the information displayed on the screen and turn on the WSL 2 feature to continue.
+
+Open Docker Desktop after installation.
+
+In Docker Desktop settings:
+
+1. Go to **Settings -> General**.
+2. Make sure **Use the WSL 2 based engine**
+3. Go to **Resources -> WSL integration**.
+4. Enable integration with **Ubuntu**.
+5. Click **Apply & restart** if requested.
+
+#### Step 5: test Docker from Ubuntu
+
+Open the **Ubuntu** terminal.
+
+Run:
 
 ```bash
-brew install git
+docker --version
+docker run --rm hello-world
 ```
 
-### Linux
+The first time you run this command, Docker may first download the small `hello-world` image. Output similar to this is normal:
 
-On Ubuntu/Debian:
+```text
+Unable to find image 'hello-world:latest' locally
+latest: Pulling from library/hello-world
+...
+Status: Downloaded newer image for hello-world:latest
 
-```bash
-sudo apt update
-sudo apt install git
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
 ```
 
-### Configure identity
+The exact digest, platform, and download details may be different.
 
-Use the same name and email you want associated with your commits:
+This confirms that Docker Desktop is correctly connected to Ubuntu WSL.
 
-```bash
-git config --global user.name "Your Name"
-git config --global user.email "your.email@example.org"
-git config --global init.defaultBranch main
+If `docker` is not found, open Docker Desktop settings again and check:
+
+```text
+Resources -> WSL integration -> Ubuntu enabled
+```
+
+#### Step 6: install Visual Studio Code
+
+Install [Visual Studio Code for Windows](https://code.visualstudio.com/docs/setup/windows).
+
+Open Visual Studio Code once after installation.
+
+#### Step 7: install the WSL extension in VS Code
+
+In Visual Studio Code:
+
+```text
+Extensions -> search "WSL" -> install "WSL" by Microsoft
+```
+
+Useful reference: [Use WSL in Visual Studio Code](https://learn.microsoft.com/windows/wsl/tutorials/wsl-vscode)
+
+#### Step 8: connect VS Code to Ubuntu WSL
+
+In Visual Studio Code, use:
+
+```text
+Ctrl + Shift + P -> WSL: Connect to WSL
+```
+
+or:
+
+```text
+Remote Explorer -> WSL -> Ubuntu
+```
+
+Open a new terminal:
+
+```text
+Terminal -> New Terminal
+```
+
+The terminal should show a Linux-style prompt, for example:
+
+```text
+your_username@computer_name:~$
 ```
 
 Check:
 
 ```bash
-git config --global --list
+pwd
 ```
 
-## 4. Install Docker Desktop or Podman Desktop
+Expected output:
 
-You need one working container engine. You do not need both.
+```text
+/home/your_username
+```
 
-| Engine | Good for | Notes |
-|---|---|---|
-| Docker Desktop | Most common route, good documentation | Recommended for many Windows/macOS users |
-| Podman Desktop | Good Docker-compatible alternative | Often preferred where Docker licensing/admin constraints exist |
+If the prompt looks like this:
 
-![Container image strategy](../assets/images/day0/container_image_strategy.svg){#fig-day0-image-strategy width="90%" fig-alt="Strategy showing instructor-provided images and student repositories as separate layers."}
+```text
+PS C:\Users\your_username>
+```
 
-### Recommended resource settings
+you are still in a Windows terminal. Reconnect VS Code to WSL before continuing.
 
-For full local execution:
+#### Step 9: create the workshop folder inside Ubuntu
 
-| Resource | Minimum participation | Recommended full local execution |
-|---|---:|---:|
-| RAM | 8 GB | 16 GB or more |
-| CPU | 2 cores | 4 cores or more |
-| Free disk | 50 GB | 80-100 GB |
-
-Students below the recommended specification can still complete the course using checkpoint files for the heaviest stages.
-
-## 5. Container smoke test
-
-Create a temporary folder:
+In the VS Code terminal connected to Ubuntu WSL, run:
 
 ```bash
-mkdir -p ~/ngs_workshop_smoke_test
-cd ~/ngs_workshop_smoke_test
-echo "host file" > host_test.txt
+mkdir -p ~/workshop_ngs
+cd ~/workshop_ngs
+pwd
 ```
 
-Docker:
+Expected output:
+
+```text
+/home/your_username/workshop_ngs
+```
+
+Open this folder in VS Code:
+
+```bash
+code .
+```
+
+If VS Code asks whether to reopen the folder in WSL, accept.
+
+After this, the Explorer panel should show the `workshop_ngs` folder, and the terminal should still show a Linux-style prompt.
+
+#### Step 10: open the Ubuntu folder from Windows Explorer
+
+Keep the workshop project inside Ubuntu WSL. This is the safest location for Linux commands, Git, Docker mounts, and file permissions.
+
+You can still browse the same folder with normal Windows clicks when you need to open a table, HTML report, PDF, or image with a Windows program such as Excel, Edge, or IGV.
+
+From the VS Code terminal connected to Ubuntu WSL, run:
+
+```bash
+explorer.exe .
+```
+
+Windows File Explorer will open the current Ubuntu folder.
+You will be able to double-click small output files from there, like those we will generate under the folders:
+
+```text
+raw_data/metadata/*.csv
+results/day1_qc/fastqc_raw/*_fastqc.html
+results/day2_rnaseq/counts/*.tsv
+results/day2_rnaseq/deseq2/*.csv
+```
+
+You can also paste this kind of path into the Windows Explorer address bar:
+
+```text
+\\wsl.localhost\Ubuntu\home\your_username\workshop_ngs
+```
+
+If your Ubuntu distribution has a slightly different name, open Windows Explorer and type:
+
+```text
+\\wsl.localhost\
+```
+
+Then click into the Ubuntu distribution, then `home`, then your username, then `workshop_ngs`.
+
+Important rule: use Windows Explorer for browsing and opening results, but run workshop commands from the VS Code terminal connected to Ubuntu WSL.
+
+#### Step 11: test folder mounting with Docker
+
+In the VS Code terminal connected to Ubuntu WSL, first move into the workshop setup folder:
+
+```bash
+cd ~/workshop_ngs
+mkdir -p test_mount
+echo "Docker can read this file" > test_mount/message.txt
+```
+
+Then run:
 
 ```bash
 docker run --rm \
-  -v "$PWD":/work \
-  -w /work \
-  ubuntu:24.04 \
-  bash -c "cat host_test.txt && echo container_ok > container_test.txt"
+  -v "$PWD/test_mount:/work" \
+  alpine:latest \
+  cat /work/message.txt
 ```
 
-Podman:
-
-```bash
-podman run --rm \
-  -v "$PWD":/work \
-  -w /work \
-  docker.io/library/ubuntu:24.04 \
-  bash -c "cat host_test.txt && echo container_ok > container_test.txt"
-```
-
-Back on the host:
-
-```bash
-cat container_test.txt
-```
-
-If you see `container_ok`, the container can read and write in your project directory.
-
-::: {.callout-warning}
-**Windows note.**
-
-For Windows students, the project folder should preferably live inside the WSL2 Linux filesystem, for example under `/home/username/`, not in a synchronized cloud folder or a Windows path with spaces.
-:::
-
-## 6. Create your personal workshop repository
-
-Create a new empty repository on GitHub, for example:
+Expected output:
 
 ```text
-ngs-workshop-student
+Docker can read this file
 ```
 
-Do not initialize it with large data files. Then clone it locally:
+This confirms that Docker can mount a folder from the Ubuntu WSL project directory into a container.
+
+#### Step 12: install IGV on Windows
+
+Install [IGV Desktop on Windows](https://igv.org/doc/desktop/).
+
+Open IGV once to confirm that it starts correctly.
+
+### 2.2 macOS {#macos-setup}
+
+The supported macOS route is:
+
+```text
+macOS -> VS Code -> Homebrew -> Git/basic tools -> Docker Desktop -> IGV
+```
+
+The goal is to open the workshop folder in Visual Studio Code and run all commands from the VS Code terminal or the macOS Terminal.
+
+#### Step 1: install Visual Studio Code
+
+Install [Visual Studio Code for macOS](https://code.visualstudio.com/docs/setup/mac).
+
+Open Visual Studio Code once to confirm that it starts correctly.
+
+#### Step 2: install Homebrew
+
+Homebrew is a package manager for macOS. It will be used to install or check command-line tools.
+
+In Terminal, run the installer command from the [official Homebrew page](https://brew.sh/):
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/ngs-workshop-student.git
-cd ngs-workshop-student
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-Create the first folders:
+If the installer prints additional commands under `Next steps`, run those commands in the same Terminal window so that `brew` is available on your PATH.
+
+After installation, open Terminal and check:
 
 ```bash
-mkdir -p code container data results
-touch code/.gitkeep container/.gitkeep data/.gitkeep results/.gitkeep
+brew --version
 ```
 
-Create `README.md` in VS Code and paste:
+Expected output:
 
-```markdown
-# NGS workshop student repository
-
-This repository documents my work during the reproducible NGS workshop.
-
-## Execution route
-
-- Local Docker/Podman: to be confirmed
-- University workstation: to be confirmed
-- Checkpoint files: to be confirmed
-
-## Dataset
-
-To be defined during Day 1.
+```text
+Homebrew x.x.x
 ```
 
-Create `.gitignore` in VS Code and paste:
+The exact version number may be different.
 
-```gitignore
-# Large sequencing files
-*.fastq
-*.fq
-*.fastq.gz
-*.fq.gz
-*.sra
-*.bam
-*.bai
-*.sam
-*.bw
-*.bigWig
+#### Step 3: install Git and basic command-line tools
 
-# Temporary and generated folders
-data/raw_fastq/
-data/trimmed_fastq/
-data/bam/
-data/genome/
-data/raw_counts/
-data/macs_peaks/
-results/tmp/
-
-# Local system files
-.DS_Store
-.Rhistory
-.RData
-```
-
-Commit and push:
+In Terminal, run:
 
 ```bash
-git add README.md .gitignore code/.gitkeep container/.gitkeep data/.gitkeep results/.gitkeep
-git commit -m "Initialize workshop repository"
-git push
+brew install git curl wget
 ```
 
-## 7. Laptop-spec form
-
-Before Day 1, communicate:
-
-| Item | Example |
-|---|---|
-| Operating system | macOS Apple Silicon / macOS Intel / Windows WSL2 / Linux |
-| RAM | 8 GB, 16 GB, 32 GB |
-| Free disk space | approximate GB available |
-| Container engine | Docker / Podman / not working yet |
-| Smoke test result | passed / failed |
-| GitHub repository URL | URL |
-| Interest in own data | organism, assay, approximate sample number |
-
-## 8. Minimum acceptable setup before Day 1
-
-You are ready for Day 1 if you can show:
+Check Git:
 
 ```bash
-git status
-git remote -v
+git --version
 ```
 
-and either:
+Expected output:
+
+```text
+git version 2.x.x
+```
+
+The exact version number may be different.
+
+#### Step 4: install Docker Desktop for Mac
+
+Install [Docker Desktop for Mac](https://docs.docker.com/desktop/setup/install/mac-install/).
+
+After installation, open Docker Desktop and wait until Docker reports that it is running.
+
+Check Docker from Terminal or from the VS Code terminal:
+
+```bash
+docker --version
+docker run --rm hello-world
+```
+
+The first time you run this command, Docker may first download the small `hello-world` image. Output similar to this is normal:
+
+```text
+Unable to find image 'hello-world:latest' locally
+latest: Pulling from library/hello-world
+...
+Status: Downloaded newer image for hello-world:latest
+
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+```
+
+The exact digest, platform, and download details may be different.
+
+This confirms that Docker can download and run a container image.
+
+#### Step 5: create the workshop folder
+
+Create a simple workshop folder in your home directory:
+
+```bash
+mkdir -p ~/workshop_ngs
+cd ~/workshop_ngs
+pwd
+```
+
+Expected output:
+
+```text
+/Users/your_username/workshop_ngs
+```
+
+Avoid iCloud Drive, Dropbox, OneDrive, network-mounted folders, and paths with spaces for the main workshop project. A simple folder directly under your home directory is safer for Git, Docker mounts, and command-line paths.
+
+Open this folder in Visual Studio Code:
+
+```bash
+code .
+```
+
+If the `code` command is not available, open Visual Studio Code manually and use:
+
+```text
+File -> Open Folder
+```
+
+Then select the `workshop_ngs` folder.
+
+#### Step 6: test folder mounting with Docker
+
+From the VS Code terminal or macOS Terminal, first move into the workshop setup folder:
+
+```bash
+cd ~/workshop_ngs
+mkdir -p test_mount
+echo "Docker can read this file" > test_mount/message.txt
+```
+
+Then run:
+
+```bash
+docker run --rm \
+  -v "$PWD/test_mount:/work" \
+  alpine:latest \
+  cat /work/message.txt
+```
+
+Expected output:
+
+```text
+Docker can read this file
+```
+
+This confirms that Docker can mount a local project folder inside a container.
+
+#### Step 7: install IGV
+
+Install [IGV Desktop](https://igv.org/doc/desktop/).
+
+Alternatively, if Homebrew is working, IGV can be installed with:
+
+```bash
+brew install --cask igv-desktop
+```
+
+Open IGV once to confirm that it starts correctly.
+
+### 2.3 Linux {#linux-setup}
+
+The supported Linux route is:
+
+```text
+Linux -> VS Code -> Git/basic tools -> Docker Engine -> IGV
+```
+
+Linux students should use the normal Linux terminal or the VS Code terminal opened from the workshop project folder.
+
+Homebrew is not required on Linux for this workshop. Use the normal package manager for your Linux distribution.
+
+The tools required on Linux are:
+
+| Tool               | Purpose                                                       |
+| ------------------ | ------------------------------------------------------------- |
+| Git                | Track changes and synchronize the repository with GitHub.     |
+| curl               | Download files and query web resources from the command line. |
+| wget               | Download files from URLs.                                     |
+| ca-certificates    | Allow secure HTTPS downloads.                                 |
+| unzip              | Extract compressed archives when needed.                      |
+| Docker Engine      | Run containerized bioinformatics tools.                       |
+| Visual Studio Code | Edit scripts, notes, and configuration files.                 |
+| IGV                | Inspect genome-aligned sequencing data.                       |
+
+#### Step 1: install Visual Studio Code
+
+Install [Visual Studio Code for Linux](https://code.visualstudio.com/docs/setup/linux).
+
+Open Visual Studio Code once to confirm that it starts correctly.
+
+#### Step 2: install Git and basic command-line tools
+
+On Ubuntu or Debian-based Linux distributions, open a terminal and run:
+
+```bash
+sudo apt update
+sudo apt install -y git curl wget ca-certificates unzip
+```
+
+Check Git:
+
+```bash
+git --version
+```
+
+Expected output:
+
+```text
+git version 2.x.x
+```
+
+The exact version number may be different.
+
+For other Linux distributions, install the same tools using your distribution package manager.
+
+#### Step 3: install Docker Engine
+
+For Ubuntu, follow the [official Docker Engine installation instructions for Ubuntu](https://docs.docker.com/engine/install/ubuntu/).
+
+For other Linux distributions, use the corresponding [official Docker Engine installation page](https://docs.docker.com/engine/install/).
+
+Use the page matching your Linux distribution.
+
+#### Step 4: check Docker
+
+After installation, check Docker:
+
+```bash
+docker --version
+```
+
+Then run the test container:
 
 ```bash
 docker run --rm hello-world
 ```
 
-or:
+The first time you run this command, Docker may first download the small `hello-world` image. Output similar to this is normal:
+
+```text
+Unable to find image 'hello-world:latest' locally
+latest: Pulling from library/hello-world
+...
+Status: Downloaded newer image for hello-world:latest
+
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+```
+
+The exact digest, platform, and download details may be different.
+
+If Docker reports a permission error, try:
 
 ```bash
-podman run --rm docker.io/library/hello-world
+sudo docker run --rm hello-world
 ```
 
-You should also have pushed at least one commit to your GitHub repository.
+If this works only with `sudo`, your user does not yet have permission to access the Docker daemon. Follow Docker’s [Linux post-installation instructions](https://docs.docker.com/engine/install/linux-postinstall/) or ask for help before the workshop.
 
-## Day 0 checkpoint
+#### Step 5: create the workshop folder
 
-By the end of Day 0, your repository should contain:
+Create a simple workshop folder in your home directory:
+
+```bash
+mkdir -p ~/workshop_ngs
+cd ~/workshop_ngs
+pwd
+```
+
+Expected output:
 
 ```text
-README.md
-.gitignore
-code/
-container/
-data/
-results/
+/home/your_username/workshop_ngs
 ```
 
-Your first commit should be visible on GitHub. Keep screenshots or terminal output for any error you cannot solve; error messages are useful diagnostic information for Day 1.
+Avoid network-mounted folders, synchronized cloud folders such as Dropbox, OneDrive, or iCloud Drive, and paths with spaces for the main workshop project.
 
-## How to report issues
+Open this folder in Visual Studio Code:
 
-If you have a GitHub account, report Day 0 problems by opening an **Issue** in your student repository.
+```bash
+code .
+```
 
-Include:
-
-- `Day 0` and the step number in the issue title;
-- your operating system;
-- the command you ran;
-- the exact error message;
-- the relevant note or log path.
-
-If you cannot create or access a GitHub account, email:
+If the `code` command is not available, open Visual Studio Code manually and use:
 
 ```text
-francesco.gualdrini@gmail.com
+File -> Open Folder
 ```
 
-Use email only for GitHub account/access problems. Use GitHub Issues for workshop technical questions whenever possible.
+Then select the `workshop_ngs` folder.
+
+#### Step 6: test folder mounting with Docker
+
+From the VS Code terminal or Linux terminal, first move into the workshop setup folder:
+
+```bash
+cd ~/workshop_ngs
+mkdir -p test_mount
+echo "Docker can read this file" > test_mount/message.txt
+```
+
+Then run:
+
+```bash
+docker run --rm \
+  -v "$PWD/test_mount:/work" \
+  alpine:latest \
+  cat /work/message.txt
+```
+
+Expected output:
+
+```text
+Docker can read this file
+```
+
+This confirms that Docker can mount a local project folder inside a container.
+
+#### Step 7: install IGV
+
+Install [IGV Desktop](https://igv.org/doc/desktop/).
+
+Open IGV once to confirm that it starts correctly.
+
+## Day 0 readiness checklist
+
+You are ready for Day 1 if you can confirm all of the following:
+
+- You can log in to GitHub.
+- You can log in to Docker Hub.
+- Visual Studio Code opens correctly.
+- Windows users can open a VS Code terminal connected to Ubuntu WSL.
+- macOS and Linux users can open a terminal from the `workshop_ngs` folder.
+- `git --version` prints a Git version.
+- `docker --version` prints a Docker version.
+- `docker run --rm hello-world` completes successfully.
+- The Docker mount test prints `Docker can read this file`.
+- IGV opens correctly.

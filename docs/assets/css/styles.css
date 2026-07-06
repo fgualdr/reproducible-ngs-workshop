@@ -10,3 +10,10 @@ table {
   font-size: 0.95rem;
 }
 
+h4 {
+  color: #3aa7d8;
+}
+
+h4 code {
+  color: inherit;
+}

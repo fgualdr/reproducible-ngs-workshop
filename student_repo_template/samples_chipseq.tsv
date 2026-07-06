@@ -1,4 +1,0 @@
-sample_id	condition	assay	role	fastq_1	fastq_2	input_sample	notes
-TODO_IP_1	condition_A	ChIP	IP	TODO_IP_1_R1.fastq.gz	NA	TODO_INPUT_1	TODO
-TODO_INPUT_1	condition_A	input	input	TODO_INPUT_1_R1.fastq.gz	NA	NA	TODO
-

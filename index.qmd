@@ -1,88 +1,137 @@
 ---
-title: "Reproducible NGS Data Analysis on Personal Laptops"
-subtitle: "Materials for a practical workshop"
-author: "Francesco Gualdrini"
-format: html
-execute:
-  eval: false
+title: "Reproducible NGS Data Analysis"
+subtitle: "RNA-seq, ChIP-seq, containers, Git, and public sequencing data"
 ---
 
-## Course identity
+# Welcome
 
-This repository contains the public teaching material for a practical workshop on reproducible analysis of public RNA-seq and ChIP-seq data using small genomes and personal laptops.
+Modern sequencing projects require much more than running bioinformatics tools.
 
-Author and maintainer: **Francesco Gualdrini**.
-
-Public GitHub repository:
-
-[https://github.com/fgualdr/reproducible-ngs-workshop](https://github.com/fgualdr/reproducible-ngs-workshop)
-
-Published course website:
-
-[https://fgualdr.github.io/reproducible-ngs-workshop/](https://fgualdr.github.io/reproducible-ngs-workshop/)
-
-Students do **not** clone a finished analysis repository. They progressively create their own GitHub repositories, adding metadata, scripts, reports, figures, checkpoints, and interpretation as the course develops.
-
-:::{.callout-important}
-The teaching logic is:
+A reproducible analysis requires:
 
 ```text
-metadata -> scripts/commands -> outputs/results/reports/interpretation -> Git commit 
+metadata retrieval
+-> raw data retrieval
+-> workflow execution
+-> design-specific analysis
+-> documentation
+-> version control
 ```
 
-The execution backend may change, but the reproducibility logic should not.
+This workshop introduces a practical workflow for organizing, executing, documenting, and interpreting RNA-seq and ChIP-seq analyses using public datasets and lightweight computational infrastructure.
+
+The practical examples focus on bacterial genomes and small datasets that can be explored on personal laptops, while introducing concepts that can also scale to larger projects and institutional computing environments.
+
+::: {.callout-important}
+This workshop teaches a reproducible approach to RNA-seq and ChIP-seq analysis using public sequencing datasets, containers, Git/GitHub, and structured project documentation.
+
+Rather than focusing on a single software package, the workshop emphasizes workflows that can be understood, reproduced, shared, and adapted to real research projects.
+
+The goal is to give you practical experience with the core steps of reference-based NGS analysis and to provide a project framework that you can reuse in your own research or laboratory work.
 :::
 
-## Source plan
+***
 
-The workshop is intended to provide basic concept on reproducibility in bioinformatics and its link to FAIR science in addition to standard workflow in data retrival and RNA-seq and Chip-seq analysis.
-Personal computer will be setup in order to use Git with an associated Github account and a Github repository which will grow during the workshop.
-Containarized images will be generated with Podman (or Docker) and stored under personal DockerHub (which is free for accademic use with unlimited space).
-VSCode will be the main IDE through which we will write-codes and deploy command in the terminal.
+# Learning objectives
 
-## Course schedule
+By the end of the workshop, you should be able to:
 
-| Session | Timing | Main focus |
-|---|---:|---|
-| Day 0 | before course | Installation, accounts, laptop-spec form, container smoke test |
-| Day 1 | 4 h | Project setup, Git/GitHub, containers, public data retrieval, reference genome, a first FASTQC |
-| Day 2 | 4 h | RNA-seq QC, trimming, mapping, counting, tracks, DESeq2 |
-| Day 3 | 4 h | ChIP-seq QC, trimming, mapping, peak calling, tracks, motifs |
-| Day 4 | 4 h | RNA-seq/ChIP-seq integration, visualization, discussion, final slides |
+- Create a reproducible NGS project structure
+- Use Git and GitHub to document analyses
+- Use Docker containers to run bioinformatics tools
+- Retrieve public sequencing datasets from SRA, ENA, and ArrayExpress
+- Generate and interpret quality-control reports
+- Perform basic RNA-seq and ChIP-seq analyses
+- Produce differential expression and peak-calling results
+- Associate regulatory regions with nearby genes
+- Document and communicate results through reports and figures
 
-## Execution routes
+***
 
-1. Full local execution in Docker or Podman.
-2. Partial local execution plus checkpoint files.
-3. Downstream-only checkpoint mode using count matrices, peak files, bigWigs, QC reports, and annotation.
+# Workshop structure
 
-:::{.callout-warning}
-Containers solve software installation. They do not solve weak hardware, limited disk, or unstable internet. Alternative checkpoints will be provided in case selected point will fail.
-:::
+| Day | Main topic |
+|---|---|
+| Day 0 | Setup and readiness |
+| Day 1 | Reproducible project setup, FASTQ QC/trimming, and reference files |
+| Day 2 | RNA-seq workflow and analysis |
+| Day 3 | ChIP-seq workflow and analysis |
+| Day 4 | Data integration and reporting |
 
-## Repository map
+***
 
-- `days/`: day-by-day Quarto lessons.
-- `modules/`: reusable conceptual modules.
-- `backends/`: local, Codespaces, Galaxy, instructor-machine, and checkpoint routes.
-- `scripts/`: instructor examples and student-copyable workflow templates.
-- `student_repo_template/`: simple starter repository layout students copy into their own GitHub repositories (will be covered during the workshop)
-- `config/`: example metadata and dataset candidate configuration.
-- `containers/`: Docker/Podman and devcontainer material.
-- `checkpoints/`: manifests and documentation for distributed fallback files.
-- `assessments/`: rubrics and submission checklists.
-- `instructor/`: course administration notes, not part of the main public teaching path.
+# What students will build
 
-## Student repository model
+Students do **not** clone a finished analysis repository or copy a hidden template.
 
-During the workshop each student creates a separate GitHub repository with:
+Instead, each participant progressively creates their own GitHub repository containing:
 
-```text
-README.md
-code/
-container/
-data/
-results/
-```
+- a clear project structure
+- metadata tables
+- analysis scripts
+- selected reports
+- figures
+- workflow documentation
 
-The `README.md` is the main reproducibility record. The `data/` directory exists locally but large sequencing and alignment files are ignored by Git through .gitignore specs.
+By the end of the workshop, each student should have:
+
+1. A reproducible GitHub repository
+2. A documented RNA-seq and/or ChIP-seq workflow
+3. A short report summarizing the analysis
+
+The assembly of this repository will be used to evaluate student progress.
+
+***
+
+# Datasets
+
+The workshop uses publicly available datasets derived from small bacterial genomes.
+
+The main examples are based on *Helicobacter pylori* strain N6 datasets generated to study the HP1021 redox switch regulon under microaerophilic and aerobic growth conditions:
+
+- *Helicobacter pylori* RNA-seq: `E-MTAB-13025`
+- *Helicobacter pylori* ChIP-seq: `E-MTAB-13026`
+
+These datasets are associated with the publication:
+
+Noszka M. et al. "Profiling of the *Helicobacter pylori* redox switch HP1021 regulon using a multi-omics approach." *Nature Communications* (2023).
+
+- Publication: [PubMed Central](https://pmc.ncbi.nlm.nih.gov/articles/PMC10593804/) and [Nature](https://www.nature.com/articles/s41467-023-42364-6)
+- RNA-seq dataset: [E-MTAB-13025](https://www.ebi.ac.uk/biostudies/arrayexpress/studies/E-MTAB-13025?key=bf2d8677-1b26-4f1e-ac5f-b1c78c7590be)
+- ChIP-seq dataset: [E-MTAB-13026](https://www.ebi.ac.uk/biostudies/arrayexpress/studies/E-MTAB-13026?key=2b27b413-e118-4802-859e-5da57ff1ead2)
+
+The full study includes multiple conditions and analyses. In this workshop, we focus on a small teaching subset of the wild-type strain under microaerobic and aerobic conditions.
+
+Our small teaching workflow captures the logic of the published analysis, but it is simplified for laptop-scale execution. It should not be interpreted as a full reproduction of the paper.
+
+***
+
+# Before you start
+
+If this is your first visit, begin with:
+
+**Day 0 - Setup and readiness**
+
+Then continue through the lessons in sequence using the navigation panel on the left. Each day page will be released as the corresponding lesson becomes available.
+
+***
+
+# Repository
+
+Source repository:
+
+<https://github.com/fgualdr/reproducible-ngs-workshop>
+
+Citation information is available in `CITATION.cff`.
+
+***
+
+# Questions and issue reporting
+
+Questions, problems, or suggestions should preferably be reported through the GitHub repository issue tracker. This makes the discussion visible, traceable, and useful for other participants who may encounter the same problem.
+
+Repository issues: <https://github.com/fgualdr/reproducible-ngs-workshop/issues>
+
+For questions that are not suitable for a public issue, you can also contact:
+
+francesco.gualdrini@gmail.com

@@ -1,0 +1,7 @@
+sample_id,assay,condition,replicate,read1,read2,layout,role,input_sample,source_accession,source_url,publication_sample,genotype,stress
+WT_1,rnaseq,WT_control,rep1,raw_data/fastq/rnaseq/WT_1_R1.fastq.gz,raw_data/fastq/rnaseq/WT_1_R2.fastq.gz,PE,sample,NA,ERR11479310,https://www.ebi.ac.uk/ena/browser/view/ERR11479310,WT_1,wild_type_genotype,no_stress_5_percent_O2
+WT_2,rnaseq,WT_control,rep2,raw_data/fastq/rnaseq/WT_2_R1.fastq.gz,raw_data/fastq/rnaseq/WT_2_R2.fastq.gz,PE,sample,NA,ERR11479311,https://www.ebi.ac.uk/ena/browser/view/ERR11479311,WT_2,wild_type_genotype,no_stress_5_percent_O2
+WT_3,rnaseq,WT_control,rep3,raw_data/fastq/rnaseq/WT_3_R1.fastq.gz,raw_data/fastq/rnaseq/WT_3_R2.fastq.gz,PE,sample,NA,ERR11479312,https://www.ebi.ac.uk/ena/browser/view/ERR11479312,WT_3,wild_type_genotype,no_stress_5_percent_O2
+WTS_1,rnaseq,WT_21Oxygen,rep1,raw_data/fastq/rnaseq/WTS_1_R1.fastq.gz,raw_data/fastq/rnaseq/WTS_1_R2.fastq.gz,PE,sample,NA,ERR11479313,https://www.ebi.ac.uk/ena/browser/view/ERR11479313,WTS_1,wild_type_genotype,oxidative_stress_21_percent_O2
+WTS_2,rnaseq,WT_21Oxygen,rep2,raw_data/fastq/rnaseq/WTS_2_R1.fastq.gz,raw_data/fastq/rnaseq/WTS_2_R2.fastq.gz,PE,sample,NA,ERR11479314,https://www.ebi.ac.uk/ena/browser/view/ERR11479314,WTS_2,wild_type_genotype,oxidative_stress_21_percent_O2
+WTS_3,rnaseq,WT_21Oxygen,rep3,raw_data/fastq/rnaseq/WTS_3_R1.fastq.gz,raw_data/fastq/rnaseq/WTS_3_R2.fastq.gz,PE,sample,NA,ERR11479315,https://www.ebi.ac.uk/ena/browser/view/ERR11479315,WTS_3,wild_type_genotype,oxidative_stress_21_percent_O2

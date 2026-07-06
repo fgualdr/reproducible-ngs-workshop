@@ -1,419 +1,835 @@
 ---
 title: "Day 2 - RNA-seq from FASTQ to differential expression"
-subtitle: "QC, trimming, mapping, counting, normalization, tracks, and DESeq2 interpretation"
+subtitle: "Reference-based mapping, BAM cleanup, gene counting, and DESeq2"
 format: html
 execute:
   eval: false
 ---
 
-## Overview
+## 1. Before we start
 
-Day 2 follows a bulk RNA-seq workflow on a small genome. The practical path is:
+You should have completed Day 1 and should be working from the root of your own `workshop_ngs` repository.
 
-```text
-FASTQ -> QC -> trimming -> mapping -> BAM -> featureCounts -> raw count matrix -> DESeq2
-```
+At the start of the practical:
 
-Genome-browser tracks are generated from BAM files for visual inspection, but differential expression is performed from **raw integer gene counts**, not from bigWig signal.
-
-![RNA-seq concept flow](../assets/images/day2/rnaseq_concept_flow.svg){#fig-day2-rnaseq-flow width="100%" fig-alt="RNA-seq workflow from FASTQ reads through QC, trimming, mapping, gene counting, normalized tracks, and DESeq2."}
-
-## Today's path: how your repository grows
-
-```text
-data/raw_fastq/rnaseq/ or RNA-seq checkpoints
-  -> code/day2_rnaseq/README.md
-  -> results/rnaseq/qc/
-  -> data/trimmed_fastq/rnaseq/
-  -> data/bam/rnaseq/
-  -> data/raw_counts/rnaseq/
-  -> results/rnaseq/deseq2/
-  -> results/rnaseq/plots/
-  -> results/logs/day2/
-  -> commit and push
-```
-
-## Learning outcomes
-
-By the end of Day 2, students should be able to:
-
-- explain the role of QC, trimming, mapping, counting, normalization, and differential testing;
-- distinguish raw counts, normalized counts, and genome-browser coverage tracks;
-- describe how reads are assigned to annotated genes;
-- understand why biological replicates are required for differential expression;
-- run selected RNA-seq commands or continue from checkpoint count matrices;
-- interpret PCA, MA plots, volcano plots, and DESeq2 result columns.
-
-## Time plan
-
-| Time | Activity |
-|---:|---|
-| 00:00-00:25 | Experimental design and count-based RNA-seq logic |
-| 00:25-01:05 | FASTQ QC and trimming concepts |
-| 01:05-01:50 | Mapping and BAM files |
-| 01:50-02:05 | Break |
-| 02:05-02:45 | Gene counting with annotation |
-| 02:45-03:35 | DESeq2 model, normalization, PCA, MA plot |
-| 03:35-03:50 | bigWig tracks and visual inspection |
-| 03:50-04:00 | Commit and push Day 2 material |
-
-## Conceptual background
-
-### RNA-seq measurement model
-
-Bulk RNA-seq does not measure absolute RNA concentration directly. It samples sequencing reads from a pool of cDNA fragments. After mapping and gene assignment, the basic data object is a matrix:
-
-$$
-K = \{k_{ij}\}
-$$
-
-where $k_{ij}$ is the number of reads assigned to gene $i$ in sample $j$.
-
-For differential expression, the important comparison is not whether one sample has more reads overall. The important question is whether a gene changes **relative to the library composition and biological variability** across conditions.
-
-A simplified count model is:
-
-$$
-k_{ij} \sim \mathrm{NB}(\mu_{ij}, \alpha_i)
-$$
-
-where $\mu_{ij}$ is the expected count for gene $i$ in sample $j$, and $\alpha_i$ is a gene-specific dispersion parameter. The negative binomial distribution is used because RNA-seq count variability is usually larger than expected under a simple Poisson model.
-
-### Replicates and dispersion
-
-Biological replicates are what allow the model to estimate biological variability. In DESeq2, the dispersion parameter captures gene-specific variability beyond simple sampling noise. With no biological replication, this variability cannot be estimated from the experiment; with only two replicates per condition, inference is possible but fragile.
-
-For the workshop, a small design is acceptable because the goal is to learn the workflow. In real experiments, additional biological replicates usually improve dispersion estimation, outlier detection and confidence in effect sizes.
-
-### Library-size normalization
-
-If sample $j$ has a larger sequencing library, many genes may have larger raw counts even without biological change. DESeq2 estimates sample-specific size factors $s_j$ and models normalized abundance approximately as:
-
-$$
-q_{ij} = \frac{k_{ij}}{s_j}
-$$
-
-The size factor is not just the total number of reads; it is estimated robustly from the relative behavior of many genes. This reduces the influence of a small number of highly abundant or strongly changing genes.
-
-### Log fold change and statistical testing
-
-A common summary is the log2 fold change:
-
-$$
-\log_2 FC_i = \log_2\left(\frac{\mathrm{mean\ normalized\ count}_{i,\ condition\ B}}{\mathrm{mean\ normalized\ count}_{i,\ condition\ A}}\right)
-$$
-
-DESeq2 estimates log fold changes within a generalized linear model and tests whether the condition effect is different from zero. Because thousands of genes are tested, p-values are corrected for multiple testing. The adjusted p-value controls the expected false discovery rate among the genes called significant.
-
-### Why raw counts are used for DESeq2
-
-DESeq2 expects raw integer counts because its model estimates size factors and dispersion from the count distribution. Pre-normalized values such as TPM, CPM, RPKM, or bigWig signal should not be used as input to DESeq2.
-
-### What the tools are doing
-
-| Step | Tool examples | Main output | Bioinformatics concept |
-|---|---|---|---|
-| FASTQ QC | FastQC, Falco, MultiQC | QC reports | Base quality, adapter content, composition biases |
-| Trimming | fastp, cutadapt | trimmed FASTQ | Remove adapters/low-quality tails when justified |
-| Mapping | bowtie2, bwa | SAM/BAM | Place reads on the reference genome |
-| BAM processing | samtools | sorted BAM + BAI | Coordinate-sorted alignments for downstream tools |
-| Counting | featureCounts | raw count table | Assign mapped reads to annotated genes |
-| Track generation | deepTools `bamCoverage` | bigWig | Normalized coverage for visualization |
-| Differential expression | DESeq2 | result table, plots | Count model, normalization, dispersion, testing |
-
-FASTQ structure and base-quality encoding were introduced on Day 1. Today we use those files as inputs to a count-based RNA-seq workflow.
-
-### Mapping and ambiguity
-
-A read can map uniquely, map to multiple positions, or fail to map. In small bacterial genomes, mapping is usually faster and less ambiguous than in large mammalian genomes, but ambiguity still exists in repeated regions, paralogous genes, rRNA sequences, and low-complexity regions.
-
-Important mapping statistics include:
-
-- total reads;
-- percentage mapped;
-- percentage uniquely mapped, if reported;
-- number of reads discarded or unassigned;
-- strand-specificity, if relevant.
-
-### Counting with genomic features
-
-featureCounts compares read alignments with annotation intervals. For a simple bacterial gene annotation, a read is counted for a gene if its genomic alignment overlaps the gene feature according to the selected parameters. Strand-specific libraries require strand-aware counting; otherwise, reads may be assigned to the wrong overlapping feature.
-
-The count matrix should have genes as rows and samples as columns:
-
-```text
-gene_id  WT_1  WT_2  KO_1  KO_2
-geneA     120   134    62    58
-geneB       5     8     6     7
-```
-
-### Genome-browser tracks
-
-A bigWig file stores continuous coverage signal across the genome. For RNA-seq, CPM-normalized coverage is often useful for visual inspection:
-
-$$
-\mathrm{CPM}_{b} = \frac{\mathrm{reads\ in\ bin\ } b}{\mathrm{total\ mapped\ reads}} \times 10^6
-$$
-
-bigWigs are useful for inspecting expression patterns, operons, strandedness, and suspicious regions. They are not a substitute for gene-level statistical testing.
-
-## 1. Prepare Day 2 folders
-
-From the root of your repository:
+- Windows users should open Visual Studio Code connected to Ubuntu WSL, open a WSL terminal, and run the commands there.
+- macOS and Linux users should open the `workshop_ngs` folder in Visual Studio Code and use the VS Code terminal or a normal terminal.
+- Before running workshop commands, move to the repository root:
 
 ```bash
-mkdir -p code/day2_rnaseq
-mkdir -p data/trimmed_fastq/rnaseq
-mkdir -p data/bam/rnaseq
-mkdir -p data/raw_counts/rnaseq
-mkdir -p results/rnaseq/qc
-mkdir -p results/rnaseq/bigwig
-mkdir -p results/rnaseq/deseq2
-mkdir -p results/rnaseq/plots
+cd ~/workshop_ngs
+pwd
+```
+
+If your repository is stored somewhere else, replace this path with the location of your own `workshop_ngs` folder. The command `pwd` should end with `workshop_ngs`.
+
+Day 2 starts from the trimmed RNA-seq FASTQ files created on Day 1:
+
+```text
+results/day1_qc/trimmed_fastq/rnaseq/
+```
+
+Check that the RNA-seq trimmed FASTQ files are present:
+
+```bash
+ls -lh results/day1_qc/trimmed_fastq/rnaseq/*.trimmed.fastq.gz
+```
+
+Also check that the reference genome and annotation are present:
+
+```bash
+ls -lh reference_genome/genome.fa
+ls -lh reference_genome/annotation.gff3
+```
+
+If these files are missing, use the instructor-provided checkpoint files before continuing.
+
+## 2. Overview of the day
+
+Today we turn RNA-seq reads into a gene-by-sample count matrix and then use that matrix for differential expression analysis.
+
+The Day 2 workflow is:
+
+```text
+trimmed RNA-seq FASTQ
+  -> reference genome index
+  -> Bowtie2 mapping
+  -> SAM/BAM alignment files
+  -> sorted and indexed BAM files
+  -> samtools cleanup and mapping summaries
+  -> featureCounts gene counts
+  -> raw gene count matrix
+  -> DESeq2 differential expression
+  -> plots and result tables
+```
+
+Today we will produce:
+
+```text
+reference_genome/bowtie2_index/
+results/day2_rnaseq/bam/*.sorted.bam
+results/day2_rnaseq/bam/*.filtered.bam
+results/day2_rnaseq/counts/gene_count_matrix.tsv
+results/day2_rnaseq/deseq2/deseq2_results.tsv
+results/day2_rnaseq/deseq2/pca.pdf
+results/day2_rnaseq/deseq2/dispersion_plot.pdf
+results/day2_rnaseq/deseq2/ma_plot.pdf
+results/day2_rnaseq/deseq2/volcano.pdf
+results/logs/day2/
+```
+
+Differential expression is performed from **raw integer gene counts**. BAM and bigWig files are useful for quality control and genome-browser inspection, but they are not the input to DESeq2.
+
+Prepare the Day 2 folders:
+
+```bash
+mkdir -p scripts/day2_rnaseq
+mkdir -p results/day2_rnaseq/bam
+mkdir -p results/day2_rnaseq/counts
+mkdir -p results/day2_rnaseq/bigwig
+mkdir -p results/day2_rnaseq/deseq2
 mkdir -p results/logs/day2
 ```
 
-Create `code/day2_rnaseq/README.md` in VS Code and paste:
+Day 1 named each FASTQ using the pattern `sample_condition`, for example `WT_1_WT_control` and `WTS_1_WT_21Oxygen`. Day 2 keeps that naming convention. Later, the R script will construct the DESeq2 design table directly from the count matrix column names.
 
-```markdown
-# Day 2 - RNA-seq
+Each practical section below follows the same pattern:
 
-This folder documents the RNA-seq workflow used in the workshop.
+1. what the step means;
+2. which script to create or inspect;
+3. which Docker command to run;
+4. which files to check afterward.
 
-Execution route:
-- Full local execution / partial local execution / checkpoint route: to be recorded
+## 3. Reference-based RNA-seq FASTQ mapping
 
-Main inputs:
-- sample metadata: code/day1/metadata/samples_rnaseq.tsv
-- genome: data/genome/genome.fa
-- annotation: data/genome/annotation.gff3
+RNA-seq mapping asks where each sequenced read, or read pair, fits on a reference sequence. The input is FASTQ. The output is an alignment file that records the genomic position and alignment details for each read.
+
+Mapping starts from:
+
+- trimmed FASTQ files from Day 1;
+- a reference genome FASTA;
+- an aligner index built from that FASTA.
+
+The index does not change the genome. It creates extra files that allow the aligner to search the genome quickly.
+
+#### 3.1 Alignment versus pseudoalignment
+
+Full aligners try to place each read or read pair at one or more genomic or transcriptomic coordinates. A common strategy is seed-and-extend:
+
+1. split or sample short exact pieces of the read called seeds;
+2. use the index to find candidate reference positions for those seeds;
+3. extend candidate alignments across the full read;
+4. score each alignment using matches, mismatches, gaps, clipping, base qualities, and sometimes paired-end consistency;
+5. report the best alignment or alignments, usually with a mapping quality score.
+
+The exact scoring system differs by tool. In general, a better score means the read agrees better with the reference. If several locations have similar scores, the read is ambiguous and the mapping quality is lower. For paired-end reads, aligners also use whether both mates map with the expected orientation and distance.
+
+Splice-aware RNA-seq aligners add another idea: a read may align across two exons with a skipped intron between them. These aligners can represent exon-exon junctions in the alignment. This is essential for many eukaryotic RNA-seq datasets but unnecessary for this bacterial workshop.
+
+Pseudoaligners and quasi-aligners usually do not try to report one exact genomic coordinate for every read. Instead, they infer which transcript or set of transcripts is compatible with each read or fragment. This is very fast and useful for transcript quantification, but it is a different workflow from creating genome-coordinate BAM files for IGV and feature counting.
+
+Common genome aligners include:
+
+| Tool | Main alignment idea | Splice-aware? | Main strengths | Main limitations | Take home |
+|---|---|---|---|---|---|
+| Bowtie2 | FM-index genome aligner using seed-and-extend search and gapped alignment scoring | No | Fast, simple, low memory, good for small genomes; supports mismatches, gaps, clipping, and paired-end constraints; produces coordinate BAM files | Does not model exon-exon junctions as splicing events; eukaryotic exon-internal reads can map, but junction-spanning reads are not handled like a splice-aware RNA-seq aligner | Good default here for bacterial RNA-seq and ChIP-seq because the genome is small and introns are not present |
+| BWA-MEM/BWA-MEM2 | Burrows-Wheeler genome aligner optimized for longer reads using maximal exact matches as seeds | No | Very robust general-purpose DNA aligner; common for variant calling, genomic DNA, ChIP-seq, ATAC-seq, and microbial genome alignment | Not designed to discover splice junctions; less commonly used as the main tool for gene-level RNA-seq counting | Conceptually similar to Bowtie2 as a non-splice-aware genome aligner, but more associated with DNA-seq and longer-read genomic alignment |
+| STAR | Splice-aware RNA-seq genome aligner using an uncompressed suffix-array style index and two-pass-style junction discovery options | Yes | Extremely fast for large eukaryotic RNA-seq; strong exon-junction detection; widely used for mammalian gene-count workflows | High memory use; more complex; unnecessary for bacterial genomes without introns | A standard choice for mammalian or other eukaryotic RNA-seq when exon-exon junctions matter |
+| HISAT2 | Splice-aware RNA-seq genome aligner using hierarchical FM indexes, with optional transcript/splice-site guidance | Yes | Much lower memory than STAR; good eukaryotic splice-aware alignment; can use known splice sites while still discovering novel junctions | Often slower than STAR for large projects; still more complex than needed for this bacterial workflow | A compact splice-aware alternative for eukaryotic RNA-seq, especially when memory is limited |
+
+Historically, TopHat and TopHat2 were early splice-aware RNA-seq workflows that used Bowtie, then Bowtie2, underneath. HISAT2 comes from the same broad line of RNA-seq aligner development, but it is not just TopHat2 with a new name. It uses a different indexing strategy and replaced TopHat/TopHat2 for most practical eukaryotic RNA-seq alignment.
+
+Common pseudoalignment or quasi-alignment tools include:
+
+| Tool | Method used by the tool | Advantages | Disadvantages | When to use it |
+|---|---|---|---|---|
+| Salmon | Quasi-mapping or selective alignment to transcript sequences | Very fast transcript/gene quantification | Usually does not create a genome-coordinate BAM for IGV; requires transcriptome and transcript-to-gene handling | Transcript-level quantification |
+| Kallisto | Pseudoalignment to transcript compatibility classes | Very fast and lightweight | Usually does not create a genome-coordinate BAM for IGV; less natural for the BAM-first workflow used here | Fast transcript quantification |
+
+In this workshop we use Bowtie2 because *H. pylori* has a small bacterial genome, there are no introns to model, and we want coordinate-sorted BAM files that can also be inspected later in IGV.
+
+#### 3.2 SAM and BAM files
+
+The general alignment file created by an aligner is SAM:
+
+```text
+Sequence Alignment/Map format
 ```
 
-## 2. FASTQ QC
+SAM is a plain-text alignment format. BAM is the compressed binary version of SAM. In practice, we usually create a temporary SAM file, convert it to BAM, sort the BAM by genomic coordinate, and create a BAM index file:
 
-Example command:
-
-```bash
-fastqc data/raw_fastq/rnaseq/WT_RNA_1.fastq.gz \
-  -o results/rnaseq/qc
+```text
+sample.sam
+  -> sample.sorted.bam
+  -> sample.sorted.bam.bai
 ```
 
-Multi-sample command:
+The sorted BAM is compact and fast for downstream tools. The `.bai` index lets software jump directly to one genomic region without reading the whole BAM file.
+
+A BAM file contains one alignment record per read alignment. The common SAM/BAM fields are:
+
+| Field | Meaning |
+|---|---|
+| `QNAME` | Read name from the FASTQ identifier |
+| `FLAG` | Bit-coded alignment status, such as paired, mapped, reverse strand, secondary, supplementary, duplicate |
+| `RNAME` | Reference sequence name, such as chromosome or contig |
+| `POS` | 1-based leftmost alignment coordinate |
+| `MAPQ` | Mapping quality, a score for confidence in the reported position |
+| `CIGAR` | Compact description of matches, insertions, deletions, clipping, and skipped reference regions |
+| `RNEXT` | Reference name for the mate read in paired-end data |
+| `PNEXT` | Position of the mate read |
+| `TLEN` | Template length inferred from the read pair |
+| `SEQ` | Read sequence |
+| `QUAL` | Base quality string |
+
+The `CIGAR` string is important for RNA-seq. In bacterial RNA-seq, reads usually align continuously because bacterial genes usually do not contain spliceosomal introns. In eukaryotic RNA-seq, a read can span an exon-exon junction. Splice-aware aligners represent this with an `N` operation in the CIGAR string, meaning a skipped region in the reference. Other CIGAR operations include `M` for aligned match/mismatch, `I` for insertion relative to the reference, `D` for deletion relative to the reference, and `S` for soft clipping.
+
+Aligners also write optional tags after the common columns. These tags are tool-specific. Common examples include edit distance, alignment score, number of possible alignments, or strand information. This is one reason BAM files from different aligners can contain the same core information but different additional descriptors.
+
+#### 3.3 How paired-end reads are stored in BAM
+
+Paired-end FASTQ files have one R1 file and one R2 file. In the BAM file, the two ends are not stored as one combined row. They are stored as two separate alignment records with the same read name (`QNAME`), one record for read 1 and one record for read 2.
+
+The pair relationship is encoded in the BAM fields:
+
+| BAM field | Paired-end meaning |
+|---|---|
+| `QNAME` | Same read-pair identifier for R1 and R2 |
+| `FLAG` | Says whether this record is read 1 or read 2, whether the mate is mapped, whether the pair is properly paired, and which strand each end maps to |
+| `RNAME` and `POS` | Reference name and position for this read end |
+| `RNEXT` and `PNEXT` | Reference name and position for the mate read |
+| `TLEN` | Inferred template length, meaning the genomic span covered by the read pair |
+| `CIGAR` | Alignment shape for this read end only |
+
+For a simple properly paired fragment, R1 and R2 usually map to nearby positions on opposite strands with an expected orientation. The two BAM records point to each other through the mate fields. When we sort a BAM by coordinate, the two mates may no longer be next to each other in the file, but the mate information remains encoded in the records.
+
+This is why paired-end tools can count fragments rather than individual read ends. Later, featureCounts uses the paired-end information to assign one fragment-level count to a gene instead of counting R1 and R2 separately.
+
+#### 3.4 Build the Bowtie2 index
+
+Create `scripts/day2_rnaseq/01_build_bowtie2_index.sh`:
 
 ```bash
-fastqc data/raw_fastq/rnaseq/*.fastq.gz \
-  -o results/rnaseq/qc \
-  2>&1 | tee results/logs/day2/01_fastqc_raw.log
+nano scripts/day2_rnaseq/01_build_bowtie2_index.sh
 ```
 
-Summarize if MultiQC is available:
+Paste this script:
 
 ```bash
-multiqc results/rnaseq/qc \
-  -o results/rnaseq/qc \
-  2>&1 | tee results/logs/day2/02_multiqc_raw.log
+#!/usr/bin/env bash
+set -euo pipefail
+
+genome="reference_genome/genome.fa"
+index_prefix="reference_genome/bowtie2_index/genome"
+
+mkdir -p reference_genome/bowtie2_index
+
+if [[ ! -f "${genome}" ]]; then
+  echo "ERROR: genome FASTA not found: ${genome}" >&2
+  exit 1
+fi
+
+bowtie2-build \
+  --threads 2 \
+  "${genome}" \
+  "${index_prefix}"
 ```
 
-## 3. Trimming
-
-Example using `fastp`:
+Run it:
 
 ```bash
-fastp \
-  -i data/raw_fastq/rnaseq/WT_RNA_1.fastq.gz \
-  -o data/trimmed_fastq/rnaseq/WT_RNA_1.trimmed.fastq.gz \
-  --thread 2 \
-  --html results/rnaseq/qc/WT_RNA_1.fastp.html \
-  --json results/rnaseq/qc/WT_RNA_1.fastp.json \
-  2>&1 | tee results/logs/day2/03_trim_fastp_WT_RNA_1.log
+docker run --rm \
+  --platform linux/amd64 \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-bowtie2-samtools:latest \
+  bash scripts/day2_rnaseq/01_build_bowtie2_index.sh
 ```
 
-Trimming should be interpreted from QC evidence. Removing too much sequence can shorten reads unnecessarily and reduce mapping quality.
+#### 3.5 Map RNA-seq reads
 
-## 4. Mapping to the reference genome
+The mapping script uses the Day 1 trimmed RNA-seq FASTQ files. It writes Bowtie2 logs, sorted BAM files, BAM indexes, and samtools mapping summaries.
 
-Build an index once:
+Create `scripts/day2_rnaseq/02_map_bowtie2_sort_index.sh`:
 
 ```bash
-bowtie2-build data/genome/genome.fa data/genome/genome_index
+nano scripts/day2_rnaseq/02_map_bowtie2_sort_index.sh
 ```
 
-Map one single-end sample:
+Paste this script:
 
 ```bash
-bowtie2 \
-  -x data/genome/genome_index \
-  -U data/trimmed_fastq/rnaseq/WT_RNA_1.trimmed.fastq.gz \
-  -p 2 \
-  2> results/logs/day2/04_bowtie2_WT_RNA_1.log \
-| samtools sort -@ 2 -o data/bam/rnaseq/WT_RNA_1.sorted.bam
+#!/usr/bin/env bash
+set -euo pipefail
 
-samtools index data/bam/rnaseq/WT_RNA_1.sorted.bam
+fastq_dir="results/day1_qc/trimmed_fastq/rnaseq"
+index_prefix="reference_genome/bowtie2_index/genome"
+bam_dir="results/day2_rnaseq/bam"
+log_dir="results/logs/day2"
+
+mkdir -p "${bam_dir}" "${log_dir}"
+
+for read1 in "${fastq_dir}"/*_R1.trimmed.fastq.gz
+do
+  [[ -e "${read1}" ]] || continue
+
+  read2="${read1/_R1.trimmed.fastq.gz/_R2.trimmed.fastq.gz}"
+  sample_id="$(basename "${read1}" _R1.trimmed.fastq.gz)"
+  sam_file="${bam_dir}/${sample_id}.sam"
+  bam_file="${bam_dir}/${sample_id}.sorted.bam"
+  filtered_bam="${bam_dir}/${sample_id}.filtered.bam"
+
+  if [[ ! -f "${read2}" ]]; then
+    echo "ERROR: paired read not found for ${read1}" >&2
+    exit 1
+  fi
+
+  echo "Mapping ${sample_id}"
+  bowtie2 \
+    -x "${index_prefix}" \
+    -1 "${read1}" \
+    -2 "${read2}" \
+    -p 2 \
+    -S "${sam_file}" \
+    2> "${log_dir}/${sample_id}.bowtie2.log"
+
+  samtools sort \
+    -@ 2 \
+    -o "${bam_file}" \
+    "${sam_file}"
+
+  samtools index "${bam_file}"
+
+  samtools flagstat "${bam_file}" > "${log_dir}/${sample_id}.flagstat.txt"
+
+  samtools view \
+    -@ 2 \
+    -b \
+    -q 10 \
+    -f 2 \
+    -F 2828 \
+    -o "${filtered_bam}" \
+    "${bam_file}"
+
+  samtools index "${filtered_bam}"
+
+  samtools flagstat "${filtered_bam}" > "${log_dir}/${sample_id}.filtered.flagstat.txt"
+
+  rm -f "${sam_file}"
+done
 ```
 
-Inspect:
+Run it:
 
 ```bash
-samtools flagstat data/bam/rnaseq/WT_RNA_1.sorted.bam \
-  > results/logs/day2/05_flagstat_WT_RNA_1.txt
+docker run --rm \
+  --platform linux/amd64 \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-bowtie2-samtools:latest \
+  bash scripts/day2_rnaseq/02_map_bowtie2_sort_index.sh
 ```
 
-## 5. Gene counting
-
-Run featureCounts on one or more BAM files:
+Check the mapping logs:
 
 ```bash
+ls -lh results/logs/day2/*.bowtie2.log
+cat results/logs/day2/*.bowtie2.log
+```
+
+Bowtie2 logs report useful mapping metrics, including:
+
+| Metric | What it tells us |
+|---|---|
+| Number of input read pairs | Whether the aligner saw the expected amount of data |
+| Concordantly aligned pairs | Read pairs that align with expected orientation and distance |
+| Discordantly aligned pairs | Pairs that align but not in the expected paired-end pattern |
+| Unaligned reads or pairs | Reads that did not match the reference well enough |
+| Multiple alignment rate | Reads compatible with more than one genomic location |
+| Overall alignment rate | Main first-pass check for whether the sample, reference, and FASTQ files make sense |
+
+Low mapping percentage can indicate a wrong reference, contamination, poor read quality, wrong sample labels, incomplete trimming, or strong rRNA/technical content.
+
+## 4. Clean BAM files with samtools
+
+`samtools` is the standard command-line tool for viewing, sorting, indexing, summarizing, and filtering SAM/BAM files.
+
+In this workflow we use it for:
+
+- converting the temporary SAM output into sorted BAM;
+- creating `.bai` BAM index files;
+- summarizing BAM files with `samtools flagstat`;
+- filtering alignments before counting.
+
+The script from section 3 already runs this cleanup step after mapping:
+
+```bash
+samtools view \
+  -@ 2 \
+  -b \
+  -q 10 \
+  -f 2 \
+  -F 2828 \
+  -o "${filtered_bam}" \
+  "${bam_file}"
+```
+
+This keeps alignments with mapping quality at least 10 and keeps properly paired reads. It removes common records that should not be counted as ordinary primary mapped read pairs, such as unmapped reads, reads with unmapped mates, secondary alignments, failed-QC reads, and supplementary alignments.
+
+SAM flags are bit-coded, so they are not intuitive at first. We will not memorize them. When you need to inspect or design a flag filter, use a flag converter such as:
+
+<https://broadinstitute.github.io/picard/explain-flags.html>
+
+Check the `samtools flagstat` summaries:
+
+```bash
+ls -lh results/logs/day2/*.flagstat.txt
+cat results/logs/day2/*.flagstat.txt
+```
+
+Compare the unfiltered and filtered summaries:
+
+```bash
+cat results/logs/day2/*.filtered.flagstat.txt
+```
+
+These files help answer:
+
+- how many reads were mapped;
+- how many read pairs were properly paired;
+- how many alignments were removed by filtering;
+- whether one sample behaves very differently from the others.
+
+We do not remove coordinate-marked duplicates by default in this teaching RNA-seq workflow. In RNA-seq, many reads at the same location can reflect high expression, not only PCR duplication. Duplicate removal can bias highly expressed genes, especially in compact bacterial genomes.
+
+Expected BAM outputs:
+
+```text
+results/day2_rnaseq/bam/*.sorted.bam
+results/day2_rnaseq/bam/*.sorted.bam.bai
+results/day2_rnaseq/bam/*.filtered.bam
+results/day2_rnaseq/bam/*.filtered.bam.bai
+```
+
+## 5. Count reads per gene with featureCounts
+
+After mapping, we want one number per gene per sample. That number is the number of fragments assigned to the gene annotation.
+
+There are several ways to count reads in features:
+
+| Counting route | How it works | Advantage | Limitation |
+|---|---|---|---|
+| featureCounts | Command-line tool counts overlaps between BAM alignments and GFF/GTF features | Fast, simple, widely used, good for teaching | Requires correct annotation fields and strand settings |
+| HTSeq-count | Python tool counts reads against annotation features | Clear conceptual model | Slower and less convenient for many samples |
+| R/Bioconductor overlap counting | Use packages such as `GenomicAlignments`, `GenomicFeatures`, and `summarizeOverlaps` | Very flexible and reproducible inside R | More code and more Bioconductor concepts |
+| Transcript quantifiers | Salmon or Kallisto quantify transcript compatibility directly | Very fast for transcriptome workflows | Different workflow; not the BAM-first route used here |
+
+For practical purposes, we use featureCounts with the downloaded annotation:
+
+```text
+filtered BAM + reference_genome/annotation.gff3
+  -> featureCounts
+  -> one count table per sample
+```
+
+For paired-end RNA-seq, we count fragments rather than individual read ends:
+
+- `-p` tells featureCounts to count fragments from paired-end reads;
+- `-B` requires both ends to be aligned;
+- `-C` avoids counting chimeric fragments.
+
+Create `scripts/day2_rnaseq/03_featurecounts_per_sample.sh`:
+
+```bash
+nano scripts/day2_rnaseq/03_featurecounts_per_sample.sh
+```
+
+Paste this script:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+annotation="reference_genome/annotation.gff3"
+bam_dir="results/day2_rnaseq/bam"
+counts_dir="results/day2_rnaseq/counts"
+log_dir="results/logs/day2"
+
+mkdir -p "${counts_dir}" "${log_dir}"
+
+if [[ ! -f "${annotation}" ]]; then
+  echo "ERROR: annotation file not found: ${annotation}" >&2
+  exit 1
+fi
+
+featureCounts -a annotation.gtf -o counts.txt -T 2 "${bam_dir}"/*.filtered.bam
+
+echo "Counting ${sample_id}"
 featureCounts \
-  -a data/genome/annotation.gff3 \
-  -o data/raw_counts/rnaseq/gene_counts.txt \
-  data/bam/rnaseq/*.sorted.bam \
-  2>&1 | tee results/logs/day2/06_featurecounts.log
+  -T 2 \
+  -p \
+  -B \
+  -C \
+  -a "${annotation}" \
+  -o "${counts_dir}/gene_count_matrix.tsv \
+  "${bam_dir}"/*.filtered.bam \
+  2>&1 | tee "${log_dir}/featureCounts.log"
+
 ```
 
-Check the summary:
+Run it:
 
 ```bash
-cat data/raw_counts/rnaseq/gene_counts.txt.summary
+docker run --rm \
+  --platform linux/amd64 \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-featurecounts:latest \
+  bash scripts/day2_rnaseq/03_featurecounts_per_sample.sh
 ```
 
-Keep the unnormalized count matrix for DESeq2.
-
-## 6. Generate RNA-seq bigWig tracks
+Check the featureCounts logs:
 
 ```bash
-bamCoverage \
-  -b data/bam/rnaseq/WT_RNA_1.sorted.bam \
-  -o results/rnaseq/bigwig/WT_RNA_1.CPM.bw \
-  --normalizeUsing CPM \
-  --binSize 10 \
-  --numberOfProcessors 2 \
-  2>&1 | tee results/logs/day2/07_bamcoverage_WT_RNA_1.log
+ls -lh results/logs/day2/*.featureCounts.log
+cat results/logs/day2/*.featureCounts.log
 ```
 
-The bigWig is useful for visualization in IGV or a genome browser. It is not the input for DESeq2.
+These logs tell us how many aligned fragments were assigned to genes. This is a second sanity check after mapping. A sample can map well but count poorly if the annotation does not match the genome, the wrong feature type is used, the library strandedness is wrong, or many reads fall outside annotated genes.
 
-## 7. DESeq2 from raw counts
+The result should look like this:
 
-Use a count matrix and sample metadata. The instructor may provide a ready checkpoint matrix if mapping/counting cannot be completed locally.
+```text
+gene_id  WT_1_WT_control  WT_2_WT_control  WTS_1_WT_21Oxygen
+geneA    120              134              62
+geneB    5                8                6
+```
 
-Minimal R skeleton:
+Keep this matrix as raw integer counts. Do not convert it to CPM, TPM, RPKM, or bigWig signal before DESeq2.
+
+## 6. Raw count matrix and DESeq2 differential expression
+
+The count matrix has genes as rows and samples as columns:
+
+```text
+features x samples
+```
+
+Before modeling, check whether the experiment still makes sense:
+
+- How many reads were present after trimming?
+- What percentage mapped to the genome?
+- What percentage of mapped reads were assigned to genes?
+- Are any samples strong outliers at the mapping or counting stage?
+- Do sample names in the count matrix match the metadata?
+
+If many reads disappear between FASTQ, BAM, and gene counts, do not jump directly to p-values. First check reference version, annotation version, strandedness, sample labels, and logs.
+
+#### 6.1 Statistical idea
+
+For each gene, RNA-seq gives integer counts. A simple Poisson model would assume that the count variance is equal to the count mean. Real RNA-seq data usually vary more than that because of biological variation, library preparation, and sampling effects. This extra variation is called overdispersion.
+
+DESeq2 and edgeR model counts with a negative binomial distribution because it allows the variance to be larger than the mean. A useful simplified version is:
+
+$$
+K_{ij} \sim \mathrm{NB}(\mu_{ij}, \alpha_i)
+$$
+
+where:
+
+- $K_{ij}$ is the raw count for gene $i$ in sample $j$;
+- $\mu_{ij}$ is the expected count for that gene and sample;
+- $\alpha_i$ is the gene-specific dispersion, meaning extra variability beyond simple Poisson sampling.
+
+DESeq2 does not simply run an independent ordinary test for each gene and ignore the rest of the experiment. It uses information across all genes to estimate size factors and to stabilize dispersion estimates. This is important because each gene has only a small number of replicate measurements.
+
+The model includes the experimental design:
 
 ```r
-library(DESeq2)
-
-counts <- read.delim("data/raw_counts/rnaseq/gene_count_matrix.tsv", row.names = 1)
-coldata <- read.delim("code/day1/metadata/samples_rnaseq.tsv")
-
-# Make sure sample order matches count columns.
-coldata <- coldata[match(colnames(counts), coldata$sample_id), ]
-stopifnot(all(colnames(counts) == coldata$sample_id))
-
-dds <- DESeqDataSetFromMatrix(
-  countData = counts,
-  colData = coldata,
-  design = ~ condition
-)
-
-dds <- dds[rowSums(counts(dds)) >= 10, ]
-dds <- DESeq(dds)
-res <- results(dds, contrast = c("condition", "KO", "WT"))
-res <- as.data.frame(res)
-res$gene_id <- rownames(res)
-
-write.table(res, "results/rnaseq/deseq2/deseq2_results.tsv",
-            sep = "\t", quote = FALSE, row.names = FALSE)
+design = ~ condition
 ```
 
-Common result columns:
+For each gene, DESeq2 estimates a condition effect. We usually report this as a log2 fold change:
+
+```text
+log2FoldChange = expression change for WT_21Oxygen relative to WT_control
+```
+
+DESeq2 also estimates uncertainty for that effect. The `lfcSE` column is the standard error of the log2 fold change. Intuitively, it reflects how variable the replicate counts are around the fitted model, after normalization and dispersion estimation. Genes with noisy counts, low counts, or inconsistent replicates have less precise fold-change estimates.
+
+The Wald test asks whether the fitted condition effect is clearly different from zero relative to its uncertainty. Because this is done for many genes, DESeq2 reports adjusted p-values (`padj`) to control the false discovery rate.
+
+#### 6.2 Median-of-ratios normalization
+
+Raw counts depend on library size and composition. DESeq2 estimates a size factor for each sample using the median-of-ratios method. The key assumption is that most genes are not globally changing in the same direction. Under that assumption, the typical gene can be used to estimate how much larger or smaller one library is relative to another.
+
+DESeq2 still uses raw integer counts as input. The normalization factors are estimated inside the model; students should not pre-normalize the matrix before running DESeq2.
+
+#### 6.3 Step-by-step R workflow
+
+Create `scripts/day2_rnaseq/04_deseq2_analysis.R`:
+
+```bash
+nano scripts/day2_rnaseq/04_deseq2_analysis.R
+```
+
+Paste this script:
+
+```r
+#!/usr/bin/env Rscript
+
+args <- commandArgs(trailingOnly = TRUE)
+if (length(args) != 2) {
+  stop("Usage: 04_deseq2_analysis.R count_matrix.tsv outdir")
+}
+
+required <- c("DESeq2", "ggplot2")
+missing <- required[!vapply(required, requireNamespace, logical(1), quietly = TRUE)]
+if (length(missing)) {
+  stop("Missing R packages: ", paste(missing, collapse = ", "))
+}
+
+counts <- read.delim(args[[1]], check.names = FALSE)
+outdir <- args[[2]]
+
+dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
+
+rownames(counts) <- counts$gene_id
+counts$gene_id <- NULL
+
+sample_ids <- names(counts)
+if (length(sample_ids) < 4) {
+  stop("Expected RNA-seq samples from at least two conditions with biological replicates")
+}
+
+condition <- sub("^[^_]+_[^_]+_", "", sample_ids)
+replicate <- sub("^[^_]+_([^_]+)_.*$", "rep\\1", sample_ids)
+
+samples <- data.frame(
+  sample_id = sample_ids,
+  condition = condition,
+  replicate = replicate,
+  row.names = sample_ids,
+  check.names = FALSE
+)
+
+if (length(unique(samples$condition)) < 2) {
+  stop("Could not infer at least two conditions from sample names")
+}
+
+if (all(c("WT_control", "WT_21Oxygen") %in% samples$condition)) {
+  samples$condition <- factor(samples$condition, levels = c("WT_control", "WT_21Oxygen"))
+} else {
+  samples$condition <- factor(samples$condition)
+}
+
+count_mat <- as.matrix(round(counts[, sample_ids, drop = FALSE]))
+
+dds <- DESeq2::DESeqDataSetFromMatrix(
+  countData = count_mat,
+  colData = samples,
+  design = ~ condition
+)
+dds <- dds[rowSums(DESeq2::counts(dds)) >= 10, ]
+dds <- DESeq2::DESeq(dds)
+
+if (all(c("WT_control", "WT_21Oxygen") %in% levels(samples$condition))) {
+  res <- as.data.frame(DESeq2::results(dds, contrast = c("condition", "WT_21Oxygen", "WT_control")))
+} else {
+  res <- as.data.frame(DESeq2::results(dds))
+}
+res$gene_id <- rownames(res)
+write.csv(samples, file.path(outdir, "inferred_sample_design.csv"), row.names = FALSE)
+write.table(res, file.path(outdir, "deseq2_results.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
+
+vsd <- DESeq2::vst(dds, blind = TRUE)
+
+pdf(file.path(outdir, "pca.pdf"))
+print(DESeq2::plotPCA(vsd, intgroup = "condition"))
+dev.off()
+
+pdf(file.path(outdir, "dispersion_plot.pdf"))
+DESeq2::plotDispEsts(dds)
+dev.off()
+
+pdf(file.path(outdir, "ma_plot.pdf"))
+DESeq2::plotMA(res)
+dev.off()
+
+volcano <- ggplot2::ggplot(res, ggplot2::aes(x = log2FoldChange, y = -log10(padj))) +
+  ggplot2::geom_point(alpha = 0.6, size = 1) +
+  ggplot2::theme_bw() +
+  ggplot2::labs(x = "log2 fold change", y = "-log10 adjusted p-value")
+
+ggplot2::ggsave(file.path(outdir, "volcano.pdf"), volcano, width = 6, height = 5)
+writeLines(capture.output(sessionInfo()), file.path(outdir, "sessionInfo.txt"))
+```
+
+Run it:
+
+```bash
+docker run --rm \
+  --platform linux/amd64 \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-r-bioc:latest \
+  Rscript scripts/day2_rnaseq/04_deseq2_analysis.R \
+  results/day2_rnaseq/counts/gene_count_matrix.tsv \
+  results/day2_rnaseq/deseq2
+```
+
+The script does these steps:
+
+| R step | Meaning |
+|---|---|
+| Read raw count matrix | Load integer counts from featureCounts |
+| Infer sample design | Build `condition` and `replicate` from sample names such as `WT_1_WT_control` |
+| Create `DESeqDataSet` | Combine counts, metadata, and design formula |
+| Filter very low-count genes | Remove genes with too little information |
+| Run `DESeq()` | Estimate size factors, dispersions, and condition effects |
+| Save results | Write log2 fold changes, standard errors, p-values, and adjusted p-values |
+| Make diagnostic plots | PCA, dispersion plot, MA plot, and volcano plot |
+
+The script writes the inferred design table to:
+
+```text
+results/day2_rnaseq/deseq2/inferred_sample_design.csv
+```
+
+Always inspect this file. If condition labels are wrong, the sample names are not following the expected Day 1 pattern.
+
+Common DESeq2 result columns:
 
 | Column | Meaning |
 |---|---|
 | `baseMean` | Mean normalized count across samples |
-| `log2FoldChange` | Estimated condition effect on log2 scale |
-| `lfcSE` | Standard error of log2 fold change |
-| `stat` | Test statistic |
+| `log2FoldChange` | Estimated condition effect on the log2 scale |
+| `lfcSE` | Standard error of the log2 fold change |
+| `stat` | Wald test statistic |
 | `pvalue` | Raw p-value |
 | `padj` | Multiple-testing adjusted p-value |
 
-## 8. PCA and MA plot interpretation
+Important plots:
 
-A PCA plot summarizes the largest sources of variation after transformation of the count matrix. Replicates should usually cluster more closely to each other than to samples from a different condition. If they do not, first check metadata, sample naming, batch effects, and QC logs.
+| Plot | What to check |
+|---|---|
+| PCA | Whether biological replicates cluster together and whether conditions separate |
+| Dispersion plot | Whether gene-wise dispersions follow a reasonable mean-dispersion trend |
+| MA plot | Whether log2 fold changes are centered and whether large changes are mostly low-count genes |
+| Volcano plot | Which genes combine large effect size with small adjusted p-value |
 
-An MA plot displays:
+Do not treat the volcano plot as the analysis itself. It is a summary of the fitted model results.
 
-$$
-M_i = \log_2 FC_i
-$$
+## 7. Optional: make RNA-seq bigWig tracks
 
-against an average abundance measure. It helps identify whether large fold changes are concentrated among low-count genes and whether the distribution is centered as expected.
+bigWig files store genome-wide coverage signal. They are useful for IGV inspection but are not inputs to DESeq2.
 
-## 9. Checkpoint route
+Create `scripts/day2_rnaseq/05_make_bigwig_bamcoverage.sh`:
 
-If FASTQ-to-BAM processing is too slow or fails, continue from:
+```bash
+nano scripts/day2_rnaseq/05_make_bigwig_bamcoverage.sh
+```
+
+Paste this script:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+bam_dir="results/day2_rnaseq/bam"
+out_dir="results/day2_rnaseq/bigwig"
+
+mkdir -p "${out_dir}"
+
+for bam in "${bam_dir}"/*.filtered.bam
+do
+  [[ -e "${bam}" ]] || continue
+  sample_id="$(basename "${bam}" .filtered.bam)"
+
+  bamCoverage \
+    -b "${bam}" \
+    -o "${out_dir}/${sample_id}.cpm.bw" \
+    --normalizeUsing CPM \
+    --binSize 10 \
+    --numberOfProcessors 2
+done
+```
+
+Run it:
+
+```bash
+docker run --rm \
+  --platform linux/amd64 \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-deeptools:latest \
+  bash scripts/day2_rnaseq/05_make_bigwig_bamcoverage.sh
+```
+
+Expected output:
+
+```text
+results/day2_rnaseq/bigwig/*.cpm.bw
+```
+
+Use these files later for genome-browser inspection together with BAM files, ChIP-seq peaks, and gene annotation.
+
+## 8. Checkpoint route
+
+If local mapping or counting is too slow, continue from instructor-provided checkpoint files:
 
 ```text
 checkpoints/rnaseq/gene_count_matrix.tsv
 checkpoints/rnaseq/sample_metadata.tsv
-checkpoints/rnaseq/multiqc_report.html
-checkpoints/rnaseq/bigwig/*.bw
+checkpoints/rnaseq/bigwig/
 ```
 
-Record the route in `code/day2_rnaseq/README.md`:
+Record this in `workflow_execution.md`:
 
-```text
-Mapping and counting were demonstrated in class. This analysis used the provided count-matrix checkpoint for DESeq2 because local FASTQ-to-BAM execution was not feasible on this laptop.
+```markdown
+## Day 2
+
+Mapping and counting were demonstrated in class. I used the provided RNA-seq count-matrix checkpoint for DESeq2 because local mapping/counting was not feasible on this laptop.
 ```
 
-## 10. Commit Day 2 material
+Do not pretend that local mapping was completed if you used checkpoint files.
 
-Do not commit BAM or bigWig files unless the instructor explicitly asks for tiny examples.
+## 9. Final commit of Day 2
+
+Before committing, check what Git sees:
 
 ```bash
 git status
-git add code/day2_rnaseq results/rnaseq/qc results/rnaseq/deseq2 results/rnaseq/plots results/logs/day2 README.md
-git commit -m "Add RNA-seq analysis notes and DESeq2 results"
+```
+
+Do not commit BAM, BAI, bigWig, FASTQ, or reference index files. These are large generated files.
+
+Add only scripts, metadata notes, small logs, tables, and plots:
+
+```bash
+git add scripts/day2_rnaseq
+git add results/logs/day2
+git add results/day2_rnaseq/counts/gene_count_matrix.tsv
+git add results/day2_rnaseq/deseq2
+git add workflow_execution.md README.md
+git status
+```
+
+If Git shows BAM, BAI, bigWig, FASTQ, or Bowtie2 index files staged by mistake, stop and ask for help before committing.
+
+Commit and push:
+
+```bash
+git commit -m "Complete Day 2 RNA-seq mapping counts and DESeq2"
 git push
 ```
 
-## Expected outputs
+## 10. Self-check questions
 
-By the end of Day 2, you should have some combination of:
-
-```text
-results/rnaseq/qc/multiqc_report.html
-results/logs/day2/*.log
-data/raw_counts/rnaseq/gene_counts.txt
-results/rnaseq/deseq2/deseq2_results.tsv
-results/rnaseq/plots/pca_plot.png
-results/rnaseq/plots/ma_plot.png
-results/rnaseq/plots/volcano_plot.png
-```
-
-## Self-check questions
-
-1. Why does DESeq2 require raw integer counts rather than CPM or bigWig signal?
-2. What biological information is represented by a row in the count matrix?
-3. What can cause low mapping percentage in RNA-seq?
-4. Why is an adjusted p-value used instead of only a raw p-value?
-5. What is the difference between a gene count table and a genome-browser track?
-
-## How to report issues
-
-If you have a GitHub account, report Day 2 problems by opening an **Issue** in your student repository.
-
-Include:
-
-- `Day 2` and the step number in the issue title;
-- your operating system;
-- whether you used full local execution or checkpoint mode;
-- the command you ran;
-- the exact error message;
-- the relevant log file, for example `results/logs/day2/04_bowtie2_WT_RNA_1.log`.
-
-If you cannot create or access a GitHub account, email:
-
-```text
-francesco.gualdrini@gmail.com
-```
-
-Use email only for GitHub account/access problems. Use GitHub Issues for workshop technical questions whenever possible.
+1. Why is Bowtie2 suitable for this bacterial RNA-seq dataset but not the usual default for mammalian spliced RNA-seq?
+2. What is the difference between SAM, BAM, and BAI?
+3. Which mapping and pairing metrics would you inspect before trusting the count matrix?
+4. Why can a sample map well but still have poor featureCounts assignment?
+5. Why does DESeq2 use raw integer counts rather than CPM, TPM, or bigWig signal?
+6. What does the dispersion parameter represent intuitively?
+7. What does `log2FoldChange` estimate, and why do we also need `lfcSE` and `padj`?

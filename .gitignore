@@ -5,6 +5,8 @@
 .quarto/
 _site/
 *_files/
+!Docker_files/
+!Docker_files/**
 *.html
 !index.html
 !docs/**/*.html
@@ -32,6 +34,18 @@ days_old/
 *.tar
 *.tar.gz
 *.zip
+
+# Reference genome downloads and generated indices
+reference_genome/*.fa
+reference_genome/*.fna
+reference_genome/*.fasta
+reference_genome/*.gff
+reference_genome/*.gff3
+reference_genome/*.gtf
+reference_genome/*.gz
+reference_genome/*_ncbi_dataset/
+reference_genome/*_ncbi_dataset.zip
+reference_genome/bowtie2_index/
 
 
 /.quarto/

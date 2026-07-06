@@ -4,8 +4,7 @@ project:
   threads: 2
   runtime: "docker"
 reference:
-  fasta: "data/reference/genome.fa"
-  annotation: "data/reference/annotation.gff3"
-  bowtie2_index_prefix: "results/reference/bowtie2_index/genome"
+  fasta: "reference_genome/genome.fa"
+  annotation: "reference_genome/annotation.gff3"
+  bowtie2_index_prefix: "reference_genome/bowtie2_index/genome"
   genome_size: "1.7e6"
-

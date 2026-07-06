@@ -3,18 +3,13 @@ project:
   output-dir: docs
   render:
     - index.qmd
-    - days/*.qmd
-    - modules/*.qmd
-    - backends/*.qmd
-    - scripts/README.md
-    - checkpoints/README.md
-    - assessments/submission_checklist.md
-    - student_repo_template/README.md
-    - release_workflow.md
+    - days/day0_setup.qmd
+    - modules/git_github.qmd
+    - modules/containers_docker_podman.qmd
     - "!docs/**"
 
 website:
-  title: "Reproducible NGS Data Analysis on Personal Laptops"
+  title: "Reproducible NGS Data Analysis"
   site-url: "https://fgualdr.github.io/reproducible-ngs-workshop/"
   repo-url: "https://github.com/fgualdr/reproducible-ngs-workshop"
   repo-actions: [source, issue]
@@ -31,41 +26,10 @@ website:
         contents:
           - text: "Day 0 - Setup"
             href: days/day0_setup.qmd
-          - text: "Day 1 - Reproducible project"
-            href: days/day1_reproducible_project.qmd
-          - text: "Day 2 - RNA-seq"
-            href: days/day2_rnaseq.qmd
-          - text: "Day 3 - ChIP-seq"
-            href: days/day3_chipseq.qmd
-          - text: "Day 4 - Integration"
-            href: days/day4_integration.qmd
       - section: "Core modules"
         contents:
           - modules/git_github.qmd
           - modules/containers_docker_podman.qmd
-          - modules/public_data_retrieval.qmd
-          - modules/reference_genomes.qmd
-          - modules/rnaseq_concepts.qmd
-          - modules/chipseq_concepts.qmd
-          - modules/genomic_intervals.qmd
-          - modules/execution_backends.qmd
-      - section: "Execution backends"
-        contents:
-          - backends/local_docker_podman.qmd
-          - backends/github_codespaces.qmd
-          - backends/galaxy_optional_demo.qmd
-          - backends/instructor_machine_or_vm.qmd
-          - backends/checkpoint_mode.qmd
-      - text: "Scripts"
-        href: scripts/README.md
-      - text: "Checkpoints"
-        href: checkpoints/README.md
-      - text: "Assessment"
-        href: assessments/submission_checklist.md
-      - text: "Student repo template"
-        href: student_repo_template/README.md
-      - text: "GitHub release workflow"
-        href: release_workflow.md
 
 format:
   html:

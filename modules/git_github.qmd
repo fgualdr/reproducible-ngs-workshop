@@ -7,13 +7,13 @@ execute:
 
 ## Purpose
 
-Git tracks the analysis logic: README notes, code, metadata tables, configuration, logs, and small final result tables. GitHub provides remote backup, collaboration, and submission infrastructure.
+Git tracks the analysis logic: README notes, scripts, metadata tables, configuration, logs, and small final result tables. GitHub provides remote backup, collaboration, and submission infrastructure.
 
 ## What to version
 
 - README and workflow notes.
 - Sample metadata and accession tables.
-- Scripts and command notes under `code/`.
+- Scripts and command notes under `scripts/`.
 - Configuration files.
 - Small summary tables and final figures.
 
@@ -27,7 +27,7 @@ Git tracks the analysis logic: README notes, code, metadata tables, configuratio
 ```bash
 git init
 git status
-git add README.md code container results
+git add README.md .gitignore raw_data/metadata reference_genome scripts results/logs
 git commit -m "Initialize reproducible NGS project"
 git remote add origin git@github.com:USERNAME/PROJECT.git
 git push -u origin main

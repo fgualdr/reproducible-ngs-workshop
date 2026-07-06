@@ -19,5 +19,5 @@ Use genome and annotation files from the same source and release whenever possib
 ## Bowtie2 index
 
 ```bash
-bowtie2-build data/genome/genome.fa data/genome/bowtie2_index/genome
+bowtie2-build reference_genome/genome.fa reference_genome/bowtie2_index/genome
 ```
