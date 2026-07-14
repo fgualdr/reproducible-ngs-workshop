@@ -1,32 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://fgualdr.github.io/reproducible-ngs-workshop/assessments/submission_checklist.html</loc>
-    <lastmod>2026-06-22T12:26:40.939Z</lastmod>
-  </url>
-  <url>
-    <loc>https://fgualdr.github.io/reproducible-ngs-workshop/scripts/README.html</loc>
-    <lastmod>2026-07-13T10:12:13.860Z</lastmod>
-  </url>
-  <url>
-    <loc>https://fgualdr.github.io/reproducible-ngs-workshop/modules/chipseq_concepts.html</loc>
-    <lastmod>2026-06-19T13:39:03.983Z</lastmod>
-  </url>
-  <url>
-    <loc>https://fgualdr.github.io/reproducible-ngs-workshop/modules/reference_genomes.html</loc>
-    <lastmod>2026-06-19T13:39:03.985Z</lastmod>
-  </url>
-  <url>
     <loc>https://fgualdr.github.io/reproducible-ngs-workshop/modules/containers_docker_podman.html</loc>
     <lastmod>2026-07-01T11:45:03.094Z</lastmod>
-  </url>
-  <url>
-    <loc>https://fgualdr.github.io/reproducible-ngs-workshop/days/day4_integration.html</loc>
-    <lastmod>2026-07-13T10:13:24.129Z</lastmod>
-  </url>
-  <url>
-    <loc>https://fgualdr.github.io/reproducible-ngs-workshop/days/day2_rnaseq.html</loc>
-    <lastmod>2026-07-07T09:42:28.269Z</lastmod>
   </url>
   <url>
     <loc>https://fgualdr.github.io/reproducible-ngs-workshop/days/day0_setup.html</loc>
@@ -37,31 +13,7 @@
     <lastmod>2026-07-01T10:53:22.873Z</lastmod>
   </url>
   <url>
-    <loc>https://fgualdr.github.io/reproducible-ngs-workshop/days/day1_reproducible_project.html</loc>
-    <lastmod>2026-07-03T11:41:37.162Z</lastmod>
-  </url>
-  <url>
-    <loc>https://fgualdr.github.io/reproducible-ngs-workshop/days/day3_chipseq.html</loc>
-    <lastmod>2026-07-13T10:14:19.916Z</lastmod>
-  </url>
-  <url>
     <loc>https://fgualdr.github.io/reproducible-ngs-workshop/modules/git_github.html</loc>
     <lastmod>2026-06-19T14:19:35.410Z</lastmod>
-  </url>
-  <url>
-    <loc>https://fgualdr.github.io/reproducible-ngs-workshop/modules/public_data_retrieval.html</loc>
-    <lastmod>2026-07-01T11:45:03.094Z</lastmod>
-  </url>
-  <url>
-    <loc>https://fgualdr.github.io/reproducible-ngs-workshop/modules/rnaseq_concepts.html</loc>
-    <lastmod>2026-06-19T13:39:03.985Z</lastmod>
-  </url>
-  <url>
-    <loc>https://fgualdr.github.io/reproducible-ngs-workshop/modules/genomic_intervals.html</loc>
-    <lastmod>2026-06-19T13:39:03.984Z</lastmod>
-  </url>
-  <url>
-    <loc>https://fgualdr.github.io/reproducible-ngs-workshop/checkpoints/README.html</loc>
-    <lastmod>2026-05-18T13:33:40.844Z</lastmod>
   </url>
 </urlset>
