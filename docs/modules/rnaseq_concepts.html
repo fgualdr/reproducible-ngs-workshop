@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Containers with Docker – Reproducible NGS Data Analysis</title>
+<title>RNA-seq Concepts – Reproducible NGS Data Analysis</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -22,41 +22,6 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
-}
-/* CSS for syntax highlighting */
-html { -webkit-text-size-adjust: 100%; }
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -119,7 +84,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../modules/git_github.html">Core modules</a></li><li class="breadcrumb-item"><a href="../modules/containers_docker_podman.html">Containers with Docker</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../modules/git_github.html">Core modules</a></li><li class="breadcrumb-item"><a href="../modules/rnaseq_concepts.html">RNA-seq Concepts</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -208,7 +173,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../modules/containers_docker_podman.html" class="sidebar-item-text sidebar-link active">
+  <a href="../modules/containers_docker_podman.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Containers with Docker</span></a>
   </div>
 </li>
@@ -226,7 +191,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../modules/rnaseq_concepts.html" class="sidebar-item-text sidebar-link">
+  <a href="../modules/rnaseq_concepts.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">RNA-seq Concepts</span></a>
   </div>
 </li>
@@ -272,18 +237,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#runtime-convention" id="toc-runtime-convention" class="nav-link active" data-scroll-target="#runtime-convention">Runtime convention</a></li>
-  <li><a href="#why-this-matters" id="toc-why-this-matters" class="nav-link" data-scroll-target="#why-this-matters">Why this matters</a></li>
-  <li><a href="#practical-limits" id="toc-practical-limits" class="nav-link" data-scroll-target="#practical-limits">Practical limits</a></li>
+  <li><a href="#core-model" id="toc-core-model" class="nav-link active" data-scroll-target="#core-model">Core model</a></li>
+  <li><a href="#teaching-caveats" id="toc-teaching-caveats" class="nav-link" data-scroll-target="#teaching-caveats">Teaching caveats</a></li>
+  <li><a href="#common-invalid-inputs" id="toc-common-invalid-inputs" class="nav-link" data-scroll-target="#common-invalid-inputs">Common invalid inputs</a></li>
   </ul>
 </nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../modules/git_github.html">Core modules</a></li><li class="breadcrumb-item"><a href="../modules/containers_docker_podman.html">Containers with Docker</a></li></ol></nav>
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../modules/git_github.html">Core modules</a></li><li class="breadcrumb-item"><a href="../modules/rnaseq_concepts.html">RNA-seq Concepts</a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title">Containers with Docker</h1>
+<h1 class="title">RNA-seq Concepts</h1>
 </div>
 
 
@@ -300,25 +265,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<section id="runtime-convention" class="level2">
-<h2 class="anchored" data-anchor-id="runtime-convention">Runtime convention</h2>
-<p>All course scripts are meant to run inside the Docker image that contains the required tool. The script contains the analysis logic; the Docker command only chooses the software environment and mounts the project folder:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--platform</span> linux/amd64 <span class="dt">\</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  docker.io/fgualdr/ngs-fastqc:latest <span class="dt">\</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  bash scripts/day1/01_fastqc_raw.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="core-model" class="level2">
+<h2 class="anchored" data-anchor-id="core-model">Core model</h2>
+<p>RNA-seq differential expression is count-based. DESeq2 estimates size factors, dispersions, and condition effects from raw integer counts.</p>
 </section>
-<section id="why-this-matters" class="level2">
-<h2 class="anchored" data-anchor-id="why-this-matters">Why this matters</h2>
-<p>The image provides software. The mounted project folder provides persistent files. <code>docker run --rm</code> starts a temporary container, runs the script inside <code>/work</code>, writes outputs into the mounted project folder, and removes the container when the command finishes. This separation makes the analysis portable across macOS, Linux, and Windows WSL2.</p>
+<section id="teaching-caveats" class="level2">
+<h2 class="anchored" data-anchor-id="teaching-caveats">Teaching caveats</h2>
+<ul>
+<li>Two replicates per condition are a minimal teaching design, not an ideal study.</li>
+<li>PCA is a diagnostic for sample-level structure.</li>
+<li>MA and volcano plots summarize effect size and uncertainty; neither replaces biological interpretation.</li>
+</ul>
 </section>
-<section id="practical-limits" class="level2">
-<h2 class="anchored" data-anchor-id="practical-limits">Practical limits</h2>
-<p>Use two threads by default:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="va">THREADS</span><span class="op">=</span>2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>More threads can overload student laptops and make failures harder to debug.</p>
+<section id="common-invalid-inputs" class="level2">
+<h2 class="anchored" data-anchor-id="common-invalid-inputs">Common invalid inputs</h2>
+<p>Do not use TPM, FPKM, CPM coverage, or bigWig values as DESeq2 input.</p>
 
 
 </section>

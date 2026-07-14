@@ -70,11 +70,13 @@ reference_genome/bowtie2_index/
 results/day2_rnaseq/bam/*.sorted.bam
 results/day2_rnaseq/bam/*.filtered.bam
 results/day2_rnaseq/counts/gene_count_matrix.tsv
+results/day2_rnaseq/bigwig/*.cpm.bw
 results/day2_rnaseq/deseq2/deseq2_results.tsv
 results/day2_rnaseq/deseq2/pca.pdf
 results/day2_rnaseq/deseq2/dispersion_plot.pdf
 results/day2_rnaseq/deseq2/ma_plot.pdf
 results/day2_rnaseq/deseq2/volcano.pdf
+results/day2_rnaseq/qc/multiqc_report.html
 results/logs/day2/
 ```
 
@@ -136,8 +138,6 @@ Common genome aligners include:
 | BWA-MEM/BWA-MEM2 | Burrows-Wheeler genome aligner optimized for longer reads using maximal exact matches as seeds | No | Very robust general-purpose DNA aligner; common for variant calling, genomic DNA, ChIP-seq, ATAC-seq, and microbial genome alignment | Not designed to discover splice junctions; less commonly used as the main tool for gene-level RNA-seq counting | Conceptually similar to Bowtie2 as a non-splice-aware genome aligner, but more associated with DNA-seq and longer-read genomic alignment |
 | STAR | Splice-aware RNA-seq genome aligner using an uncompressed suffix-array style index and two-pass-style junction discovery options | Yes | Extremely fast for large eukaryotic RNA-seq; strong exon-junction detection; widely used for mammalian gene-count workflows | High memory use; more complex; unnecessary for bacterial genomes without introns | A standard choice for mammalian or other eukaryotic RNA-seq when exon-exon junctions matter |
 | HISAT2 | Splice-aware RNA-seq genome aligner using hierarchical FM indexes, with optional transcript/splice-site guidance | Yes | Much lower memory than STAR; good eukaryotic splice-aware alignment; can use known splice sites while still discovering novel junctions | Often slower than STAR for large projects; still more complex than needed for this bacterial workflow | A compact splice-aware alternative for eukaryotic RNA-seq, especially when memory is limited |
-
-Historically, TopHat and TopHat2 were early splice-aware RNA-seq workflows that used Bowtie, then Bowtie2, underneath. HISAT2 comes from the same broad line of RNA-seq aligner development, but it is not just TopHat2 with a new name. It uses a different indexing strategy and replaced TopHat/TopHat2 for most practical eukaryotic RNA-seq alignment.
 
 Common pseudoalignment or quasi-alignment tools include:
 
@@ -429,7 +429,8 @@ For practical purposes, we use featureCounts with the downloaded annotation:
 ```text
 filtered BAM + reference_genome/annotation.gff3
   -> featureCounts
-  -> one count table per sample
+  -> one all-sample featureCounts table
+  -> one simple gene-by-sample count matrix
 ```
 
 For paired-end RNA-seq, we count fragments rather than individual read ends:
@@ -438,10 +439,19 @@ For paired-end RNA-seq, we count fragments rather than individual read ends:
 - `-B` requires both ends to be aligned;
 - `-C` avoids counting chimeric fragments.
 
-Create `scripts/day2_rnaseq/03_featurecounts_per_sample.sh`:
+The command below uses `-t gene -g ID`, which means:
+
+- count reads overlapping GFF3 records whose feature type is `gene`;
+- use the `ID` attribute from the GFF3 file as the gene identifier.
+
+This is a practical choice for the NCBI-style bacterial GFF3 used in this workshop. If an annotation uses a different feature type, such as `CDS`, or a different gene identifier attribute, these two options must be changed.
+
+The command below does not set `-s`, so featureCounts treats the library as unstranded. If the actual RNA-seq protocol is stranded, count assignment can be badly wrong unless `-s 1` or `-s 2` is used after checking the library orientation in the metadata or protocol.
+
+Create `scripts/day2_rnaseq/03_featurecounts_all_samples.sh`:
 
 ```bash
-nano scripts/day2_rnaseq/03_featurecounts_per_sample.sh
+nano scripts/day2_rnaseq/03_featurecounts_all_samples.sh
 ```
 
 Paste this script:
@@ -454,6 +464,8 @@ annotation="reference_genome/annotation.gff3"
 bam_dir="results/day2_rnaseq/bam"
 counts_dir="results/day2_rnaseq/counts"
 log_dir="results/logs/day2"
+featurecounts_out="${counts_dir}/featureCounts_all_samples.txt"
+count_matrix="${counts_dir}/gene_count_matrix.tsv"
 
 mkdir -p "${counts_dir}" "${log_dir}"
 
@@ -462,18 +474,52 @@ if [[ ! -f "${annotation}" ]]; then
   exit 1
 fi
 
-featureCounts -a annotation.gtf -o counts.txt -T 2 "${bam_dir}"/*.filtered.bam
+# Collect all filtered BAM files
+bam_files=("${bam_dir}"/*.filtered.bam)
 
-echo "Counting ${sample_id}"
+if [[ ! -e "${bam_files[0]}" ]]; then
+  echo "ERROR: No filtered BAM files found in ${bam_dir}" >&2
+  exit 1
+fi
+
+echo "Counting reads across ${#bam_files[@]} samples..."
+
 featureCounts \
   -T 2 \
   -p \
   -B \
   -C \
+  -t gene \
+  -g ID \
   -a "${annotation}" \
-  -o "${counts_dir}/gene_count_matrix.tsv \
-  "${bam_dir}"/*.filtered.bam \
-  2>&1 | tee "${log_dir}/featureCounts.log"
+  -o "${featurecounts_out}" \
+  "${bam_files[@]}" \
+  2>&1 | tee "${log_dir}/featureCounts_all_samples.log"
+
+# Convert the full featureCounts table into the simple gene x sample matrix used by DESeq2.
+awk 'BEGIN { FS = OFS = "\t" }
+  /^#/ { next }
+  $1 == "Geneid" {
+    printf "gene_id"
+    for (i = 7; i <= NF; i++) {
+      sample = $i
+      sub(/^.*\//, "", sample)
+      sub(/[.]filtered[.]bam$/, "", sample)
+      printf OFS sample
+    }
+    printf "\n"
+    next
+  }
+  {
+    printf $1
+    for (i = 7; i <= NF; i++) {
+      printf OFS $i
+    }
+    printf "\n"
+  }' "${featurecounts_out}" > "${count_matrix}"
+
+echo "Wrote ${featurecounts_out}"
+echo "Wrote ${count_matrix}"
 
 ```
 
@@ -485,14 +531,16 @@ docker run --rm \
   -v "$PWD:/work" \
   -w /work \
   docker.io/fgualdr/ngs-featurecounts:latest \
-  bash scripts/day2_rnaseq/03_featurecounts_per_sample.sh
+  bash scripts/day2_rnaseq/03_featurecounts_all_samples.sh
 ```
 
 Check the featureCounts logs:
 
 ```bash
-ls -lh results/logs/day2/*.featureCounts.log
-cat results/logs/day2/*.featureCounts.log
+ls -lh results/logs/day2/featureCounts_all_samples.log
+cat results/logs/day2/featureCounts_all_samples.log
+ls -lh results/day2_rnaseq/counts/gene_count_matrix.tsv
+head results/day2_rnaseq/counts/gene_count_matrix.tsv
 ```
 
 These logs tell us how many aligned fragments were assigned to genes. This is a second sanity check after mapping. A sample can map well but count poorly if the annotation does not match the genome, the wrong feature type is used, the library strandedness is wrong, or many reads fall outside annotated genes.
@@ -506,6 +554,17 @@ geneB    5                8                6
 ```
 
 Keep this matrix as raw integer counts. Do not convert it to CPM, TPM, RPKM, or bigWig signal before DESeq2.
+
+Approximate sanity checks before moving to DESeq2:
+
+| Check | Reasonable teaching-workflow expectation | If it looks bad |
+|---|---|---|
+| Bowtie2 overall alignment rate | Often high for a small bacterial genome when the reference and sample labels are correct | Check wrong reference, contamination, mixed samples, or failed trimming |
+| Properly paired reads after filtering | Most mapped pairs should remain properly paired | Check R1/R2 pairing, sample names, insert size, or over-strict filtering |
+| featureCounts assignment rate | A large fraction of aligned fragments should assign to annotated genes in a compact bacterial genome | Check annotation/reference mismatch, `-t`/`-g` options, strandedness, or chromosome names |
+| Replicate behavior | Replicates should have broadly similar mapping, assignment, and library sizes | Recheck sample labels and any sample-specific QC warning |
+
+These are qualitative checks, not pass/fail statistical tests. A clearly different sample should be investigated before interpreting differential expression.
 
 ## 6. Raw count matrix and DESeq2 differential expression
 
@@ -741,9 +800,15 @@ out_dir="results/day2_rnaseq/bigwig"
 
 mkdir -p "${out_dir}"
 
-for bam in "${bam_dir}"/*.filtered.bam
+bam_files=("${bam_dir}"/*.filtered.bam)
+
+if [[ ! -e "${bam_files[0]}" ]]; then
+  echo "ERROR: No filtered BAM files found in ${bam_dir}" >&2
+  exit 1
+fi
+
+for bam in "${bam_files[@]}"
 do
-  [[ -e "${bam}" ]] || continue
   sample_id="$(basename "${bam}" .filtered.bam)"
 
   bamCoverage \
@@ -774,14 +839,91 @@ results/day2_rnaseq/bigwig/*.cpm.bw
 
 Use these files later for genome-browser inspection together with BAM files, ChIP-seq peaks, and gene annotation.
 
-## 8. Checkpoint route
+## 8. Summarize Day 2 logs with MultiQC
+
+MultiQC collects tool logs into one HTML report. This makes it easier to compare samples side by side instead of opening each Bowtie2, samtools, and featureCounts log separately.
+
+Create `scripts/day2_rnaseq/06_multiqc_day2.sh`:
+
+```bash
+nano scripts/day2_rnaseq/06_multiqc_day2.sh
+```
+
+Paste this script:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+log_dir="results/logs/day2"
+counts_dir="results/day2_rnaseq/counts"
+qc_dir="results/day2_rnaseq/qc"
+
+mkdir -p "${qc_dir}"
+
+if [[ ! -d "${log_dir}" ]]; then
+  echo "ERROR: Day 2 log directory not found: ${log_dir}" >&2
+  exit 1
+fi
+
+if ! compgen -G "${log_dir}/*" > /dev/null; then
+  echo "ERROR: No Day 2 logs found in ${log_dir}" >&2
+  exit 1
+fi
+
+multiqc \
+  "${log_dir}" \
+  "${counts_dir}" \
+  --outdir "${qc_dir}" \
+  --filename multiqc_report.html \
+  --force
+```
+
+Run it:
+
+```bash
+docker run --rm \
+  --platform linux/amd64 \
+  -v "$PWD:/work" \
+  -w /work \
+  multiqc/multiqc:latest \
+  bash scripts/day2_rnaseq/06_multiqc_day2.sh
+```
+
+Expected output:
+
+```text
+results/day2_rnaseq/qc/multiqc_report.html
+```
+
+Open the report in a browser and check whether one sample has a clearly different alignment rate, properly paired rate, or featureCounts assignment rate.
+
+## 9. Files needed by Day 4
+
+Day 4 integration uses the RNA-seq results from this page together with ChIP-seq peaks and genome annotation. Keep these files and names stable:
+
+```text
+reference_genome/genome.fa
+reference_genome/annotation.gff3
+results/day2_rnaseq/counts/gene_count_matrix.tsv
+results/day2_rnaseq/deseq2/deseq2_results.tsv
+results/day2_rnaseq/deseq2/inferred_sample_design.csv
+results/day2_rnaseq/bam/*.filtered.bam
+results/day2_rnaseq/bam/*.filtered.bam.bai
+results/day2_rnaseq/bigwig/*.cpm.bw
+results/day2_rnaseq/qc/multiqc_report.html
+```
+
+The BAM and bigWig files are large generated files. Keep them locally for IGV and downstream inspection, but do not commit them unless the instructor explicitly provides tiny example files.
+
+## 10. Checkpoint route
 
 If local mapping or counting is too slow, continue from instructor-provided checkpoint files:
 
 ```text
 checkpoints/rnaseq/gene_count_matrix.tsv
-checkpoints/rnaseq/sample_metadata.tsv
 checkpoints/rnaseq/bigwig/
+checkpoints/rnaseq/qc/multiqc_report.html
 ```
 
 Record this in `workflow_execution.md`:
@@ -794,7 +936,7 @@ Mapping and counting were demonstrated in class. I used the provided RNA-seq cou
 
 Do not pretend that local mapping was completed if you used checkpoint files.
 
-## 9. Final commit of Day 2
+## 11. Final commit of Day 2
 
 Before committing, check what Git sees:
 
@@ -811,6 +953,7 @@ git add scripts/day2_rnaseq
 git add results/logs/day2
 git add results/day2_rnaseq/counts/gene_count_matrix.tsv
 git add results/day2_rnaseq/deseq2
+git add results/day2_rnaseq/qc/multiqc_report.html
 git add workflow_execution.md README.md
 git status
 ```
@@ -824,7 +967,7 @@ git commit -m "Complete Day 2 RNA-seq mapping counts and DESeq2"
 git push
 ```
 
-## 10. Self-check questions
+## 12. Self-check questions
 
 1. Why is Bowtie2 suitable for this bacterial RNA-seq dataset but not the usual default for mammalian spliced RNA-seq?
 2. What is the difference between SAM, BAM, and BAI?

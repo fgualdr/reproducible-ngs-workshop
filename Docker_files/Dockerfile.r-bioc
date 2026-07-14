@@ -6,6 +6,7 @@ RUN micromamba install -y -n base -c conda-forge -c bioconda \
       r-ggplot2 \
       r-readr \
       r-tibble \
+      r-tidyverse \
       r-pheatmap \
       bioconductor-deseq2 \
       bioconductor-complexheatmap \

@@ -28,20 +28,23 @@ scripts/day1/example_sra_run_selector_download.sh
 ```text
 scripts/day2_rnaseq/01_build_bowtie2_index.sh
 scripts/day2_rnaseq/02_map_bowtie2_sort_index.sh
-scripts/day2_rnaseq/03_featurecounts_per_sample.sh
-scripts/day2_rnaseq/04_merge_featurecounts.R
+scripts/day2_rnaseq/03_featurecounts_all_samples.sh
+scripts/day2_rnaseq/04_deseq2_analysis.R
 scripts/day2_rnaseq/05_make_bigwig_bamcoverage.sh
-scripts/day2_rnaseq/06_deseq2_analysis.R
+scripts/day2_rnaseq/06_multiqc_day2.sh
 ```
 
 ## Day 3 ChIP-seq
 
 ```text
 scripts/day3_chipseq/01_map_bowtie2_sort_index.sh
-scripts/day3_chipseq/02_make_chipseq_bigwigs.sh
-scripts/day3_chipseq/03_call_peaks_macs3_no_input.sh
-scripts/day3_chipseq/04_extract_peak_sequences.sh
-scripts/day3_chipseq/05_run_streme.sh
+scripts/day3_chipseq/02_phantom_peak_cross_correlation.sh
+scripts/day3_chipseq/03_make_chipseq_bigwigs.sh
+scripts/day3_chipseq/04_call_peaks_macs3_no_input.sh
+scripts/day3_chipseq/05_idr_replicate_qc.sh
+scripts/day3_chipseq/06_make_consensus_peak_counts.sh
+scripts/day3_chipseq/07_extract_peak_sequences.sh
+scripts/day3_chipseq/08_run_streme.sh
 ```
 
 ## Runtime convention

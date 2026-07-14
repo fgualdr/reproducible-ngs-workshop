@@ -2,7 +2,7 @@
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) != 2) {
-  stop("Usage: 06_deseq2_analysis.R count_matrix.tsv outdir")
+  stop("Usage: 04_deseq2_analysis.R count_matrix.tsv outdir")
 }
 
 required <- c("DESeq2", "ggplot2")

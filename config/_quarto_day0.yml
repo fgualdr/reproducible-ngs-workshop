@@ -1,0 +1,44 @@
+project:
+  type: website
+  output-dir: docs
+  render:
+    - index.qmd
+    - days/day0_setup.qmd
+    - modules/git_github.qmd
+    - modules/containers_docker_podman.qmd
+    - "!docs/**"
+
+website:
+  title: "Reproducible NGS Data Analysis"
+  site-url: "https://fgualdr.github.io/reproducible-ngs-workshop/"
+  repo-url: "https://github.com/fgualdr/reproducible-ngs-workshop"
+  page-footer:
+    left: "Author: Francesco Gualdrini"
+    right: "Source: [github.com/fgualdr/reproducible-ngs-workshop](https://github.com/fgualdr/reproducible-ngs-workshop)"
+  sidebar:
+    style: docked
+    search: true
+    contents:
+      - text: "Home"
+        href: index.qmd
+      - section: "Day-by-day lessons"
+        contents:
+          - text: "Day 0 - Setup"
+            href: days/day0_setup.qmd
+      - section: "Core modules"
+        contents:
+          - modules/git_github.qmd
+          - modules/containers_docker_podman.qmd
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    number-sections: false
+    code-copy: true
+    css: assets/css/styles.css
+
+execute:
+  freeze: auto
+  eval: false

@@ -24,6 +24,7 @@ website:
   title: "Reproducible NGS Data Analysis"
   site-url: "https://fgualdr.github.io/reproducible-ngs-workshop/"
   repo-url: "https://github.com/fgualdr/reproducible-ngs-workshop"
+  repo-actions: [source, issue]
   page-footer:
     left: "Author: Francesco Gualdrini"
     right: "Source: [github.com/fgualdr/reproducible-ngs-workshop](https://github.com/fgualdr/reproducible-ngs-workshop)"
@@ -73,4 +74,3 @@ format:
 execute:
   freeze: auto
   eval: false
-

@@ -6,18 +6,11 @@ project:
     - days/day0_setup.qmd
     - days/day1_reproducible_project.qmd
     - days/day2_rnaseq.qmd
-    - days/day3_chipseq.qmd
-    - days/day4_integration.qmd
     - modules/git_github.qmd
     - modules/containers_docker_podman.qmd
     - modules/public_data_retrieval.qmd
     - modules/reference_genomes.qmd
     - modules/rnaseq_concepts.qmd
-    - modules/chipseq_concepts.qmd
-    - modules/genomic_intervals.qmd
-    - scripts/README.md
-    - checkpoints/README.md
-    - assessments/submission_checklist.md
     - "!docs/**"
 
 website:
@@ -41,10 +34,6 @@ website:
             href: days/day1_reproducible_project.qmd
           - text: "Day 2 - RNA-seq"
             href: days/day2_rnaseq.qmd
-          - text: "Day 3 - ChIP-seq"
-            href: days/day3_chipseq.qmd
-          - text: "Day 4 - Integration"
-            href: days/day4_integration.qmd
       - section: "Core modules"
         contents:
           - modules/git_github.qmd
@@ -52,14 +41,6 @@ website:
           - modules/public_data_retrieval.qmd
           - modules/reference_genomes.qmd
           - modules/rnaseq_concepts.qmd
-          - modules/chipseq_concepts.qmd
-          - modules/genomic_intervals.qmd
-      - text: "Scripts"
-        href: scripts/README.md
-      - text: "Checkpoints"
-        href: checkpoints/README.md
-      - text: "Assessment"
-        href: assessments/submission_checklist.md
 
 format:
   html:
@@ -73,4 +54,3 @@ format:
 execute:
   freeze: auto
   eval: false
-

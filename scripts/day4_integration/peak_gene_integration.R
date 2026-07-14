@@ -7,9 +7,22 @@ suppressPackageStartupMessages({
 })
 
 # Inputs
-peak_file <- "results/day3_chipseq/peaks/no_input/WT_1_peaks.narrowPeak"
+peak_file <- "results/day3_chipseq/peaks/consensus/day4_consensus_peaks.bed"
 annotation_file <- "reference_genome/annotation.gff3"
 deseq_file <- "results/day2_rnaseq/deseq2/deseq2_results.tsv"
+out_dir <- "results/day4_integration/tables"
+
+if (!file.exists(peak_file)) {
+  stop("Peak file not found: ", peak_file)
+}
+if (!file.exists(annotation_file)) {
+  stop("Annotation file not found: ", annotation_file)
+}
+if (!file.exists(deseq_file)) {
+  stop("DESeq2 result file not found: ", deseq_file)
+}
+
+dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
 # Import data
 peaks <- import(peak_file, format = "BED")
@@ -18,6 +31,12 @@ de <- read_tsv(deseq_file, show_col_types = FALSE)
 
 # Keep gene-like features. Adapt this line to the organism annotation.
 genes <- annotation[annotation$type %in% c("gene", "CDS")]
+if (length(peaks) == 0) {
+  stop("No peaks were imported from: ", peak_file)
+}
+if (length(genes) == 0) {
+  stop("No gene or CDS features were imported from: ", annotation_file)
+}
 
 # Create stable gene identifiers from available metadata.
 gene_id <- mcols(genes)$gene_id
@@ -38,7 +57,7 @@ peak_gene <- tibble(
   peak_end = end(peaks)[queryHits(nearest_hits)]
 )
 
-write_tsv(peak_gene, "results/day4_integration/tables/peak_nearest_gene.tsv")
+write_tsv(peak_gene, file.path(out_dir, "peak_nearest_gene.tsv"))
 
 # Join with DESeq2 results. Adapt the gene ID column if needed.
 if (!"gene_id" %in% names(de)) {
@@ -56,4 +75,4 @@ combined <- peak_gene %>%
     )
   )
 
-write_tsv(combined, "results/day4_integration/tables/peak_gene_deseq2_join.tsv")
+write_tsv(combined, file.path(out_dir, "peak_gene_deseq2_join.tsv"))

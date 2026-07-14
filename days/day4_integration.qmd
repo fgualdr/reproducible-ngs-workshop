@@ -17,7 +17,7 @@ The goal is careful prioritization of candidate regulatory relationships, not ov
 
 ```text
 DESeq2 result table
-  + ChIP-seq peak file
+  + Day 3 consensus ChIP-seq peak file
   + genome annotation
   -> genomic interval objects
   -> peak-to-gene table
@@ -57,8 +57,9 @@ If your repository is stored somewhere else, replace this path with the location
 Use your own outputs or checkpoint files:
 
 ```text
-results/day2_rnaseq/deseq2/deseq2_results.csv or .tsv
-results/day3_chipseq/peaks/no_input/WT_1_peaks.narrowPeak
+results/day2_rnaseq/deseq2/deseq2_results.tsv
+results/day3_chipseq/peaks/consensus/day4_consensus_peaks.bed
+results/day3_chipseq/counts/consensus_peak_counts.tsv
 reference_genome/annotation.gff3
 raw_data/metadata/samples.csv
 ```
@@ -178,7 +179,7 @@ Good final figures should answer specific questions:
 |---|---|
 | Did replicates behave as expected? | PCA or sample-distance plot |
 | Which genes changed? | MA plot, volcano plot, top DEG table |
-| How many peaks were called? | peak-count table with/without input |
+| How many peaks were called? | Day 3 peak-count table and consensus peak summary |
 | Where are peaks relative to genes? | distance-to-gene histogram |
 | Which DE genes have nearby peaks? | candidate direct target table |
 | What does one locus look like? | genome-browser track snapshot |
@@ -213,7 +214,7 @@ After interval operations, many outputs become regular tables: peak ID, nearest 
 In the guided demonstration, you will see:
 
 - importing a DESeq2 result table;
-- importing a `narrowPeak` file;
+- importing the Day 3 consensus BED peak file;
 - importing GFF3 annotation;
 - converting gene features into genomic intervals;
 - computing nearest genes to peaks;
@@ -239,7 +240,8 @@ Create `scripts/day4_integration/execution_note.md` in VS Code and paste:
 
 ## Inputs used
 - DESeq2 table:
-- peak file:
+- Day 3 consensus peak file:
+- optional Day 3 peak-count table:
 - annotation file:
 - checkpoint files, if any:
 
@@ -267,9 +269,22 @@ suppressPackageStartupMessages({
 })
 
 # Inputs
-peak_file <- "results/day3_chipseq/peaks/no_input/WT_1_peaks.narrowPeak"
+peak_file <- "results/day3_chipseq/peaks/consensus/day4_consensus_peaks.bed"
 annotation_file <- "reference_genome/annotation.gff3"
 deseq_file <- "results/day2_rnaseq/deseq2/deseq2_results.tsv"
+out_dir <- "results/day4_integration/tables"
+
+if (!file.exists(peak_file)) {
+  stop("Peak file not found: ", peak_file)
+}
+if (!file.exists(annotation_file)) {
+  stop("Annotation file not found: ", annotation_file)
+}
+if (!file.exists(deseq_file)) {
+  stop("DESeq2 result file not found: ", deseq_file)
+}
+
+dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
 # Import data
 peaks <- import(peak_file, format = "BED")
@@ -278,6 +293,12 @@ de <- read_tsv(deseq_file, show_col_types = FALSE)
 
 # Keep gene-like features. Adapt this line to the organism annotation.
 genes <- annotation[annotation$type %in% c("gene", "CDS")]
+if (length(peaks) == 0) {
+  stop("No peaks were imported from: ", peak_file)
+}
+if (length(genes) == 0) {
+  stop("No gene or CDS features were imported from: ", annotation_file)
+}
 
 # Create stable gene identifiers from available metadata.
 gene_id <- mcols(genes)$gene_id
@@ -298,7 +319,7 @@ peak_gene <- tibble(
   peak_end = end(peaks)[queryHits(nearest_hits)]
 )
 
-write_tsv(peak_gene, "results/day4_integration/tables/peak_nearest_gene.tsv")
+write_tsv(peak_gene, file.path(out_dir, "peak_nearest_gene.tsv"))
 
 # Join with DESeq2 results. Adapt the gene ID column if needed.
 if (!"gene_id" %in% names(de)) {
@@ -316,7 +337,7 @@ combined <- peak_gene %>%
     )
   )
 
-write_tsv(combined, "results/day4_integration/tables/peak_gene_deseq2_join.tsv")
+write_tsv(combined, file.path(out_dir, "peak_gene_deseq2_join.tsv"))
 ```
 
 Run the script you just saved:
@@ -448,7 +469,7 @@ git push
 
 ## Self-check questions
 
-1. What coordinate-system assumptions are involved when combining GFF3 and narrowPeak files?
+1. What coordinate-system assumptions are involved when combining GFF3 and BED-like peak files?
 2. Why is nearest-gene annotation not equivalent to proof of regulation?
 3. How does promoter-window analysis differ for positive- and negative-strand genes?
 4. What evidence supports a candidate direct target?

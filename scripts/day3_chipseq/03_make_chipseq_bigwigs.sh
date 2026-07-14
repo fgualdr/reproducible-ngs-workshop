@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-bam_dir="results/day2_rnaseq/bam"
-out_dir="results/day2_rnaseq/bigwig"
+bam_dir="results/day3_chipseq/bam"
+out_dir="results/day3_chipseq/bigwig"
+log_dir="results/logs/day3"
+THREADS="${THREADS:-2}"
 
-mkdir -p "${out_dir}"
+mkdir -p "${out_dir}" "${log_dir}"
 
 bam_files=("${bam_dir}"/*.filtered.bam)
 
@@ -22,5 +24,6 @@ do
     -o "${out_dir}/${sample_id}.cpm.bw" \
     --normalizeUsing CPM \
     --binSize 10 \
-    --numberOfProcessors 2
+    --numberOfProcessors "${THREADS}" \
+    2>&1 | tee "${log_dir}/${sample_id}.bamCoverage.log"
 done

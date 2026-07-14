@@ -5,13 +5,24 @@ fastq_dir="results/day1_qc/trimmed_fastq/chipseq"
 index_prefix="reference_genome/bowtie2_index/genome"
 bam_dir="results/day3_chipseq/bam"
 log_dir="results/logs/day3"
+THREADS="${THREADS:-2}"
 
 mkdir -p "${bam_dir}" "${log_dir}"
 
-for read1 in "${fastq_dir}"/*_R1.trimmed.fastq.gz
-do
-  [[ -e "${read1}" ]] || continue
+if ! compgen -G "${index_prefix}"*.bt2 > /dev/null; then
+  echo "ERROR: Bowtie2 index files not found for prefix: ${index_prefix}" >&2
+  exit 1
+fi
 
+read1_files=("${fastq_dir}"/*_R1.trimmed.fastq.gz)
+
+if [[ ! -e "${read1_files[0]}" ]]; then
+  echo "ERROR: No ChIP-seq R1 trimmed FASTQ files found in ${fastq_dir}" >&2
+  exit 1
+fi
+
+for read1 in "${read1_files[@]}"
+do
   read2="${read1/_R1.trimmed.fastq.gz/_R2.trimmed.fastq.gz}"
   sample_id="$(basename "${read1}" _R1.trimmed.fastq.gz)"
   sam_file="${bam_dir}/${sample_id}.sam"
@@ -28,12 +39,12 @@ do
     -x "${index_prefix}" \
     -1 "${read1}" \
     -2 "${read2}" \
-    -p 2 \
+    -p "${THREADS}" \
     -S "${sam_file}" \
     2> "${log_dir}/${sample_id}.bowtie2.log"
 
   samtools sort \
-    -@ 2 \
+    -@ "${THREADS}" \
     -o "${bam_file}" \
     "${sam_file}"
 
@@ -42,7 +53,7 @@ do
   samtools flagstat "${bam_file}" > "${log_dir}/${sample_id}.flagstat.txt"
 
   samtools view \
-    -@ 2 \
+    -@ "${THREADS}" \
     -b \
     -q 10 \
     -f 2 \
