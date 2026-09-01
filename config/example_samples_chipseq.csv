@@ -1,7 +1,0 @@
-sample_id,assay,condition,replicate,read1,read2,layout,role,input_sample,source_accession,source_url,publication_sample,genotype,stress
-WT_1,chipseq,WT_control,rep1,raw_data/fastq/chipseq/WT_1_R1.fastq.gz,raw_data/fastq/chipseq/WT_1_R2.fastq.gz,PE,IP,NA,ERR11468761,https://www.ebi.ac.uk/ena/browser/view/ERR11468761,WT_1,wild_type_genotype,none
-WT_2,chipseq,WT_control,rep2,raw_data/fastq/chipseq/WT_2_R1.fastq.gz,raw_data/fastq/chipseq/WT_2_R2.fastq.gz,PE,IP,NA,ERR11468762,https://www.ebi.ac.uk/ena/browser/view/ERR11468762,WT_2,wild_type_genotype,none
-WT_3,chipseq,WT_control,rep3,raw_data/fastq/chipseq/WT_3_R1.fastq.gz,raw_data/fastq/chipseq/WT_3_R2.fastq.gz,PE,IP,NA,ERR11468763,https://www.ebi.ac.uk/ena/browser/view/ERR11468763,WT_3,wild_type_genotype,none
-WTS_1,chipseq,WT_21Oxygen,rep1,raw_data/fastq/chipseq/WTS_1_R1.fastq.gz,raw_data/fastq/chipseq/WTS_1_R2.fastq.gz,PE,IP,NA,ERR11468767,https://www.ebi.ac.uk/ena/browser/view/ERR11468767,WTS_1,wild_type_genotype,21_percent_oxygen
-WTS_2,chipseq,WT_21Oxygen,rep2,raw_data/fastq/chipseq/WTS_2_R1.fastq.gz,raw_data/fastq/chipseq/WTS_2_R2.fastq.gz,PE,IP,NA,ERR11468768,https://www.ebi.ac.uk/ena/browser/view/ERR11468768,WTS_2,wild_type_genotype,21_percent_oxygen
-WTS_3,chipseq,WT_21Oxygen,rep3,raw_data/fastq/chipseq/WTS_3_R1.fastq.gz,raw_data/fastq/chipseq/WTS_3_R2.fastq.gz,PE,IP,NA,ERR11468769,https://www.ebi.ac.uk/ena/browser/view/ERR11468769,WTS_3,wild_type_genotype,21_percent_oxygen

@@ -3,8 +3,6 @@
 These files are examples and should be copied into student repositories before editing.
 
 - `teaching_subset_samples.csv`: WT-only oxidative-stress teaching subset for RNA-seq and ChIP-seq.
-- `example_samples_rnaseq.csv`: RNA-seq-only sample table using the same stable workshop columns.
-- `example_samples_chipseq.csv`: ChIP-seq-only sample table using the same stable workshop columns.
 
 SRA Toolkit is shown in Day 1 as a future-use example, not as the main workshop download route.
 
@@ -13,15 +11,17 @@ SRA Toolkit is shown in Day 1 as a future-use example, not as the main workshop 
 The `_quarto_day*.yml` files are copy-paste templates for publishing the
 website one workshop day at a time.
 
-Use this workflow before each release:
+Choose the release day (`0` through `4`) and render from a clean output folder:
 
 ```bash
-cp config/_quarto_day1.yml _quarto.yml
+release_day=1
+cp "config/_quarto_day${release_day}.yml" _quarto.yml
 rm -rf docs
 quarto render
 ```
 
 Then commit the updated `_quarto.yml` and rendered `docs/` folder.
+The repository's current `_quarto.yml` is the complete Day 4 configuration.
 
 Release order:
 

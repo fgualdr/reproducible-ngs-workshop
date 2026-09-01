@@ -201,9 +201,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
    
   <ul>
   <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
-  <li><a href="#conceptual-background-and-setup-checklist" id="toc-conceptual-background-and-setup-checklist" class="nav-link" data-scroll-target="#conceptual-background-and-setup-checklist">Conceptual background and setup checklist</a>
-  <ul class="collapse">
-  <li><a href="#containers-in-one-sentence" id="toc-containers-in-one-sentence" class="nav-link" data-scroll-target="#containers-in-one-sentence">Containers in one sentence</a></li>
+  <li><a href="#what-you-will-have-ready-today" id="toc-what-you-will-have-ready-today" class="nav-link" data-scroll-target="#what-you-will-have-ready-today">What you will have ready today</a></li>
+  <li><a href="#conceptual-background-and-setup-checklist" id="toc-conceptual-background-and-setup-checklist" class="nav-link" data-scroll-target="#conceptual-background-and-setup-checklist">Conceptual background and setup checklist</a></li>
   <li><a href="#create-online-accounts" id="toc-create-online-accounts" class="nav-link" data-scroll-target="#create-online-accounts">1. Create online accounts</a>
   <ul class="collapse">
   <li><a href="#github-account" id="toc-github-account" class="nav-link" data-scroll-target="#github-account">GitHub account</a></li>
@@ -217,8 +216,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#macos-setup" id="toc-macos-setup" class="nav-link" data-scroll-target="#macos-setup">2.2 macOS</a></li>
   <li><a href="#linux-setup" id="toc-linux-setup" class="nav-link" data-scroll-target="#linux-setup">2.3 Linux</a></li>
   </ul></li>
-  <li><a href="#day-0-readiness-checklist" id="toc-day-0-readiness-checklist" class="nav-link" data-scroll-target="#day-0-readiness-checklist">Day 0 readiness checklist</a></li>
-  </ul></li>
+  <li><a href="#expected-outputs-and-day-0-readiness-checklist" id="toc-expected-outputs-and-day-0-readiness-checklist" class="nav-link" data-scroll-target="#expected-outputs-and-day-0-readiness-checklist">3. Expected outputs and Day 0 readiness checklist</a></li>
+  <li><a href="#git-checkpoint" id="toc-git-checkpoint" class="nav-link" data-scroll-target="#git-checkpoint">4. Git checkpoint</a></li>
+  <li><a href="#common-problems" id="toc-common-problems" class="nav-link" data-scroll-target="#common-problems">5. Common problems</a></li>
   </ul>
 </nav>
     </div>
@@ -228,7 +228,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../days/day0_setup.html">Day-by-day lessons</a></li><li class="breadcrumb-item"><a href="../days/day0_setup.html">Day 0 - Setup</a></li></ol></nav>
 <div class="quarto-title">
 <h1 class="title">Day 0 - Technical setup for a reproducible NGS workshop</h1>
-<p class="subtitle lead">Accounts, software, containers, GitHub, and the first local repository</p>
+<p class="subtitle lead">Accounts, software, containers, and readiness checks</p>
 </div>
 
 
@@ -245,10 +245,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<section id="overview" class="level1">
-<h1>Overview</h1>
+<section id="overview" class="level2">
+<h2 class="anchored" data-anchor-id="overview">Overview</h2>
 <p>This preparatory session ensures that every participant has a working computational environment before the start of the workshop. Personal computers are preferred, but if limitations or installation issues arise, participants will be able to use computers from the University.</p>
 <p>The goal is not to learn bioinformatics yet. Instead, we will verify that the required software is installed correctly and that containers can access files on the local computer.</p>
+</section>
+<section id="what-you-will-have-ready-today" class="level2">
+<h2 class="anchored" data-anchor-id="what-you-will-have-ready-today">What you will have ready today</h2>
 <p>By the end of Day 0, you should be able to:</p>
 <ul>
 <li>access GitHub;</li>
@@ -262,8 +265,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>For any problems, questions, or installation issues, please follow the issue-reporting instructions on the workshop home page.</p>
 <hr>
 </section>
-<section id="conceptual-background-and-setup-checklist" class="level1">
-<h1>Conceptual background and setup checklist</h1>
+<section id="conceptual-background-and-setup-checklist" class="level2">
+<h2 class="anchored" data-anchor-id="conceptual-background-and-setup-checklist">Conceptual background and setup checklist</h2>
 <p>NGS analyses depend on many linked components: input data, reference files, software tools, command-line options, and output files. Small differences in any of these components can change the final results.</p>
 <p>For Day 0, the goal is to create accounts, install the required software, and verify the tools needed to work in a reproducible project folder. The table below combines the setup checklist with the reason each component matters.</p>
 <table class="caption-top table">
@@ -329,23 +332,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 <p>The detailed repository structure will be covered in Day 1. For now, we will focus on the intuitive reasons why we use Git, containers, Visual Studio Code, and IGV in a reproducible NGS workflow.</p>
-<section id="containers-in-one-sentence" class="level3">
-<h3 class="anchored" data-anchor-id="containers-in-one-sentence">Containers in one sentence</h3>
-<p>A container is like a small virtual computer that already contains the command-line tools needed for the workshop.</p>
-<p>It is not a separate physical computer: it uses the computing power of the machine where it is running. The advantage is that the software inside the container stays consistent across Windows, macOS, and Linux.</p>
-<p>The container also needs to see the relevant folders from your computer. To do this, we will <strong>mount</strong> a folder from your computer into the container, similar to connecting an external USB drive:</p>
-<pre class="text"><code>your project folder on your computer  &lt;-&gt;  /work inside the container</code></pre>
-<p>Most practical analysis commands from Day 1 onward mount your project folder inside the container as <code>/work</code> and run from there.</p>
-<div id="fig-day0-container" class="quarto-float quarto-figure quarto-figure-center anchored" alt="Container concept showing host computer, mounted project folder, and reproducible software environment.">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-day0-container-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="../assets/images/day0/container_simple.svg" class="img-fluid figure-img" style="width:85.0%" alt="Container concept showing host computer, mounted project folder, and reproducible software environment.">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-day0-container-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;1: Container concept
-</figcaption>
-</figure>
-</div>
 <div class="callout callout-style-default callout-note callout-titled" title="How this setup will be used">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -356,7 +342,7 @@ Figure&nbsp;1: Container concept
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>We will use Visual Studio Code as the main working environment. VS Code is a versatile and widely used IDE that lets you organize files, browse folder contents, edit scripts and notes, open terminals, run container commands, and inspect outputs such as text files, PDFs, PNGs, and HTML reports.</p>
+<p>We will use Visual Studio Code as the main working environment. VS Code is a versatile and widely used code editor that lets you organize files, browse folder contents, edit scripts and notes, open terminals, run container commands, and inspect outputs such as text files, PDFs, PNGs, and HTML reports.</p>
 <p>Because the software tools will be provided through Docker images, you do not need to install R, RStudio, Python, Bioconductor packages, or command-line bioinformatics tools directly on your computer for the workshop. Those programming languages and tools will run inside the relevant container image.</p>
 <p>The preferred route is to run the practical commands locally with Docker. If this is not possible because of laptop, storage, or installation limitations, we may provide University computers and checkpoint files so that you can still follow the workflow and document the analysis.</p>
 </div>
@@ -548,8 +534,11 @@ Figure&nbsp;1: Container concept
 <h4 class="anchored" data-anchor-id="step-1-install-wsl2-and-ubuntu">Step 1: install WSL2 and Ubuntu</h4>
 <p>Open <strong>Windows Terminal</strong> or <strong>PowerShell</strong> as administrator.</p>
 <p>Run:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode powershell code-with-copy"><code class="sourceCode powershell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>wsl <span class="op">--</span>install</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>This installs WSL and the default Ubuntu distribution. If this command is not available or does not work on your computer, follow the <a href="https://learn.microsoft.com/windows/wsl/install">official Microsoft WSL installation instructions</a>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode powershell code-with-copy"><code class="sourceCode powershell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>wsl <span class="op">--</span>install</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This installs WSL and the default Ubuntu distribution. The one-command route requires a supported, up-to-date version of Windows 10 or Windows 11. If this command is not available or does not work on your computer, follow the <a href="https://learn.microsoft.com/windows/wsl/install">official Microsoft WSL installation instructions</a>.</p>
+<p>If WSL is already installed but Ubuntu is missing, list the available distributions and install Ubuntu explicitly:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode powershell code-with-copy"><code class="sourceCode powershell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>wsl <span class="op">--</span>list <span class="op">--</span>online</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>wsl <span class="op">--</span>install <span class="op">-</span>d Ubuntu</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>If Windows asks you to restart, restart the computer.</p>
 <p>After restart, Ubuntu may open automatically. If not, open <strong>Ubuntu</strong> from the Windows Start menu. (Look for the Linux penguin icon)</p>
 <p>The first time Ubuntu starts, it will ask you to create:</p>
@@ -561,20 +550,22 @@ Figure&nbsp;1: Container concept
 </section>
 <section id="step-2-check-that-ubuntu-uses-wsl2" class="level4">
 <h4 class="anchored" data-anchor-id="step-2-check-that-ubuntu-uses-wsl2">Step 2: check that Ubuntu uses WSL2</h4>
-<p>Open <strong>Windows Terminal</strong> or <strong>PowerShell</strong> and check that Ubuntu is using WSL2:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode powershell code-with-copy"><code class="sourceCode powershell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>wsl <span class="op">-</span>l <span class="op">-</span>v</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Expected output:</p>
+<p>Open <strong>Windows Terminal</strong> or <strong>PowerShell</strong>, update WSL, record its version, and check that Ubuntu is using WSL2:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode powershell code-with-copy"><code class="sourceCode powershell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>wsl <span class="op">--</span>update</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>wsl <span class="op">--</span>version</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>wsl <span class="op">-</span>l <span class="op">-</span>v</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Example output:</p>
 <pre class="text"><code>  NAME      STATE           VERSION
 * Ubuntu    Running         2</code></pre>
-<p>If Ubuntu shows version <code>1</code>, ask for help before continuing.</p>
+<p>The distribution name may be <code>Ubuntu</code>, <code>Ubuntu-24.04</code>, or something similar, and its state may be <code>Running</code> or <code>Stopped</code>. The important value is <code>2</code> in the <code>VERSION</code> column. If Ubuntu shows version <code>1</code>, ask for help before continuing.</p>
+<p>Docker Desktop requires a recent WSL release. If <code>wsl --version</code> is not recognized or the update fails, complete the current Microsoft WSL update instructions before installing Docker Desktop.</p>
 </section>
 <section id="step-3-update-ubuntu-and-install-basic-command-line-tools" class="level4">
 <h4 class="anchored" data-anchor-id="step-3-update-ubuntu-and-install-basic-command-line-tools">Step 3: update Ubuntu and install basic command-line tools</h4>
 <p>Open <strong>Ubuntu</strong> from the Windows Start menu.</p>
 <p>Run:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt update</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt upgrade <span class="at">-y</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> git gawk curl wget ca-certificates unzip</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> git gawk curl wget ca-certificates unzip</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Check Git:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> <span class="at">--version</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Expected output:</p>
@@ -584,11 +575,12 @@ Figure&nbsp;1: Container concept
 <section id="step-4-install-docker-desktop-for-windows" class="level4">
 <h4 class="anchored" data-anchor-id="step-4-install-docker-desktop-for-windows">Step 4: install Docker Desktop for Windows</h4>
 <p>Install <a href="https://docs.docker.com/desktop/setup/install/windows-install/">Docker Desktop for Windows</a>. Depending on which version of Windows you are using, Docker Desktop may prompt you to turn on WSL 2 during installation. Read the information displayed on the screen and turn on the WSL 2 feature to continue.</p>
+<p>Do not install Docker Engine or the Docker CLI with <code>apt</code> inside Ubuntu WSL. Docker documents that a second Docker installation inside the WSL distribution can conflict with Docker Desktop’s WSL integration.</p>
 <p>Open Docker Desktop after installation.</p>
 <p>In Docker Desktop settings:</p>
 <ol type="1">
 <li>Go to <strong>Settings -&gt; General</strong>.</li>
-<li>Make sure <strong>Use the WSL 2 based engine</strong></li>
+<li>Make sure <strong>Use the WSL 2 based engine</strong> is enabled. On current installations this may already be enabled and the setting may not be shown.</li>
 <li>Go to <strong>Resources -&gt; WSL integration</strong>.</li>
 <li>Enable integration with <strong>Ubuntu</strong>.</li>
 <li>Click <strong>Apply &amp; restart</strong> if requested.</li>
@@ -616,6 +608,7 @@ This message shows that your installation appears to be working correctly.</code
 <section id="step-6-install-visual-studio-code" class="level4">
 <h4 class="anchored" data-anchor-id="step-6-install-visual-studio-code">Step 6: install Visual Studio Code</h4>
 <p>Install <a href="https://code.visualstudio.com/docs/setup/windows">Visual Studio Code for Windows</a>.</p>
+<p>During installation, retain the option that adds the <code>code</code> command to <code>PATH</code>, if it is offered.</p>
 <p>Open Visual Studio Code once after installation.</p>
 </section>
 <section id="step-7-install-the-wsl-extension-in-vs-code" class="level4">
@@ -665,7 +658,7 @@ This message shows that your installation appears to be working correctly.</code
 <pre class="text"><code>raw_data/metadata/*.csv
 results/day1_qc/fastqc_raw/*_fastqc.html
 results/day2_rnaseq/counts/*.tsv
-results/day2_rnaseq/deseq2/*.csv</code></pre>
+results/day2_rnaseq/deseq2/*.tsv</code></pre>
 <p>You can also paste this kind of path into the Windows Explorer address bar:</p>
 <pre class="text"><code>\\wsl.localhost\Ubuntu\home\your_username\workshop_ngs</code></pre>
 <p>If your Ubuntu distribution has a slightly different name, open Windows Explorer and type:</p>
@@ -675,22 +668,27 @@ results/day2_rnaseq/deseq2/*.csv</code></pre>
 </section>
 <section id="step-11-test-folder-mounting-with-docker" class="level4">
 <h4 class="anchored" data-anchor-id="step-11-test-folder-mounting-with-docker">Step 11: test folder mounting with Docker</h4>
-<p>In the VS Code terminal connected to Ubuntu WSL, first move into the workshop setup folder:</p>
+<p>In the VS Code terminal connected to Ubuntu WSL, first move into the workshop folder:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/workshop_ngs</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> test_mount</span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"Docker can read this file"</span> <span class="op">&gt;</span> test_mount/message.txt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Then run:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">/test_mount:/work"</span> <span class="dt">\</span></span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  alpine:latest <span class="dt">\</span></span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>  cat /work/message.txt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--platform</span> linux/amd64 <span class="dt">\</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>  alpine:latest <span class="dt">\</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>  cat test_mount/message.txt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Expected output:</p>
 <pre class="text"><code>Docker can read this file</code></pre>
-<p>This confirms that Docker can mount a folder from the Ubuntu WSL project directory into a container.</p>
+<p>This confirms that Docker can mount the Ubuntu WSL project directory into a Linux container using the same <code>linux/amd64</code> platform and <code>/work</code> location used later in the workshop.</p>
+<p>Remove the temporary mount-test files:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> test_mount/message.txt</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rmdir</span> test_mount</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="step-12-install-igv-on-windows" class="level4">
 <h4 class="anchored" data-anchor-id="step-12-install-igv-on-windows">Step 12: install IGV on Windows</h4>
-<p>Install <a href="https://igv.org/doc/desktop/">IGV Desktop on Windows</a>.</p>
+<p>Install <a href="https://igv.org/doc/desktop/DownloadPage/">IGV Desktop on Windows</a> and choose the Windows package that includes Java.</p>
 <p>Open IGV once to confirm that it starts correctly.</p>
 </section>
 </section>
@@ -708,10 +706,10 @@ results/day2_rnaseq/deseq2/*.csv</code></pre>
 <h4 class="anchored" data-anchor-id="step-2-install-homebrew">Step 2: install Homebrew</h4>
 <p>Homebrew is a package manager for macOS. It will be used to install or check command-line tools.</p>
 <p>In Terminal, run the installer command from the <a href="https://brew.sh/">official Homebrew page</a>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="ex">/bin/bash</span> <span class="at">-c</span> <span class="st">"</span><span class="va">$(</span><span class="ex">curl</span> <span class="at">-fsSL</span> https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh<span class="va">)</span><span class="st">"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="ex">/bin/bash</span> <span class="at">-c</span> <span class="st">"</span><span class="va">$(</span><span class="ex">curl</span> <span class="at">-fsSL</span> https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh<span class="va">)</span><span class="st">"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>If the installer prints additional commands under <code>Next steps</code>, run those commands in the same Terminal window so that <code>brew</code> is available on your PATH.</p>
 <p>After installation, open Terminal and check:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="ex">brew</span> <span class="at">--version</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="ex">brew</span> <span class="at">--version</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Expected output:</p>
 <pre class="text"><code>Homebrew x.x.x</code></pre>
 <p>The exact version number may be different.</p>
@@ -719,9 +717,9 @@ results/day2_rnaseq/deseq2/*.csv</code></pre>
 <section id="step-3-install-git-and-basic-command-line-tools" class="level4">
 <h4 class="anchored" data-anchor-id="step-3-install-git-and-basic-command-line-tools">Step 3: install Git and basic command-line tools</h4>
 <p>In Terminal, run:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="ex">brew</span> install git curl wget</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="ex">brew</span> install git gawk curl wget</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Check Git:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> <span class="at">--version</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> <span class="at">--version</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Expected output:</p>
 <pre class="text"><code>git version 2.x.x</code></pre>
 <p>The exact version number may be different.</p>
@@ -731,8 +729,8 @@ results/day2_rnaseq/deseq2/*.csv</code></pre>
 <p>Install <a href="https://docs.docker.com/desktop/setup/install/mac-install/">Docker Desktop for Mac</a>.</p>
 <p>After installation, open Docker Desktop and wait until Docker reports that it is running.</p>
 <p>Check Docker from Terminal or from the VS Code terminal:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> <span class="at">--version</span></span>
-<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> hello-world</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> <span class="at">--version</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> hello-world</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The first time you run this command, Docker may first download the small <code>hello-world</code> image. Output similar to this is normal:</p>
 <pre class="text"><code>Unable to find image 'hello-world:latest' locally
 latest: Pulling from library/hello-world
@@ -747,38 +745,44 @@ This message shows that your installation appears to be working correctly.</code
 <section id="step-5-create-the-workshop-folder" class="level4">
 <h4 class="anchored" data-anchor-id="step-5-create-the-workshop-folder">Step 5: create the workshop folder</h4>
 <p>Create a simple workshop folder in your home directory:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> ~/workshop_ngs</span>
-<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/workshop_ngs</span>
-<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="bu">pwd</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> ~/workshop_ngs</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/workshop_ngs</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="bu">pwd</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Expected output:</p>
 <pre class="text"><code>/Users/your_username/workshop_ngs</code></pre>
 <p>Avoid iCloud Drive, Dropbox, OneDrive, network-mounted folders, and paths with spaces for the main workshop project. A simple folder directly under your home directory is safer for Git, Docker mounts, and command-line paths.</p>
 <p>Open this folder in Visual Studio Code:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="ex">code</span> .</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="ex">code</span> .</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>If the <code>code</code> command is not available, open Visual Studio Code manually and use:</p>
 <pre class="text"><code>File -&gt; Open Folder</code></pre>
 <p>Then select the <code>workshop_ngs</code> folder.</p>
 </section>
 <section id="step-6-test-folder-mounting-with-docker" class="level4">
 <h4 class="anchored" data-anchor-id="step-6-test-folder-mounting-with-docker">Step 6: test folder mounting with Docker</h4>
-<p>From the VS Code terminal or macOS Terminal, first move into the workshop setup folder:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/workshop_ngs</span>
-<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> test_mount</span>
-<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"Docker can read this file"</span> <span class="op">&gt;</span> test_mount/message.txt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>From the VS Code terminal or macOS Terminal, first move into the workshop folder:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/workshop_ngs</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> test_mount</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"Docker can read this file"</span> <span class="op">&gt;</span> test_mount/message.txt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Then run:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb46"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
-<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">/test_mount:/work"</span> <span class="dt">\</span></span>
-<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>  alpine:latest <span class="dt">\</span></span>
-<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>  cat /work/message.txt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb47"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--platform</span> linux/amd64 <span class="dt">\</span></span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a>  alpine:latest <span class="dt">\</span></span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a>  cat test_mount/message.txt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Expected output:</p>
 <pre class="text"><code>Docker can read this file</code></pre>
-<p>This confirms that Docker can mount a local project folder inside a container.</p>
+<p>This confirms that Docker can mount the local project folder into a Linux container using the same <code>linux/amd64</code> platform and <code>/work</code> location used later in the workshop. On an Apple-silicon Mac, this also checks that Docker can run the workshop’s Intel/AMD-compatible container images.</p>
+<p>Remove the temporary mount-test files:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb49"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> test_mount/message.txt</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rmdir</span> test_mount</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="step-7-install-igv" class="level4">
 <h4 class="anchored" data-anchor-id="step-7-install-igv">Step 7: install IGV</h4>
-<p>Install <a href="https://igv.org/doc/desktop/">IGV Desktop</a>.</p>
-<p>Alternatively, if Homebrew is working, IGV can be installed with:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="ex">brew</span> install <span class="at">--cask</span> igv-desktop</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Install <a href="https://igv.org/doc/desktop/DownloadPage/">IGV Desktop</a>.</p>
+<p>Alternatively, if Homebrew is working, install the current Java runtime required by the Homebrew IGV package and then install IGV:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb50"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="ex">brew</span> install <span class="at">--cask</span> temurin</span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="ex">brew</span> install <span class="at">--cask</span> igv-desktop</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Open IGV once to confirm that it starts correctly.</p>
 </section>
 </section>
@@ -806,30 +810,34 @@ This message shows that your installation appears to be working correctly.</code
 <td>Track changes and synchronize the repository with GitHub.</td>
 </tr>
 <tr class="even">
+<td>gawk</td>
+<td>Process simple tabular text files in later practicals.</td>
+</tr>
+<tr class="odd">
 <td>curl</td>
 <td>Download files and query web resources from the command line.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>wget</td>
 <td>Download files from URLs.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>ca-certificates</td>
 <td>Allow secure HTTPS downloads.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>unzip</td>
 <td>Extract compressed archives when needed.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Docker Engine</td>
 <td>Run containerized bioinformatics tools.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Visual Studio Code</td>
 <td>Edit scripts, notes, and configuration files.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>IGV</td>
 <td>Inspect genome-aligned sequencing data.</td>
 </tr>
@@ -843,10 +851,10 @@ This message shows that your installation appears to be working correctly.</code
 <section id="step-2-install-git-and-basic-command-line-tools" class="level4">
 <h4 class="anchored" data-anchor-id="step-2-install-git-and-basic-command-line-tools">Step 2: install Git and basic command-line tools</h4>
 <p>On Ubuntu or Debian-based Linux distributions, open a terminal and run:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb50"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt update</span>
-<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> git curl wget ca-certificates unzip</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb52"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt update</span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> apt install <span class="at">-y</span> git gawk curl wget ca-certificates unzip</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Check Git:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb51"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> <span class="at">--version</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb53"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> <span class="at">--version</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Expected output:</p>
 <pre class="text"><code>git version 2.x.x</code></pre>
 <p>The exact version number may be different.</p>
@@ -861,9 +869,9 @@ This message shows that your installation appears to be working correctly.</code
 <section id="step-4-check-docker" class="level4">
 <h4 class="anchored" data-anchor-id="step-4-check-docker">Step 4: check Docker</h4>
 <p>After installation, check Docker:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb53"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> <span class="at">--version</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb55"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> <span class="at">--version</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Then run the test container:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb54"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> hello-world</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> hello-world</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The first time you run this command, Docker may first download the small <code>hello-world</code> image. Output similar to this is normal:</p>
 <pre class="text"><code>Unable to find image 'hello-world:latest' locally
 latest: Pulling from library/hello-world
@@ -873,50 +881,53 @@ Status: Downloaded newer image for hello-world:latest
 Hello from Docker!
 This message shows that your installation appears to be working correctly.</code></pre>
 <p>The exact digest, platform, and download details may be different.</p>
-<p>If Docker reports a permission error, try:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> docker run <span class="at">--rm</span> hello-world</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>If this works only with <code>sudo</code>, your user does not yet have permission to access the Docker daemon. Follow Docker’s <a href="https://docs.docker.com/engine/install/linux-postinstall/">Linux post-installation instructions</a> or ask for help before the workshop.</p>
+<p>If Docker reports a permission error, your user may not have permission to access the Docker daemon. Do not use <code>sudo docker</code> as the permanent workshop route. Follow Docker’s <a href="https://docs.docker.com/engine/install/linux-postinstall/">Linux post-installation instructions</a> or ask for help before the workshop. Be aware that membership in the <code>docker</code> group grants root-level privileges on the computer.</p>
 </section>
 <section id="step-5-create-the-workshop-folder-1" class="level4">
 <h4 class="anchored" data-anchor-id="step-5-create-the-workshop-folder-1">Step 5: create the workshop folder</h4>
 <p>Create a simple workshop folder in your home directory:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb57"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> ~/workshop_ngs</span>
-<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/workshop_ngs</span>
-<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a><span class="bu">pwd</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb58"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> ~/workshop_ngs</span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/workshop_ngs</span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a><span class="bu">pwd</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Expected output:</p>
 <pre class="text"><code>/home/your_username/workshop_ngs</code></pre>
 <p>Avoid network-mounted folders, synchronized cloud folders such as Dropbox, OneDrive, or iCloud Drive, and paths with spaces for the main workshop project.</p>
 <p>Open this folder in Visual Studio Code:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb59"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="ex">code</span> .</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb60"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="ex">code</span> .</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>If the <code>code</code> command is not available, open Visual Studio Code manually and use:</p>
 <pre class="text"><code>File -&gt; Open Folder</code></pre>
 <p>Then select the <code>workshop_ngs</code> folder.</p>
 </section>
 <section id="step-6-test-folder-mounting-with-docker-1" class="level4">
 <h4 class="anchored" data-anchor-id="step-6-test-folder-mounting-with-docker-1">Step 6: test folder mounting with Docker</h4>
-<p>From the VS Code terminal or Linux terminal, first move into the workshop setup folder:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb61"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/workshop_ngs</span>
-<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> test_mount</span>
-<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"Docker can read this file"</span> <span class="op">&gt;</span> test_mount/message.txt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>From the VS Code terminal or Linux terminal, first move into the workshop folder:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb62"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/workshop_ngs</span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> test_mount</span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"Docker can read this file"</span> <span class="op">&gt;</span> test_mount/message.txt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Then run:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb62"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
-<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">/test_mount:/work"</span> <span class="dt">\</span></span>
-<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>  alpine:latest <span class="dt">\</span></span>
-<span id="cb62-4"><a href="#cb62-4" aria-hidden="true" tabindex="-1"></a>  cat /work/message.txt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb63"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--platform</span> linux/amd64 <span class="dt">\</span></span>
+<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
+<span id="cb63-4"><a href="#cb63-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
+<span id="cb63-5"><a href="#cb63-5" aria-hidden="true" tabindex="-1"></a>  alpine:latest <span class="dt">\</span></span>
+<span id="cb63-6"><a href="#cb63-6" aria-hidden="true" tabindex="-1"></a>  cat test_mount/message.txt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Expected output:</p>
 <pre class="text"><code>Docker can read this file</code></pre>
-<p>This confirms that Docker can mount a local project folder inside a container.</p>
+<p>This confirms that Docker can mount the local project folder into a Linux container using the same <code>linux/amd64</code> platform and <code>/work</code> location used later in the workshop.</p>
+<p>Remove the temporary mount-test files:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb65"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> test_mount/message.txt</span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rmdir</span> test_mount</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="step-7-install-igv-1" class="level4">
 <h4 class="anchored" data-anchor-id="step-7-install-igv-1">Step 7: install IGV</h4>
-<p>Install <a href="https://igv.org/doc/desktop/">IGV Desktop</a>.</p>
+<p>Install <a href="https://igv.org/doc/desktop/DownloadPage/">IGV Desktop</a>. Prefer the Linux package that includes Java. Current IGV releases require Java 21 or newer when Java is not bundled with the download.</p>
 <p>Open IGV once to confirm that it starts correctly.</p>
 </section>
 </section>
 </section>
-<section id="day-0-readiness-checklist" class="level2">
-<h2 class="anchored" data-anchor-id="day-0-readiness-checklist">Day 0 readiness checklist</h2>
-<p>You are ready for Day 1 if you can confirm all of the following:</p>
+<section id="expected-outputs-and-day-0-readiness-checklist" class="level2">
+<h2 class="anchored" data-anchor-id="expected-outputs-and-day-0-readiness-checklist">3. Expected outputs and Day 0 readiness checklist</h2>
+<p>Day 0 produces a working local environment, not NGS analysis files or biological results. You are ready for Day 1 if you can confirm all of the following:</p>
 <ul>
 <li>You can log in to GitHub.</li>
 <li>You can log in to Docker Hub.</li>
@@ -924,14 +935,72 @@ This message shows that your installation appears to be working correctly.</code
 <li>Windows users can open a VS Code terminal connected to Ubuntu WSL.</li>
 <li>macOS and Linux users can open a terminal from the <code>workshop_ngs</code> folder.</li>
 <li><code>git --version</code> prints a Git version.</li>
+<li><code>gawk --version</code>, <code>curl --version</code>, and <code>wget --version</code> run successfully.</li>
 <li><code>docker --version</code> prints a Docker version.</li>
 <li><code>docker run --rm hello-world</code> completes successfully.</li>
-<li>The Docker mount test prints <code>Docker can read this file</code>.</li>
+<li>The <code>linux/amd64</code> Docker mount test prints <code>Docker can read this file</code>.</li>
 <li>IGV opens correctly.</li>
 </ul>
-
-
 </section>
+<section id="git-checkpoint" class="level2">
+<h2 class="anchored" data-anchor-id="git-checkpoint">4. Git checkpoint</h2>
+<p>No Git commit is expected on Day 0. The <code>workshop_ngs</code> directory is only a local folder at this stage. Day 1 initializes it as a Git repository, creates the required project structure and <code>.gitignore</code>, and makes the first commit.</p>
+</section>
+<section id="common-problems" class="level2">
+<h2 class="anchored" data-anchor-id="common-problems">5. Common problems</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Problem</th>
+<th>Likely cause</th>
+<th>What to check</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>The VS Code terminal starts with <code>PS C:\...</code></td>
+<td>VS Code is still connected to Windows rather than Ubuntu WSL</td>
+<td>Reopen the folder with <strong>WSL: Connect to WSL</strong> and confirm that <code>pwd</code> starts with <code>/home/</code></td>
+</tr>
+<tr class="even">
+<td><code>docker</code> is not found inside Ubuntu WSL</td>
+<td>Docker Desktop is not running or WSL integration is disabled</td>
+<td>Docker Desktop <strong>Settings -&gt; Resources -&gt; WSL integration</strong></td>
+</tr>
+<tr class="odd">
+<td>Docker cannot connect to its daemon</td>
+<td>Docker Desktop or the native Linux Docker service is not running</td>
+<td>Start Docker Desktop, or follow the service instructions for your Linux distribution</td>
+</tr>
+<tr class="even">
+<td>Docker reports a permission error on Linux</td>
+<td>The current user cannot access the Docker socket</td>
+<td>Follow the official Linux post-installation guidance; do not rely on <code>sudo docker</code> for workshop commands</td>
+</tr>
+<tr class="odd">
+<td><code>hello-world</code> works but the mount test fails</td>
+<td>The command was run outside <code>~/workshop_ngs</code>, the folder was not shared, or <code>linux/amd64</code> emulation is unavailable</td>
+<td>Check <code>pwd</code>, Docker Desktop file sharing/emulation settings, and the exact mount command</td>
+</tr>
+<tr class="even">
+<td><code>code .</code> is not found</td>
+<td>The VS Code command-line launcher is not on <code>PATH</code></td>
+<td>Open VS Code manually and use <strong>File -&gt; Open Folder</strong></td>
+</tr>
+<tr class="odd">
+<td>IGV does not start</td>
+<td>The wrong package was downloaded or a non-bundled installation lacks a current Java runtime</td>
+<td>Use the platform-specific IGV download; current non-bundled releases require Java 21 or newer</td>
+</tr>
+</tbody>
+</table>
+
+
 </section>
 
 </main> <!-- /main -->

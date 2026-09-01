@@ -1,6 +1,10 @@
-organism: "TODO_ORGANISM"
-genome_fasta_url: "TODO_REFERENCE_URL"
-annotation_gff_url: "TODO_ANNOTATION_URL"
-genome_size: "TODO_GENOME_SIZE"
-source: "TODO_SOURCE_AND_RELEASE"
-
+organism: "Helicobacter pylori strain CHC155"
+assembly_accession: "GCF_025998455.1"
+assembly_name: "ASM2599845v1"
+chromosome_accession: "NZ_AP026446.1"
+genome_fasta_url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/025/998/455/GCF_025998455.1_ASM2599845v1/GCF_025998455.1_ASM2599845v1_genomic.fna.gz"
+annotation_gff3_url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/025/998/455/GCF_025998455.1_ASM2599845v1/GCF_025998455.1_ASM2599845v1_genomic.gff.gz"
+annotation_gtf_url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/025/998/455/GCF_025998455.1_ASM2599845v1/GCF_025998455.1_ASM2599845v1_genomic.gtf.gz"
+annotation_genbank_url: "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/025/998/455/GCF_025998455.1_ASM2599845v1/GCF_025998455.1_ASM2599845v1_genomic.gbff.gz"
+genome_size_bp: 1696601
+source: "NCBI RefSeq"

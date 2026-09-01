@@ -319,7 +319,8 @@ Important
 <li>ChIP-seq dataset: <a href="https://www.ebi.ac.uk/biostudies/arrayexpress/studies/E-MTAB-13026?key=2b27b413-e118-4802-859e-5da57ff1ead2">E-MTAB-13026</a></li>
 </ul>
 <p>The full study includes multiple conditions and analyses. In this workshop, we focus on a small teaching subset of the wild-type strain under microaerobic and aerobic conditions.</p>
-<p>Our small teaching workflow captures the logic of the published analysis, but it is simplified for laptop-scale execution. It should not be interpreted as a full reproduction of the paper.</p>
+<p>The publication provides biological context and raw-data provenance; it does not define the workshop reference coordinates. We reprocess the selected FASTQ files against the current NCBI RefSeq reference assembly <code>GCF_025998455.1</code> (<code>ASM2599845v1</code>, strain CHC155; chromosome <code>NZ_AP026446.1</code>) using its matching RefSeq annotation. All BAM, bigWig, count, peak, and integration outputs are regenerated in that coordinate system rather than reused from the publication.</p>
+<p>This is a simplified, laptop-scale reanalysis and is not expected to reproduce the paper’s coordinate-dependent results.</p>
 <hr>
 </section>
 <section id="before-you-start" class="level1">

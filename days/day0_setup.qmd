@@ -1,17 +1,19 @@
 ---
 title: "Day 0 - Technical setup for a reproducible NGS workshop"
-subtitle: "Accounts, software, containers, GitHub, and the first local repository"
+subtitle: "Accounts, software, containers, and readiness checks"
 format: html
 execute:
   eval: false
 ---
 
-# Overview
+## Overview
 
 This preparatory session ensures that every participant has a working computational environment before the start of the workshop.
 Personal computers are preferred, but if limitations or installation issues arise, participants will be able to use computers from the University.
 
 The goal is not to learn bioinformatics yet. Instead, we will verify that the required software is installed correctly and that containers can access files on the local computer.
+
+## What you will have ready today
 
 By the end of Day 0, you should be able to:
 
@@ -28,7 +30,7 @@ For any problems, questions, or installation issues, please follow the issue-rep
 
 ***
 
-# Conceptual background and setup checklist
+## Conceptual background and setup checklist
 
 NGS analyses depend on many linked components: input data, reference files, software tools, command-line options, and output files. Small differences in any of these components can change the final results.
 
@@ -45,24 +47,8 @@ For Day 0, the goal is to create accounts, install the required software, and ve
 
 The detailed repository structure will be covered in Day 1. For now, we will focus on the intuitive reasons why we use Git, containers, Visual Studio Code, and IGV in a reproducible NGS workflow.
 
-### Containers in one sentence
-
-A container is like a small virtual computer that already contains the command-line tools needed for the workshop.
-
-It is not a separate physical computer: it uses the computing power of the machine where it is running. The advantage is that the software inside the container stays consistent across Windows, macOS, and Linux.
-
-The container also needs to see the relevant folders from your computer. To do this, we will **mount** a folder from your computer into the container, similar to connecting an external USB drive:
-
-```text
-your project folder on your computer  <->  /work inside the container
-```
-
-Most practical analysis commands from Day 1 onward mount your project folder inside the container as `/work` and run from there.
-
-![Container concept](../assets/images/day0/container_simple.svg){#fig-day0-container width="85%" fig-alt="Container concept showing host computer, mounted project folder, and reproducible software environment."}
-
 ::: {.callout-note title="How this setup will be used"}
-We will use Visual Studio Code as the main working environment. VS Code is a versatile and widely used IDE that lets you organize files, browse folder contents, edit scripts and notes, open terminals, run container commands, and inspect outputs such as text files, PDFs, PNGs, and HTML reports.
+We will use Visual Studio Code as the main working environment. VS Code is a versatile and widely used code editor that lets you organize files, browse folder contents, edit scripts and notes, open terminals, run container commands, and inspect outputs such as text files, PDFs, PNGs, and HTML reports.
 
 Because the software tools will be provided through Docker images, you do not need to install R, RStudio, Python, Bioconductor packages, or command-line bioinformatics tools directly on your computer for the workshop. Those programming languages and tools will run inside the relevant container image.
 
@@ -188,7 +174,14 @@ Run:
 wsl --install
 ```
 
-This installs WSL and the default Ubuntu distribution. If this command is not available or does not work on your computer, follow the [official Microsoft WSL installation instructions](https://learn.microsoft.com/windows/wsl/install).
+This installs WSL and the default Ubuntu distribution. The one-command route requires a supported, up-to-date version of Windows 10 or Windows 11. If this command is not available or does not work on your computer, follow the [official Microsoft WSL installation instructions](https://learn.microsoft.com/windows/wsl/install).
+
+If WSL is already installed but Ubuntu is missing, list the available distributions and install Ubuntu explicitly:
+
+```powershell
+wsl --list --online
+wsl --install -d Ubuntu
+```
 
 If Windows asks you to restart, restart the computer.
 
@@ -203,20 +196,24 @@ This password is used for Ubuntu commands such as `sudo`. It is not your Windows
 
 #### Step 2: check that Ubuntu uses WSL2
 
-Open **Windows Terminal** or **PowerShell** and check that Ubuntu is using WSL2:
+Open **Windows Terminal** or **PowerShell**, update WSL, record its version, and check that Ubuntu is using WSL2:
 
 ```powershell
+wsl --update
+wsl --version
 wsl -l -v
 ```
 
-Expected output:
+Example output:
 
 ```text
   NAME      STATE           VERSION
 * Ubuntu    Running         2
 ```
 
-If Ubuntu shows version `1`, ask for help before continuing.
+The distribution name may be `Ubuntu`, `Ubuntu-24.04`, or something similar, and its state may be `Running` or `Stopped`. The important value is `2` in the `VERSION` column. If Ubuntu shows version `1`, ask for help before continuing.
+
+Docker Desktop requires a recent WSL release. If `wsl --version` is not recognized or the update fails, complete the current Microsoft WSL update instructions before installing Docker Desktop.
 
 #### Step 3: update Ubuntu and install basic command-line tools
 
@@ -226,7 +223,6 @@ Run:
 
 ```bash
 sudo apt update
-sudo apt upgrade -y
 sudo apt install -y git gawk curl wget ca-certificates unzip
 ```
 
@@ -248,12 +244,14 @@ The exact version number may be different.
 
 Install [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/). Depending on which version of Windows you are using, Docker Desktop may prompt you to turn on WSL 2 during installation. Read the information displayed on the screen and turn on the WSL 2 feature to continue.
 
+Do not install Docker Engine or the Docker CLI with `apt` inside Ubuntu WSL. Docker documents that a second Docker installation inside the WSL distribution can conflict with Docker Desktop's WSL integration.
+
 Open Docker Desktop after installation.
 
 In Docker Desktop settings:
 
 1. Go to **Settings -> General**.
-2. Make sure **Use the WSL 2 based engine**
+2. Make sure **Use the WSL 2 based engine** is enabled. On current installations this may already be enabled and the setting may not be shown.
 3. Go to **Resources -> WSL integration**.
 4. Enable integration with **Ubuntu**.
 5. Click **Apply & restart** if requested.
@@ -294,6 +292,8 @@ Resources -> WSL integration -> Ubuntu enabled
 #### Step 6: install Visual Studio Code
 
 Install [Visual Studio Code for Windows](https://code.visualstudio.com/docs/setup/windows).
+
+During installation, retain the option that adds the `code` command to `PATH`, if it is offered.
 
 Open Visual Studio Code once after installation.
 
@@ -398,7 +398,7 @@ You will be able to double-click small output files from there, like those we wi
 raw_data/metadata/*.csv
 results/day1_qc/fastqc_raw/*_fastqc.html
 results/day2_rnaseq/counts/*.tsv
-results/day2_rnaseq/deseq2/*.csv
+results/day2_rnaseq/deseq2/*.tsv
 ```
 
 You can also paste this kind of path into the Windows Explorer address bar:
@@ -419,7 +419,7 @@ Important rule: use Windows Explorer for browsing and opening results, but run w
 
 #### Step 11: test folder mounting with Docker
 
-In the VS Code terminal connected to Ubuntu WSL, first move into the workshop setup folder:
+In the VS Code terminal connected to Ubuntu WSL, first move into the workshop folder:
 
 ```bash
 cd ~/workshop_ngs
@@ -431,9 +431,11 @@ Then run:
 
 ```bash
 docker run --rm \
-  -v "$PWD/test_mount:/work" \
+  --platform linux/amd64 \
+  -v "$PWD:/work" \
+  -w /work \
   alpine:latest \
-  cat /work/message.txt
+  cat test_mount/message.txt
 ```
 
 Expected output:
@@ -442,11 +444,18 @@ Expected output:
 Docker can read this file
 ```
 
-This confirms that Docker can mount a folder from the Ubuntu WSL project directory into a container.
+This confirms that Docker can mount the Ubuntu WSL project directory into a Linux container using the same `linux/amd64` platform and `/work` location used later in the workshop.
+
+Remove the temporary mount-test files:
+
+```bash
+rm test_mount/message.txt
+rmdir test_mount
+```
 
 #### Step 12: install IGV on Windows
 
-Install [IGV Desktop on Windows](https://igv.org/doc/desktop/).
+Install [IGV Desktop on Windows](https://igv.org/doc/desktop/DownloadPage/) and choose the Windows package that includes Java.
 
 Open IGV once to confirm that it starts correctly.
 
@@ -497,7 +506,7 @@ The exact version number may be different.
 In Terminal, run:
 
 ```bash
-brew install git curl wget
+brew install git gawk curl wget
 ```
 
 Check Git:
@@ -577,7 +586,7 @@ Then select the `workshop_ngs` folder.
 
 #### Step 6: test folder mounting with Docker
 
-From the VS Code terminal or macOS Terminal, first move into the workshop setup folder:
+From the VS Code terminal or macOS Terminal, first move into the workshop folder:
 
 ```bash
 cd ~/workshop_ngs
@@ -589,9 +598,11 @@ Then run:
 
 ```bash
 docker run --rm \
-  -v "$PWD/test_mount:/work" \
+  --platform linux/amd64 \
+  -v "$PWD:/work" \
+  -w /work \
   alpine:latest \
-  cat /work/message.txt
+  cat test_mount/message.txt
 ```
 
 Expected output:
@@ -600,15 +611,23 @@ Expected output:
 Docker can read this file
 ```
 
-This confirms that Docker can mount a local project folder inside a container.
+This confirms that Docker can mount the local project folder into a Linux container using the same `linux/amd64` platform and `/work` location used later in the workshop. On an Apple-silicon Mac, this also checks that Docker can run the workshop's Intel/AMD-compatible container images.
+
+Remove the temporary mount-test files:
+
+```bash
+rm test_mount/message.txt
+rmdir test_mount
+```
 
 #### Step 7: install IGV
 
-Install [IGV Desktop](https://igv.org/doc/desktop/).
+Install [IGV Desktop](https://igv.org/doc/desktop/DownloadPage/).
 
-Alternatively, if Homebrew is working, IGV can be installed with:
+Alternatively, if Homebrew is working, install the current Java runtime required by the Homebrew IGV package and then install IGV:
 
 ```bash
+brew install --cask temurin
 brew install --cask igv-desktop
 ```
 
@@ -631,6 +650,7 @@ The tools required on Linux are:
 | Tool               | Purpose                                                       |
 | ------------------ | ------------------------------------------------------------- |
 | Git                | Track changes and synchronize the repository with GitHub.     |
+| gawk               | Process simple tabular text files in later practicals.         |
 | curl               | Download files and query web resources from the command line. |
 | wget               | Download files from URLs.                                     |
 | ca-certificates    | Allow secure HTTPS downloads.                                 |
@@ -651,7 +671,7 @@ On Ubuntu or Debian-based Linux distributions, open a terminal and run:
 
 ```bash
 sudo apt update
-sudo apt install -y git curl wget ca-certificates unzip
+sudo apt install -y git gawk curl wget ca-certificates unzip
 ```
 
 Check Git:
@@ -706,13 +726,7 @@ This message shows that your installation appears to be working correctly.
 
 The exact digest, platform, and download details may be different.
 
-If Docker reports a permission error, try:
-
-```bash
-sudo docker run --rm hello-world
-```
-
-If this works only with `sudo`, your user does not yet have permission to access the Docker daemon. Follow Docker’s [Linux post-installation instructions](https://docs.docker.com/engine/install/linux-postinstall/) or ask for help before the workshop.
+If Docker reports a permission error, your user may not have permission to access the Docker daemon. Do not use `sudo docker` as the permanent workshop route. Follow Docker's [Linux post-installation instructions](https://docs.docker.com/engine/install/linux-postinstall/) or ask for help before the workshop. Be aware that membership in the `docker` group grants root-level privileges on the computer.
 
 #### Step 5: create the workshop folder
 
@@ -748,7 +762,7 @@ Then select the `workshop_ngs` folder.
 
 #### Step 6: test folder mounting with Docker
 
-From the VS Code terminal or Linux terminal, first move into the workshop setup folder:
+From the VS Code terminal or Linux terminal, first move into the workshop folder:
 
 ```bash
 cd ~/workshop_ngs
@@ -760,9 +774,11 @@ Then run:
 
 ```bash
 docker run --rm \
-  -v "$PWD/test_mount:/work" \
+  --platform linux/amd64 \
+  -v "$PWD:/work" \
+  -w /work \
   alpine:latest \
-  cat /work/message.txt
+  cat test_mount/message.txt
 ```
 
 Expected output:
@@ -771,17 +787,24 @@ Expected output:
 Docker can read this file
 ```
 
-This confirms that Docker can mount a local project folder inside a container.
+This confirms that Docker can mount the local project folder into a Linux container using the same `linux/amd64` platform and `/work` location used later in the workshop.
+
+Remove the temporary mount-test files:
+
+```bash
+rm test_mount/message.txt
+rmdir test_mount
+```
 
 #### Step 7: install IGV
 
-Install [IGV Desktop](https://igv.org/doc/desktop/).
+Install [IGV Desktop](https://igv.org/doc/desktop/DownloadPage/). Prefer the Linux package that includes Java. Current IGV releases require Java 21 or newer when Java is not bundled with the download.
 
 Open IGV once to confirm that it starts correctly.
 
-## Day 0 readiness checklist
+## 3. Expected outputs and Day 0 readiness checklist
 
-You are ready for Day 1 if you can confirm all of the following:
+Day 0 produces a working local environment, not NGS analysis files or biological results. You are ready for Day 1 if you can confirm all of the following:
 
 - You can log in to GitHub.
 - You can log in to Docker Hub.
@@ -789,7 +812,24 @@ You are ready for Day 1 if you can confirm all of the following:
 - Windows users can open a VS Code terminal connected to Ubuntu WSL.
 - macOS and Linux users can open a terminal from the `workshop_ngs` folder.
 - `git --version` prints a Git version.
+- `gawk --version`, `curl --version`, and `wget --version` run successfully.
 - `docker --version` prints a Docker version.
 - `docker run --rm hello-world` completes successfully.
-- The Docker mount test prints `Docker can read this file`.
+- The `linux/amd64` Docker mount test prints `Docker can read this file`.
 - IGV opens correctly.
+
+## 4. Git checkpoint
+
+No Git commit is expected on Day 0. The `workshop_ngs` directory is only a local folder at this stage. Day 1 initializes it as a Git repository, creates the required project structure and `.gitignore`, and makes the first commit.
+
+## 5. Common problems
+
+| Problem | Likely cause | What to check |
+|---|---|---|
+| The VS Code terminal starts with `PS C:\...` | VS Code is still connected to Windows rather than Ubuntu WSL | Reopen the folder with **WSL: Connect to WSL** and confirm that `pwd` starts with `/home/` |
+| `docker` is not found inside Ubuntu WSL | Docker Desktop is not running or WSL integration is disabled | Docker Desktop **Settings -> Resources -> WSL integration** |
+| Docker cannot connect to its daemon | Docker Desktop or the native Linux Docker service is not running | Start Docker Desktop, or follow the service instructions for your Linux distribution |
+| Docker reports a permission error on Linux | The current user cannot access the Docker socket | Follow the official Linux post-installation guidance; do not rely on `sudo docker` for workshop commands |
+| `hello-world` works but the mount test fails | The command was run outside `~/workshop_ngs`, the folder was not shared, or `linux/amd64` emulation is unavailable | Check `pwd`, Docker Desktop file sharing/emulation settings, and the exact mount command |
+| `code .` is not found | The VS Code command-line launcher is not on `PATH` | Open VS Code manually and use **File -> Open Folder** |
+| IGV does not start | The wrong package was downloaded or a non-bundled installation lacks a current Java runtime | Use the platform-specific IGV download; current non-bundled releases require Java 21 or newer |
