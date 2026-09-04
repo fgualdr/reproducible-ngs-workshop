@@ -14,8 +14,8 @@ docker run --rm \
   --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  docker.io/fgualdr/ngs-fastqc:latest \
-  bash scripts/day1/01_fastqc_raw.sh
+  docker.io/fgualdr/ngs-fastp:latest \
+  bash scripts/day1/02_trim_fastq.sh
 ```
 
 ## Why this matters

@@ -26,7 +26,7 @@ By the end of Day 0, you should be able to:
 
 These steps should be completed before the start of the workshop.
 
-For any problems, questions, or installation issues, please follow the issue-reporting instructions on the workshop home page.
+For any problems, questions, or installation issues, follow the issue-reporting instructions at the end of this page.
 
 ***
 
@@ -396,7 +396,7 @@ You will be able to double-click small output files from there, like those we wi
 
 ```text
 raw_data/metadata/*.csv
-results/day1_qc/fastqc_raw/*_fastqc.html
+results/logs/day1/fastp/*.fastp.html
 results/day2_rnaseq/counts/*.tsv
 results/day2_rnaseq/deseq2/*.tsv
 ```
@@ -833,3 +833,27 @@ No Git commit is expected on Day 0. The `workshop_ngs` directory is only a local
 | `hello-world` works but the mount test fails | The command was run outside `~/workshop_ngs`, the folder was not shared, or `linux/amd64` emulation is unavailable | Check `pwd`, Docker Desktop file sharing/emulation settings, and the exact mount command |
 | `code .` is not found | The VS Code command-line launcher is not on `PATH` | Open VS Code manually and use **File -> Open Folder** |
 | IGV does not start | The wrong package was downloaded or a non-bundled installation lacks a current Java runtime | Use the platform-specific IGV download; current non-bundled releases require Java 21 or newer |
+
+## 6. Report a setup problem
+
+If a setup problem remains after checking the table above, email:
+
+```text
+francesco.gualdrini@gmail.com
+```
+
+Use this exact email subject:
+
+```text
+Issue - Reproducible NGS workshop
+```
+
+In the message, include:
+
+- your operating system and version;
+- the Day 0 step where the problem occurred;
+- the command you ran;
+- the complete error message or a screenshot of it;
+- which readiness checks completed successfully.
+
+Do not include passwords, access tokens, or account recovery codes.

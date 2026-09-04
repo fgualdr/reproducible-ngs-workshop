@@ -219,6 +219,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#expected-outputs-and-day-0-readiness-checklist" id="toc-expected-outputs-and-day-0-readiness-checklist" class="nav-link" data-scroll-target="#expected-outputs-and-day-0-readiness-checklist">3. Expected outputs and Day 0 readiness checklist</a></li>
   <li><a href="#git-checkpoint" id="toc-git-checkpoint" class="nav-link" data-scroll-target="#git-checkpoint">4. Git checkpoint</a></li>
   <li><a href="#common-problems" id="toc-common-problems" class="nav-link" data-scroll-target="#common-problems">5. Common problems</a></li>
+  <li><a href="#report-a-setup-problem" id="toc-report-a-setup-problem" class="nav-link" data-scroll-target="#report-a-setup-problem">6. Report a setup problem</a></li>
   </ul>
 </nav>
     </div>
@@ -262,7 +263,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>install and open IGV.</li>
 </ul>
 <p>These steps should be completed before the start of the workshop.</p>
-<p>For any problems, questions, or installation issues, please follow the issue-reporting instructions on the workshop home page.</p>
+<p>For any problems, questions, or installation issues, follow the issue-reporting instructions at the end of this page.</p>
 <hr>
 </section>
 <section id="conceptual-background-and-setup-checklist" class="level2">
@@ -656,7 +657,7 @@ This message shows that your installation appears to be working correctly.</code
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="ex">explorer.exe</span> .</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Windows File Explorer will open the current Ubuntu folder. You will be able to double-click small output files from there, like those we will generate under the folders:</p>
 <pre class="text"><code>raw_data/metadata/*.csv
-results/day1_qc/fastqc_raw/*_fastqc.html
+results/logs/day1/fastp/*.fastp.html
 results/day2_rnaseq/counts/*.tsv
 results/day2_rnaseq/deseq2/*.tsv</code></pre>
 <p>You can also paste this kind of path into the Windows Explorer address bar:</p>
@@ -999,6 +1000,22 @@ This message shows that your installation appears to be working correctly.</code
 </tr>
 </tbody>
 </table>
+</section>
+<section id="report-a-setup-problem" class="level2">
+<h2 class="anchored" data-anchor-id="report-a-setup-problem">6. Report a setup problem</h2>
+<p>If a setup problem remains after checking the table above, email:</p>
+<pre class="text"><code>francesco.gualdrini@gmail.com</code></pre>
+<p>Use this exact email subject:</p>
+<pre class="text"><code>Issue - Reproducible NGS workshop</code></pre>
+<p>In the message, include:</p>
+<ul>
+<li>your operating system and version;</li>
+<li>the Day 0 step where the problem occurred;</li>
+<li>the command you ran;</li>
+<li>the complete error message or a screenshot of it;</li>
+<li>which readiness checks completed successfully.</li>
+</ul>
+<p>Do not include passwords, access tokens, or account recovery codes.</p>
 
 
 </section>

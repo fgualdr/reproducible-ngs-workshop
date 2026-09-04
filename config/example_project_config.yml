@@ -8,5 +8,6 @@ reference:
   chromosome_accession: "NZ_AP026446.1"
   fasta: "reference_genome/genome.fa"
   annotation: "reference_genome/annotation.gff3"
+  gene_model_bed: "reference_genome/genes.bed"
   bowtie2_index_prefix: "reference_genome/bowtie2_index/genome"
   genome_size: "1696601"
