@@ -40,9 +40,13 @@ Also check that the reference genome and annotation are present:
 ```bash
 ls -lh reference_genome/genome.fa
 ls -lh reference_genome/annotation.gff3
+ls -lh reference_genome/genes.bed
+grep '^>' reference_genome/genome.fa | grep 'NZ_AP026446.1'
+grep -v '^#' reference_genome/annotation.gff3 | head -1
+head -1 reference_genome/genes.bed
 ```
 
-If these files are missing, use the instructor-provided checkpoint files before continuing.
+The FASTA, GFF3, and BED checks must all report `NZ_AP026446.1`. If these files are missing, run the Day 1 reference-download script. Use checkpoint files only when their provenance explicitly states `GCF_025998455.1`.
 
 ## 2. Overview of the day
 
@@ -57,6 +61,7 @@ trimmed RNA-seq FASTQ
   -> SAM/BAM alignment files
   -> sorted and indexed BAM files
   -> samtools cleanup and mapping summaries
+  -> determine RNA-seq library strandedness
   -> featureCounts gene counts
   -> raw gene count matrix
   -> DESeq2 differential expression
@@ -69,6 +74,7 @@ Today we will produce:
 reference_genome/bowtie2_index/
 results/day2_rnaseq/bam/*.sorted.bam
 results/day2_rnaseq/bam/*.filtered.bam
+results/day2_rnaseq/counts/featureCounts_all_samples.txt
 results/day2_rnaseq/counts/gene_count_matrix.tsv
 results/day2_rnaseq/bigwig/*.cpm.bw
 results/day2_rnaseq/deseq2/deseq2_results.tsv
@@ -93,7 +99,7 @@ mkdir -p results/day2_rnaseq/deseq2
 mkdir -p results/logs/day2
 ```
 
-Day 1 named each FASTQ using the pattern `sample_condition`, for example `WT_1_WT_control` and `WTS_1_WT_21Oxygen`. Day 2 keeps that naming convention. Later, the R script will construct the DESeq2 design table directly from the count matrix column names.
+Day 1 named each FASTQ using the pattern `sample_condition`, for example `WT_1_condition_A` and `WTS_1_condition_B`. Day 2 keeps that naming convention. The DESeq2 script reads condition and replicate labels from the stable metadata table rather than guessing the design from filenames.
 
 Each practical section below follows the same pattern:
 
@@ -207,6 +213,10 @@ This is why paired-end tools can count fragments rather than individual read end
 
 #### 3.4 Build the Bowtie2 index
 
+Bowtie2 must search for possible locations for millions of reads. Searching the FASTA sequence from beginning to end for every read would be inefficient, so `bowtie2-build` converts the reference genome into compact index files that Bowtie2 can search quickly. We build the index once for this exact genome and reuse it for every RNA-seq and ChIP-seq sample; if the reference FASTA changes, the index must be rebuilt.
+
+This reference-genome index is different from the `.bai` index described above: the Bowtie2 index makes the genome searchable before alignment, whereas a `.bai` file makes an aligned BAM searchable by genomic position afterward.
+
 Create `scripts/day2_rnaseq/01_build_bowtie2_index.sh`:
 
 ```bash
@@ -319,7 +329,77 @@ do
 done
 ```
 
-Run it:
+The loop performs the following steps for each paired-end sample.
+
+```text
+trimmed R1 + R2
+  -> Bowtie2 mapping -> temporary SAM + Bowtie2 log
+  -> samtools sort -> coordinate-sorted BAM
+  -> samtools index + flagstat
+  -> samtools view filtering -> filtered BAM
+  -> samtools index + flagstat
+  -> remove temporary SAM
+```
+
+##### 3.5.1 Map the paired reads
+
+`bowtie2` uses the Bowtie2 index (`-x`) and the trimmed R1/R2 files (`-1` and `-2`) to find genomic alignments. It writes:
+
+- a temporary SAM file containing the alignments;
+- a Bowtie2 log containing the alignment summary.
+
+The log is written separately with `2>` because Bowtie2 sends its progress and summary information to the standard-error stream.
+
+##### 3.5.2 Convert SAM to a coordinate-sorted BAM
+
+`samtools sort` reads the text SAM file and writes a compressed BAM file sorted by genomic coordinate:
+
+```bash
+samtools sort \
+  -@ 2 \
+  -o "${bam_file}" \
+  "${sam_file}"
+```
+
+Conversion and sorting therefore happen in the same command. Coordinate sorting places alignments from the same genomic region together, which is required for BAM indexing and makes downstream access efficient.
+
+##### 3.5.3 Index and summarize the sorted BAM
+
+`samtools index` creates `sample.sorted.bam.bai`. This index allows programs to jump directly to one genomic region without reading the complete BAM.
+
+`samtools flagstat` then creates the first mapping summary. It reports totals such as mapped reads and properly paired reads before we apply alignment filters.
+
+##### 3.5.4 Filter alignments for counting
+
+The script creates a second BAM containing the alignments we want to use for gene counting:
+
+```bash
+samtools view \
+  -@ 2 \
+  -b \
+  -q 10 \
+  -f 2 \
+  -F 2828 \
+  -o "${filtered_bam}" \
+  "${bam_file}"
+```
+
+| Option | Meaning |
+|---|---|
+| `-b` | Write BAM output |
+| `-q 10` | Keep alignments with mapping quality of at least 10 |
+| `-f 2` | Require the read to belong to a properly aligned pair |
+| `-F 2828` | Exclude unmapped reads, reads whose mate is unmapped, secondary alignments, failed-QC reads, and supplementary alignments |
+
+SAM flags are bit-coded and do not need to be memorized. The [Picard flag converter](https://broadinstitute.github.io/picard/explain-flags.html) can be used to inspect a filter.
+
+We do not exclude reads marked as duplicates in this teaching RNA-seq workflow. Multiple reads at the same position can represent high gene expression rather than PCR duplication, so removing them can bias counts.
+
+##### 3.5.5 Index and summarize the filtered BAM
+
+The filtered BAM is also indexed and summarized with `samtools flagstat`. Comparing the summaries before and after filtering shows how many alignments were removed. Finally, the temporary SAM is deleted because the sorted BAM contains the alignment information in a smaller, more useful form.
+
+##### 3.5.6 Run the mapping workflow
 
 ```bash
 docker run --rm \
@@ -350,47 +430,13 @@ Bowtie2 logs report useful mapping metrics, including:
 
 Low mapping percentage can indicate a wrong reference, contamination, poor read quality, wrong sample labels, incomplete trimming, or strong rRNA/technical content.
 
-## 4. Clean BAM files with samtools
+##### 3.5.7 Inspect the BAM summaries and outputs
 
-`samtools` is the standard command-line tool for viewing, sorting, indexing, summarizing, and filtering SAM/BAM files.
-
-In this workflow we use it for:
-
-- converting the temporary SAM output into sorted BAM;
-- creating `.bai` BAM index files;
-- summarizing BAM files with `samtools flagstat`;
-- filtering alignments before counting.
-
-The script from section 3 already runs this cleanup step after mapping:
-
-```bash
-samtools view \
-  -@ 2 \
-  -b \
-  -q 10 \
-  -f 2 \
-  -F 2828 \
-  -o "${filtered_bam}" \
-  "${bam_file}"
-```
-
-This keeps alignments with mapping quality at least 10 and keeps properly paired reads. It removes common records that should not be counted as ordinary primary mapped read pairs, such as unmapped reads, reads with unmapped mates, secondary alignments, failed-QC reads, and supplementary alignments.
-
-SAM flags are bit-coded, so they are not intuitive at first. We will not memorize them. When you need to inspect or design a flag filter, use a flag converter such as:
-
-<https://broadinstitute.github.io/picard/explain-flags.html>
-
-Check the `samtools flagstat` summaries:
+Check the `samtools flagstat` summaries before and after filtering:
 
 ```bash
 ls -lh results/logs/day2/*.flagstat.txt
 cat results/logs/day2/*.flagstat.txt
-```
-
-Compare the unfiltered and filtered summaries:
-
-```bash
-cat results/logs/day2/*.filtered.flagstat.txt
 ```
 
 These files help answer:
@@ -399,8 +445,6 @@ These files help answer:
 - how many read pairs were properly paired;
 - how many alignments were removed by filtering;
 - whether one sample behaves very differently from the others.
-
-We do not remove coordinate-marked duplicates by default in this teaching RNA-seq workflow. In RNA-seq, many reads at the same location can reflect high expression, not only PCR duplication. Duplicate removal can bias highly expressed genes, especially in compact bacterial genomes.
 
 Expected BAM outputs:
 
@@ -411,42 +455,74 @@ results/day2_rnaseq/bam/*.filtered.bam
 results/day2_rnaseq/bam/*.filtered.bam.bai
 ```
 
-## 5. Count reads per gene with featureCounts
+The `*.sorted.bam` files preserve all alignments for diagnosis. The `*.filtered.bam` files are the inputs to featureCounts.
 
-After mapping, we want one number per gene per sample. That number is the number of fragments assigned to the gene annotation.
+#### 3.6 Determine RNA-seq library strandedness
 
-There are several ways to count reads in features:
+Genes are transcribed from either the `+` or the `-` genomic strand. RNA-seq library preparation determines whether the orientation of read 1 (R1) preserves information about that transcript strand. `featureCounts` needs this information so that a fragment is assigned only to a gene with the expected orientation.
 
-| Counting route | How it works | Advantage | Limitation |
-|---|---|---|---|
-| featureCounts | Command-line tool counts overlaps between BAM alignments and GFF/GTF features | Fast, simple, widely used, good for teaching | Requires correct annotation fields and strand settings |
-| HTSeq-count | Python tool counts reads against annotation features | Clear conceptual model | Slower and less convenient for many samples |
-| R/Bioconductor overlap counting | Use packages such as `GenomicAlignments`, `GenomicFeatures`, and `summarizeOverlaps` | Very flexible and reproducible inside R | More code and more Bioconductor concepts |
-| Transcript quantifiers | Salmon or Kallisto quantify transcript compatibility directly | Very fast for transcriptome workflows | Different workflow; not the BAM-first route used here |
+| Relationship between R1 and the transcript | Library type | `featureCounts` setting |
+|---|---|---|
+| R1 orientation is unrelated to transcript orientation | Unstranded | `-s 0` (the default) |
+| R1 has the same orientation as the transcript | Forward/sense stranded | `-s 1` |
+| R1 has the opposite orientation to the transcript | Reverse/antisense stranded | `-s 2` |
 
-For practical purposes, we use featureCounts with the downloaded annotation:
+First obtain this information from the library-preparation metadata. The metadata for `E-MTAB-13025` describes a prokaryotic directional library made with strand-selective second-strand and USER-enzyme chemistry. In this protocol, R1 has the opposite orientation to the original transcript. We will therefore use `featureCounts -s 2` for the workshop RNA-seq samples.
+
+If the metadata is missing or ambiguous, infer the relationship empirically with [`infer_experiment.py`](https://rseqc.sourceforge.net/#infer-experiment-py) from RSeQC. Use the 12-column BED gene model created by the Day 1 reference script:
+
+```text
+reference_genome/genes.bed
+```
+
+This BED file must describe the same `GCF_025998455.1` assembly as the BAM files and must use the same sequence name, `NZ_AP026446.1`. A BED file made for the study's original `NC_000915.1` alignment cannot be used with the workshop BAM files.
+
+The workshop supplies a prebuilt image containing [RSeQC 5.0.5](https://pypi.org/project/RSeQC/5.0.5/). Inspect one representative filtered BAM:
+
+```bash
+docker run --rm \
+  --platform linux/amd64 \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-rseqc:latest \
+  -i results/day2_rnaseq/bam/WT_1_condition_A.filtered.bam \
+  -r reference_genome/genes.bed
+```
+
+For paired-end data, the RSeQC strings encode the read number, the strand on which that read aligns, and the annotated transcript strand. For example, `1++` means that R1 aligns to the `+` strand over a `+` transcript.
+
+| Dominant RSeQC result | Meaning | Use with `featureCounts` |
+|---|---|---|
+| The two orientation classes are approximately equal, often near 50/50 | R1 orientation is unrelated to transcript orientation | `-s 0` |
+| `1++,1--,2+-,2-+` | R1 has the same orientation as the transcript | `-s 1` |
+| `1+-,1-+,2++,2--` | R1 has the opposite orientation to the transcript | `-s 2` |
+
+Do not memorize the strings. Use them to answer one question: is R1 unrelated to, in the same orientation as, or in the opposite orientation to the transcript? If RSeQC reports a large fraction of reads for which orientation cannot be determined, check that the BED and BAM use the same assembly and reconcile the result with the library metadata before counting.
+
+With `-s 2` established for the workshop dataset, the progression is:
+
+```text
+BAM
+  -> determine strandedness
+  -> choose -s 0/1/2
+  -> featureCounts
+  -> inspect .summary
+  -> import counts into R
+  -> DESeq2
+```
+
+## 4. Count reads per gene with featureCounts
+
+The strandedness step selected `-s 2` for this dataset. We can now use featureCounts to obtain one raw fragment count per gene and sample:
 
 ```text
 filtered BAM + reference_genome/annotation.gff3
   -> featureCounts
-  -> one all-sample featureCounts table
-  -> one simple gene-by-sample count matrix
+  -> one complete featureCounts table
+  -> select the gene and sample-count columns later in R
 ```
 
-For paired-end RNA-seq, we count fragments rather than individual read ends:
-
-- `-p` tells featureCounts to count fragments from paired-end reads;
-- `-B` requires both ends to be aligned;
-- `-C` avoids counting chimeric fragments.
-
-The command below uses `-t gene -g ID`, which means:
-
-- count reads overlapping GFF3 records whose feature type is `gene`;
-- use the `ID` attribute from the GFF3 file as the gene identifier.
-
-This is a practical choice for the NCBI-style bacterial GFF3 used in this workshop. If an annotation uses a different feature type, such as `CDS`, or a different gene identifier attribute, these two options must be changed.
-
-The command below does not set `-s`, so featureCounts treats the library as unstranded. If the actual RNA-seq protocol is stranded, count assignment can be badly wrong unless `-s 1` or `-s 2` is used after checking the library orientation in the metadata or protocol.
+We keep the complete featureCounts table unchanged. In the R section, we will explicitly retain its gene identifier and sample-count columns and leave out the extra annotation columns that DESeq2 does not need.
 
 Create `scripts/day2_rnaseq/03_featurecounts_all_samples.sh`:
 
@@ -465,7 +541,6 @@ bam_dir="results/day2_rnaseq/bam"
 counts_dir="results/day2_rnaseq/counts"
 log_dir="results/logs/day2"
 featurecounts_out="${counts_dir}/featureCounts_all_samples.txt"
-count_matrix="${counts_dir}/gene_count_matrix.tsv"
 
 mkdir -p "${counts_dir}" "${log_dir}"
 
@@ -474,7 +549,6 @@ if [[ ! -f "${annotation}" ]]; then
   exit 1
 fi
 
-# Collect all filtered BAM files
 bam_files=("${bam_dir}"/*.filtered.bam)
 
 if [[ ! -e "${bam_files[0]}" ]]; then
@@ -482,13 +556,15 @@ if [[ ! -e "${bam_files[0]}" ]]; then
   exit 1
 fi
 
-echo "Counting reads across ${#bam_files[@]} samples..."
+echo "Counting reads across ${#bam_files[@]} samples"
 
 featureCounts \
   -T 2 \
   -p \
+  --countReadPairs \
   -B \
   -C \
+  -s 2 \
   -t gene \
   -g ID \
   -a "${annotation}" \
@@ -496,32 +572,32 @@ featureCounts \
   "${bam_files[@]}" \
   2>&1 | tee "${log_dir}/featureCounts_all_samples.log"
 
-# Convert the full featureCounts table into the simple gene x sample matrix used by DESeq2.
-awk 'BEGIN { FS = OFS = "\t" }
-  /^#/ { next }
-  $1 == "Geneid" {
-    printf "gene_id"
-    for (i = 7; i <= NF; i++) {
-      sample = $i
-      sub(/^.*\//, "", sample)
-      sub(/[.]filtered[.]bam$/, "", sample)
-      printf OFS sample
-    }
-    printf "\n"
-    next
-  }
-  {
-    printf $1
-    for (i = 7; i <= NF; i++) {
-      printf OFS $i
-    }
-    printf "\n"
-  }' "${featurecounts_out}" > "${count_matrix}"
-
 echo "Wrote ${featurecounts_out}"
-echo "Wrote ${count_matrix}"
-
 ```
+
+The script performs these steps:
+
+| Code | Meaning |
+|---|---|
+| `annotation=...` | Store the path to the GFF3 annotation used to define genes. |
+| `bam_dir=...`, `counts_dir=...`, `log_dir=...` | Store the input and output folder paths. |
+| `mkdir -p` | Create the count and log folders if they do not exist. |
+| `bam_files=(.../*.filtered.bam)` | Collect every filtered RNA-seq BAM file into a Bash array. |
+| `featureCounts` | Count alignments that overlap annotated genes. |
+| `-T 2` | Use two processing threads. |
+| `-p` | Tell featureCounts that the BAM files contain paired-end reads. |
+| `--countReadPairs` | Count one fragment for each read pair instead of counting the two read ends separately. |
+| `-B` | Count a fragment only when both ends are aligned. |
+| `-C` | Exclude chimeric pairs whose two ends align to different chromosomes. |
+| `-s 2` | Assign fragments when R1 is opposite to the annotated gene strand, as determined above. |
+| `-t gene` | Count overlaps with GFF3 records whose feature type is `gene`. |
+| `-g ID` | Use the GFF3 `ID` attribute as the gene identifier. |
+| `-a "${annotation}"` | Supply the annotation file. |
+| `-o "${featurecounts_out}"` | Write the complete count table to this file. |
+| `"${bam_files[@]}"` | Pass all filtered BAM files to one featureCounts command, producing one count column per sample. |
+| `2>&1 \| tee ...` | Show the featureCounts messages in the terminal and save the same messages in a log file. |
+
+The choices `-t gene -g ID` match the NCBI-style bacterial GFF3 used in this workshop. Another annotation may use a different feature type or identifier attribute. The chosen `-s` value is also study-specific and must follow the metadata or empirical RSeQC result.
 
 Run it:
 
@@ -539,21 +615,23 @@ Check the featureCounts logs:
 ```bash
 ls -lh results/logs/day2/featureCounts_all_samples.log
 cat results/logs/day2/featureCounts_all_samples.log
-ls -lh results/day2_rnaseq/counts/gene_count_matrix.tsv
-head results/day2_rnaseq/counts/gene_count_matrix.tsv
+ls -lh results/day2_rnaseq/counts/featureCounts_all_samples.txt
+ls -lh results/day2_rnaseq/counts/featureCounts_all_samples.txt.summary
+head results/day2_rnaseq/counts/featureCounts_all_samples.txt
+cat results/day2_rnaseq/counts/featureCounts_all_samples.txt.summary
 ```
 
 These logs tell us how many aligned fragments were assigned to genes. This is a second sanity check after mapping. A sample can map well but count poorly if the annotation does not match the genome, the wrong feature type is used, the library strandedness is wrong, or many reads fall outside annotated genes.
 
-The result should look like this:
+The complete featureCounts table should look like this:
 
 ```text
-gene_id  WT_1_WT_control  WT_2_WT_control  WTS_1_WT_21Oxygen
-geneA    120              134              62
-geneB    5                8                6
+Geneid  Chr           Start  End  Strand  Length  results/day2_rnaseq/bam/WT_1_condition_A.filtered.bam  ...
+geneA   NZ_AP026446.1  100    450  +       351     120                                                   ...
+geneB   NZ_AP026446.1  600    900  -       301     5                                                     ...
 ```
 
-Keep this matrix as raw integer counts. Do not convert it to CPM, TPM, RPKM, or bigWig signal before DESeq2.
+The first six columns describe each annotated gene. Every later column contains the raw fragment counts for one BAM file. Do not edit this table manually or convert its counts to CPM, TPM, RPKM, or bigWig signal before DESeq2. We will select and rename the required columns in R.
 
 Approximate sanity checks before moving to DESeq2:
 
@@ -566,9 +644,9 @@ Approximate sanity checks before moving to DESeq2:
 
 These are qualitative checks, not pass/fail statistical tests. A clearly different sample should be investigated before interpreting differential expression.
 
-## 6. Raw count matrix and DESeq2 differential expression
+## 5. Prepare the raw count matrix in R and run DESeq2
 
-The count matrix has genes as rows and samples as columns:
+The complete featureCounts table contains annotation information as well as counts. In R, we will select the gene identifier and sample columns to create a count matrix with genes as rows and samples as columns:
 
 ```text
 features x samples
@@ -584,178 +662,1042 @@ Before modeling, check whether the experiment still makes sense:
 
 If many reads disappear between FASTQ, BAM, and gene counts, do not jump directly to p-values. First check reference version, annotation version, strandedness, sample labels, and logs.
 
-#### 6.1 Statistical idea
+#### 5.1 Statistical idea: what is DESeq2 trying to estimate?
 
-For each gene, RNA-seq gives integer counts. A simple Poisson model would assume that the count variance is equal to the count mean. Real RNA-seq data usually vary more than that because of biological variation, library preparation, and sampling effects. This extra variation is called overdispersion.
+For each gene, we want to answer a simple question:
 
-DESeq2 and edgeR model counts with a negative binomial distribution because it allows the variance to be larger than the mean. A useful simplified version is:
+> Is expression different between the two conditions, and is that difference large enough relative to the variability among biological replicates?
+
+For gene $i$, RNA-seq gives one observed integer count in each sample $j$:
 
 $$
-K_{ij} \sim \mathrm{NB}(\mu_{ij}, \alpha_i)
+K_{ij}
+$$
+
+Suppose we have two conditions with two biological replicates each:
+
+```text
+condition_A: A1  A2
+condition_B: B1  B2
+```
+
+For one gene we might observe:
+
+```text
+           A1    A2    B1    B2
+counts    100   120   200   220
+```
+
+Intuitively, DESeq2 needs to learn two things:
+
+```text
+1. where the centre of each condition is
+2. how much biological replicates vary around those centres
+```
+
+The difference between the two fitted condition levels gives the **effect size**.
+
+The variability among replicates determines how precisely that effect can be estimated.
+
+Before doing either, however, DESeq2 must account for differences in library size.
+
+---
+
+#### 5.2 First account for differences between libraries
+
+Raw counts cannot be compared directly because samples may have different sequencing depths and library compositions.
+
+DESeq2 estimates one **size factor** $s_j$ for each sample.
+
+The statistical model distinguishes the observed count:
+
+$$
+K_{ij}
+$$
+
+from its modelled mean:
+
+$$
+\mu_{ij}
+$$
+
+The modelled mean is:
+
+$$
+\mu_{ij}=s_j q_{ij}
 $$
 
 where:
 
-- $K_{ij}$ is the raw count for gene $i$ in sample $j$;
-- $\mu_{ij}$ is the expected count for that gene and sample;
-- $\alpha_i$ is the gene-specific dispersion, meaning extra variability beyond simple Poisson sampling.
+* $\mu_{ij}$ is the mean count predicted by the model for gene $i$ in sample $j$;
+* $s_j$ is the size factor for sample $j$;
+* $q_{ij}$ is the expression level predicted by the experimental design after accounting for library size.
 
-DESeq2 does not simply run an independent ordinary test for each gene and ignore the rest of the experiment. It uses information across all genes to estimate size factors and to stabilize dispersion estimates. This is important because each gene has only a small number of replicate measurements.
+The word **expected** is often used for $\mu_{ij}$. It has a statistical meaning:
 
-The model includes the experimental design:
+> $\mu_{ij}$ is the average count that the fitted model predicts for that sample.
+
+It does not mean what we expected biologically before performing the experiment.
+
+For example, suppose a gene has the same expression in two samples, but the second library has twice the sequencing depth:
+
+```text
+modelled expression q:       100     100
+size factor s:                 1       2
+expected count μ:            100     200
+```
+
+The expected raw count is twice as large in the second sample even though the underlying expression level is unchanged.
+
+DESeq2 estimates the size factors from many genes using the **median-of-ratios** method. The basic idea is to determine the relative scale of each library using genes that, collectively, provide a stable reference.
+
+This normalization assumes that large expression changes in one direction do not dominate most of the transcriptome. Experiments involving strong global shifts may require external information such as spike-ins or suitable control genes.
+
+Importantly, DESeq2 still takes **raw integer counts** as input. The size factors are incorporated into the statistical model; we do not normalize the count matrix ourselves before running DESeq2.
+
+---
+
+#### 5.3 The design tells DESeq2 what expression levels to fit
+
+Consider the simple design:
 
 ```r
 design = ~ condition
 ```
 
-For each gene, DESeq2 estimates a condition effect. We usually report this as a log2 fold change:
+with condition A used as the reference.
+
+For the four samples:
 
 ```text
-log2FoldChange = expression change for WT_21Oxygen relative to WT_control
+sample         A1   A2   B1   B2
+condition x     0    0    1    1
 ```
 
-DESeq2 also estimates uncertainty for that effect. The `lfcSE` column is the standard error of the log2 fold change. Intuitively, it reflects how variable the replicate counts are around the fitted model, after normalization and dispersion estimation. Genes with noisy counts, low counts, or inconsistent replicates have less precise fold-change estimates.
+For each gene, the design says:
 
-The Wald test asks whether the fitted condition effect is clearly different from zero relative to its uncertainty. Because this is done for many genes, DESeq2 reports adjusted p-values (`padj`) to control the false discovery rate.
-
-#### 6.2 Median-of-ratios normalization
-
-Raw counts depend on library size and composition. DESeq2 estimates a size factor for each sample using the median-of-ratios method. The key assumption is that most genes are not globally changing in the same direction. Under that assumption, the typical gene can be used to estimate how much larger or smaller one library is relative to another.
-
-DESeq2 still uses raw integer counts as input. The normalization factors are estimated inside the model; students should not pre-normalize the matrix before running DESeq2.
-
-#### 6.3 Step-by-step R workflow
-
-Create `scripts/day2_rnaseq/04_deseq2_analysis.R`:
-
-```bash
-nano scripts/day2_rnaseq/04_deseq2_analysis.R
+```text
+A samples -> fit one expression level for condition A
+B samples -> fit one expression level for condition B
 ```
 
-Paste this script:
+We can write this on the log2 scale as:
+
+$$
+\log_2(q_{ij})=\beta_{i0}+x_j\beta_{i1}
+$$
+
+where:
+
+* $\beta_{i0}$ is the baseline expression of gene $i$ on the log2 scale;
+* $x_j=0$ for condition A and $x_j=1$ for condition B;
+* $\beta_{i1}$ is the condition effect.
+
+For condition A:
+
+$$
+x_j=0
+$$
+
+so:
+
+$$
+\log_2(q_{iA})=\beta_{i0}
+$$
+
+For condition B:
+
+$$
+x_j=1
+$$
+
+so:
+
+$$
+\log_2(q_{iB})=\beta_{i0}+\beta_{i1}
+$$
+
+Thus, in this simple experiment, the model fits one expression level $q_{iA}$ for condition A and another $q_{iB}$ for condition B.
+
+The expected raw count for each individual sample is then obtained by applying its size factor:
+
+$$
+\mu_{ij}=s_j q_{ij}
+$$
+
+Therefore, samples in the same condition have the same modelled expression $q$, but they can have different expected raw counts $\mu$ because their size factors differ.
+
+For example:
+
+```text
+                 A1      A2
+modelled q        110     110
+size factor       0.8     1.2
+expected μ         88     132
+```
+
+If all size factors were equal to 1, the distinction disappears.
+
+For:
+
+```text
+           A1    A2    B1    B2
+observed   100   120   200   220
+```
+
+the fitted condition levels in this simple two-group example would be:
+
+```text
+condition A: 110
+condition B: 210
+```
+
+and, because $s_j=1$:
+
+```text
+           A1    A2    B1    B2
+expected μ 110   110   210   210
+```
+
+This is the simple intuition to keep in mind:
+
+```text
+observed replicate counts
+          |
+          v
+fit a centre for condition A
+and a centre for condition B
+          |
+          v
+adjust the expected raw count
+for the size of each library
+```
+
+With unequal size factors or more complex experimental designs, these fitted values come from the generalized linear model rather than simply taking arithmetic means.
+
+---
+
+#### 5.4 The difference between the fitted conditions is the log2 fold change
+
+For the simple two-condition design, the condition coefficient is:
+
+$$
+\beta_{i1}
+=
+\log_2
+\left(
+\frac{q_{iB}}{q_{iA}}
+\right)
+$$
+
+This is the value reported as:
+
+```text
+log2FoldChange
+```
+
+Therefore:
+
+```text
+log2FoldChange =  0   -> same fitted expression in A and B
+log2FoldChange =  1   -> 2-fold higher in B
+log2FoldChange = -1   -> 2-fold lower in B
+```
+
+The null hypothesis is:
+
+$$
+H_0:\beta_{i1}=0
+$$
+
+which, in this simple design, is equivalent to:
+
+$$
+H_0:q_{iA}=q_{iB}
+$$
+
+The question is therefore not merely whether the two fitted values are numerically different.
+
+The question is:
+
+> Is the estimated condition effect sufficiently large relative to the uncertainty with which we estimated it?
+
+To answer that, DESeq2 needs biological replicates.
+
+---
+
+#### 5.5 Replicate variability: why use a negative binomial model?
+
+Consider two genes:
+
+```text
+Gene 1
+A: 100  105
+B: 200  210
+
+Gene 2
+A:  40  165
+B: 120  290
+```
+
+Both genes show approximately the same average increase from condition A to condition B.
+
+However, the replicates for Gene 1 are much more consistent.
+
+For Gene 2, there is much greater variability among replicates. We should therefore be less certain about its estimated condition effect.
+
+DESeq2 models the **observed counts themselves** using a negative binomial distribution:
+
+$$
+K_{ij}\sim\mathrm{NB}(\mu_{ij},\alpha_i)
+$$
+
+where:
+
+* $K_{ij}$ is the observed count;
+* $\mu_{ij}$ is the expected count from the fitted model;
+* $\alpha_i$ is the dispersion of gene $i$.
+
+The variance of the negative binomial model is:
+
+$$
+\mathrm{Var}(K_{ij})
+=
+\mu_{ij}
++
+\alpha_i\mu_{ij}^{2}
+$$
+
+A Poisson model would contain only the first term:
+
+$$
+\mathrm{Var}(K_{ij})=\mu_{ij}
+$$
+
+but real RNA-seq data usually show additional variability among biological replicates.
+
+The dispersion $\alpha_i$ allows DESeq2 to model this extra variability.
+
+Intuitively:
+
+```text
+small dispersion
+    -> replicate counts are relatively consistent
+       with the fitted model
+
+large dispersion
+    -> considerably more variation among replicate
+       counts is plausible
+```
+
+The amount of count variation also depends on the expected count $\mu_{ij}$. Therefore, a difference of 20 reads has a different meaning for a gene with an expected count of 10 than for a gene with an expected count of 10,000.
+
+The negative binomial model captures both properties:
+
+```text
+mean expression level
+        +
+gene-specific dispersion
+        |
+        v
+expected variability of the counts
+```
+
+A useful distinction is:
+
+```text
+K  -> observed counts
+
+q  -> expression levels predicted by the design
+
+μ  -> expected raw counts after including size factors
+
+α  -> dispersion: extra variability of counts around the fitted model
+```
+
+---
+
+#### 5.6 How can DESeq2 estimate dispersion from only a few replicates?
+
+Suppose we have:
+
+```text
+A1  A2
+B1  B2
+```
+
+For one gene, four observations provide very little information about its true variability.
+
+An independent dispersion estimate for every gene would therefore be very unstable.
+
+DESeq2 solves this by using information across all genes.
+
+Conceptually:
+
+```text
+for each gene
+    |
+    v
+obtain a gene-wise dispersion estimate
+from its counts and fitted design
+    |
+    v
+compare dispersion estimates
+across thousands of genes
+    |
+    v
+learn the typical relationship between
+mean normalized count and dispersion
+    |
+    v
+stabilize noisy gene-wise dispersion estimates
+toward this relationship
+```
+
+The important point is that DESeq2 does **not** assume that every gene has the same dispersion.
+
+Each gene retains its own dispersion estimate, but information from all genes is used to make those estimates more stable.
+
+This is particularly important when the number of biological replicates is small.
+
+Extreme dispersion outliers can be treated differently and are not necessarily shrunk toward the fitted trend.
+
+Borrowing information across genes improves estimation of variability; it does **not** replace biological replication.
+
+---
+
+#### 5.7 From dispersion to uncertainty in the log2 fold change
+
+After estimating the dispersion, DESeq2 can determine how precisely the condition effect has been estimated.
+
+For each gene it reports:
+
+```text
+log2FoldChange
+lfcSE
+```
+
+`log2FoldChange` is the estimated condition effect.
+
+`lfcSE` is the **standard error of that estimated log2 fold change**.
+
+The intuition is:
+
+```text
+consistent biological replicates
+        |
+        v
+condition effect can be located precisely
+        |
+        v
+small lfcSE
+```
+
+whereas:
+
+```text
+variable biological replicates
+        |
+        v
+many different condition effects
+are reasonably compatible with the data
+        |
+        v
+large lfcSE
+```
+
+For example:
+
+```text
+Gene 1
+log2FoldChange = 1.0
+lfcSE          = 0.15
+
+Gene 2
+log2FoldChange = 1.0
+lfcSE          = 0.80
+```
+
+The estimated effect is identical, but the effect for Gene 1 is much more precisely determined.
+
+More formally, after the mean model and dispersion have been fitted, DESeq2 evaluates how sharply the negative-binomial likelihood identifies the condition coefficient.
+
+```text
+sharp likelihood around the fitted effect
+    -> coefficient is well determined
+    -> small standard error
+
+broad likelihood around the fitted effect
+    -> many effect sizes remain plausible
+    -> large standard error
+```
+
+Therefore, `lfcSE` is **not** the standard deviation of the replicate counts.
+
+It is the uncertainty of the estimated condition coefficient produced by the negative-binomial GLM.
+
+---
+
+#### 5.8 Testing whether the condition effect differs from zero
+
+DESeq2 uses a Wald test to compare the estimated effect with its standard error:
+
+$$
+z_i
+=
+\frac{\mathrm{log2FoldChange}_i}
+{\mathrm{lfcSE}_i}
+$$
+
+The null hypothesis is:
+
+$$
+H_0:\mathrm{log2FoldChange}_i=0
+$$
+
+For example:
+
+```text
+Gene A
+log2FoldChange = 1.2
+lfcSE          = 0.15
+```
+
+provides much stronger evidence against the null hypothesis than:
+
+```text
+Gene B
+log2FoldChange = 1.2
+lfcSE          = 0.90
+```
+
+even though the estimated fold change is identical.
+
+Thus:
+
+```text
+effect size
+    relative to
+uncertainty of the effect
+        |
+        v
+Wald statistic
+        |
+        v
+p-value
+```
+
+DESeq2 performs this test for thousands of genes. Testing many hypotheses produces some small p-values by chance, so the p-values are adjusted for multiple testing using the Benjamini-Hochberg procedure.
+
+The resulting value is reported as:
+
+```text
+padj
+```
+
+and is used to control the false discovery rate.
+
+---
+
+#### 5.9 Biological replicates are not a `replicate` term in the design
+
+For a standard experiment with independent biological replicates:
+
+```text
+A1  A2  A3
+B1  B2  B3
+```
+
+we normally use:
 
 ```r
-#!/usr/bin/env Rscript
-
-args <- commandArgs(trailingOnly = TRUE)
-if (length(args) != 2) {
-  stop("Usage: 04_deseq2_analysis.R count_matrix.tsv outdir")
-}
-
-required <- c("DESeq2", "ggplot2")
-missing <- required[!vapply(required, requireNamespace, logical(1), quietly = TRUE)]
-if (length(missing)) {
-  stop("Missing R packages: ", paste(missing, collapse = ", "))
-}
-
-counts <- read.delim(args[[1]], check.names = FALSE)
-outdir <- args[[2]]
-
-dir.create(outdir, recursive = TRUE, showWarnings = FALSE)
-
-rownames(counts) <- counts$gene_id
-counts$gene_id <- NULL
-
-sample_ids <- names(counts)
-if (length(sample_ids) < 4) {
-  stop("Expected RNA-seq samples from at least two conditions with biological replicates")
-}
-
-condition <- sub("^[^_]+_[^_]+_", "", sample_ids)
-replicate <- sub("^[^_]+_([^_]+)_.*$", "rep\\1", sample_ids)
-
-samples <- data.frame(
-  sample_id = sample_ids,
-  condition = condition,
-  replicate = replicate,
-  row.names = sample_ids,
-  check.names = FALSE
-)
-
-if (length(unique(samples$condition)) < 2) {
-  stop("Could not infer at least two conditions from sample names")
-}
-
-if (all(c("WT_control", "WT_21Oxygen") %in% samples$condition)) {
-  samples$condition <- factor(samples$condition, levels = c("WT_control", "WT_21Oxygen"))
-} else {
-  samples$condition <- factor(samples$condition)
-}
-
-count_mat <- as.matrix(round(counts[, sample_ids, drop = FALSE]))
-
-dds <- DESeq2::DESeqDataSetFromMatrix(
-  countData = count_mat,
-  colData = samples,
-  design = ~ condition
-)
-dds <- dds[rowSums(DESeq2::counts(dds)) >= 10, ]
-dds <- DESeq2::DESeq(dds)
-
-if (all(c("WT_control", "WT_21Oxygen") %in% levels(samples$condition))) {
-  res <- as.data.frame(DESeq2::results(dds, contrast = c("condition", "WT_21Oxygen", "WT_control")))
-} else {
-  res <- as.data.frame(DESeq2::results(dds))
-}
-res$gene_id <- rownames(res)
-write.csv(samples, file.path(outdir, "inferred_sample_design.csv"), row.names = FALSE)
-write.table(res, file.path(outdir, "deseq2_results.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
-
-vsd <- DESeq2::vst(dds, blind = TRUE)
-
-pdf(file.path(outdir, "pca.pdf"))
-print(DESeq2::plotPCA(vsd, intgroup = "condition"))
-dev.off()
-
-pdf(file.path(outdir, "dispersion_plot.pdf"))
-DESeq2::plotDispEsts(dds)
-dev.off()
-
-pdf(file.path(outdir, "ma_plot.pdf"))
-DESeq2::plotMA(res)
-dev.off()
-
-volcano <- ggplot2::ggplot(res, ggplot2::aes(x = log2FoldChange, y = -log10(padj))) +
-  ggplot2::geom_point(alpha = 0.6, size = 1) +
-  ggplot2::theme_bw() +
-  ggplot2::labs(x = "log2 fold change", y = "-log10 adjusted p-value")
-
-ggplot2::ggsave(file.path(outdir, "volcano.pdf"), volcano, width = 6, height = 5)
-writeLines(capture.output(sessionInfo()), file.path(outdir, "sessionInfo.txt"))
+design = ~ condition
 ```
 
-Run it:
+We do **not** add a variable called `replicate`.
+
+The differences among A1, A2 and A3, and among B1, B2 and B3, provide the replicate information from which dispersion is estimated.
+
+A different situation occurs when samples are **paired** or contain another known blocking factor.
+
+For example:
+
+```text
+individual    condition
+1             A
+1             B
+2             A
+2             B
+3             A
+3             B
+```
+
+Here the same three individuals were measured in both conditions.
+
+Suppose one gene gives:
+
+```text
+              A      B
+individual 1  100    150
+individual 2  300    450
+individual 3   50     75
+```
+
+The absolute expression differs strongly among individuals, but every individual shows the same approximately 1.5-fold increase.
+
+If we use:
+
+```r
+design = ~ individual + condition
+```
+
+the model accounts for both:
+
+```text
+individual effect
+    -> systematic baseline differences among individuals
+
+condition effect
+    -> systematic difference between A and B
+       after accounting for those individual differences
+```
+
+On the log2 scale, the model can be written conceptually as:
+
+$$
+\log_2(q_{ij})
+=
+\beta_{i0}
++
+\gamma_{i,\mathrm{individual}(j)}
++
+x_j\beta_{i,\mathrm{condition}}
+$$
+
+The condition coefficient now answers:
+
+> After accounting for baseline differences among individuals, is there a consistent change between conditions?
+
+The same principle applies to other known sources of variation, for example:
+
+```r
+design = ~ batch + condition
+```
+
+A variable should be included in the design when it represents a **systematic source of variation that we want to separate from the condition effect**.
+
+The variables must not be perfectly confounded. For example:
+
+```text
+all condition A samples -> batch 1
+all condition B samples -> batch 2
+```
+
+does not allow condition and batch effects to be estimated separately.
+
+---
+
+#### 5.10 The complete logic
+
+The DESeq2 workflow can now be summarized as:
+
+```text
+OBSERVED RAW COUNTS K
+        |
+        v
+estimate SIZE FACTORS s
+for the samples
+        |
+        v
+use the EXPERIMENTAL DESIGN
+to define the expected expression pattern
+for each gene
+        |
+        v
+for each gene, fit expected counts μ
+        |
+        v
+estimate a preliminary
+GENE-WISE DISPERSION α
+        |
+        v
+use ALL GENES to learn the typical
+mean-dispersion relationship
+        |
+        v
+obtain stabilized
+GENE-SPECIFIC DISPERSIONS
+        |
+        v
+fit the condition coefficient
+LOG2 FOLD CHANGE
+        |
+        v
+estimate its uncertainty
+lfcSE
+        |
+        v
+WALD TEST:
+is log2FoldChange different from 0?
+        |
+        v
+p-value
+        |
+        v
+multiple-testing correction
+        |
+        v
+padj
+```
+
+The quantities to keep separate are:
+
+```text
+Kij
+    -> observed count for gene i in sample j
+
+qij
+    -> expression level predicted by the experimental design
+       on the common, size-factor-adjusted scale
+
+sj
+    -> size factor for sample j
+
+μij = sj qij
+    -> expected raw count for gene i in sample j
+
+αi
+    -> gene-specific dispersion
+
+log2FoldChange
+    -> fitted condition effect on the log2 scale
+
+lfcSE
+    -> standard error of that fitted condition effect
+```
+
+The formal statistical model connecting these quantities is:
+
+$$
+K_{ij}\sim\mathrm{NB}(\mu_{ij},\alpha_i)
+$$
+
+with:
+
+$$
+\mu_{ij}=s_jq_{ij}
+$$
+
+and the experimental design determining $q_{ij}$.
+
+For the simple two-condition design:
+
+$$
+\log_2(q_{ij})
+=
+\beta_{i0}+x_j\beta_{i1}
+$$
+
+where $x_j=0$ for condition A and $x_j=1$ for condition B, so that:
+
+$$
+\beta_{i1}
+=
+\log_2
+\left(
+\frac{q_{iB}}{q_{iA}}
+\right)
+$$
+
+is the reported log2 fold change.
+
+For the formal model and implementation details, see the [DESeq2 vignette](https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html) and the [DESeq2 methods paper](https://doi.org/10.1186/s13059-014-0550-8).
+
+#### 5.11 Build and inspect the DESeq2 analysis interactively
+
+We will build the R analysis during the workshop instead of immediately running a finished script. Each block will be:
+
+1. typed into `scripts/day2_rnaseq/04_deseq2_analysis.R` in VS Code;
+2. copied into an interactive R session;
+3. inspected before we continue.
+
+The saved script remains the reproducible record of the analysis, while the interactive session lets us see what each object contains.
+
+From the root of `workshop_ngs`, launch R inside the Bioconductor image:
 
 ```bash
-docker run --rm \
+docker run --rm -it \
   --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
   docker.io/fgualdr/ngs-r-bioc:latest \
-  Rscript scripts/day2_rnaseq/04_deseq2_analysis.R \
-  results/day2_rnaseq/counts/gene_count_matrix.tsv \
-  results/day2_rnaseq/deseq2
+  R --vanilla
 ```
 
-The script does these steps:
+The `-it` options keep the terminal attached to R. The project is mounted at `/work`, so scripts and results written there remain on the laptop after the container closes.
+
+When the R prompt (`>`) appears, confirm the working directory:
+
+```r
+getwd()
+list.files()
+```
+
+`getwd()` should return `"/work"`.
+
+Keep this R session open. In the VS Code Explorer, create `scripts/day2_rnaseq/04_deseq2_analysis.R`. Type each block below into that file, save it, and then copy the same lines into the R prompt. Do not copy the `>` prompt itself.
+
+Start by loading the packages and defining the three fixed project paths:
+
+```r
+library(DESeq2)
+library(ggplot2)
+
+counts_file <- "results/day2_rnaseq/counts/featureCounts_all_samples.txt"
+metadata_file <- "raw_data/metadata/samples.csv"
+out_dir <- "results/day2_rnaseq/deseq2"
+count_matrix_file <- file.path(dirname(counts_file), "gene_count_matrix.tsv")
+
+featurecounts <- read.delim(
+  counts_file,
+  comment.char = "#",
+  check.names = FALSE
+)
+metadata <- read.csv(metadata_file, stringsAsFactors = FALSE, check.names = FALSE)
+
+dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+
+print(dim(featurecounts))
+print(head(featurecounts))
+print(metadata)
+```
+
+`comment.char = "#"` skips the first featureCounts line, which records the command used to create the file. The imported table should contain the six annotation columns followed by one count column per BAM file. The metadata inspection should show the stable columns created on Day 1.
+
+##### Select the count columns in R
+
+DESeq2 needs gene identifiers and sample counts, but it does not need the `Chr`, `Start`, `End`, `Strand`, or `Length` columns. Remove those five columns, rename `Geneid`, and shorten each BAM path to its sample name:
+
+```r
+counts <- featurecounts[, -c(2:6), drop = FALSE]
+names(counts)[1] <- "gene_id"
+names(counts)[-1] <- sub(
+  "[.]filtered[.]bam$",
+  "",
+  basename(names(counts)[-1])
+)
+
+write.table(
+  counts,
+  count_matrix_file,
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+print(dim(counts))
+print(head(counts))
+```
+
+`counts[, -c(2:6)]` keeps the first `Geneid` column and all sample-count columns while excluding featureCounts columns 2–6. `basename()` removes the folder from each BAM column name, and `sub()` removes the `.filtered.bam` suffix. The saved `gene_count_matrix.tsv` is therefore a simple table with genes as rows and samples as columns:
+
+```text
+gene_id  WT_1_condition_A  WT_2_condition_A  WTS_1_condition_B  WTS_2_condition_B
+geneA    120               134               62                 70
+geneB    5                 8                 6                  7
+```
+
+These remain raw integer counts. The R code has changed only which columns and names are retained; it has not normalized the values.
+
+##### Match the metadata to the count matrix
+
+The count-matrix column names came from the BAM filenames. We create `analysis_id` from the `read1` filename and reorder the RNA-seq metadata to exactly match those columns:
+
+```r
+required_columns <- c("sample_id", "assay", "condition", "replicate", "read1")
+if (!all(required_columns %in% names(metadata))) {
+  stop("Metadata is missing required columns")
+}
+if (!"gene_id" %in% names(counts)) stop("Count matrix requires a gene_id column")
+
+metadata <- metadata[metadata$assay == "rnaseq", , drop = FALSE]
+metadata$analysis_id <- sub("_R1[.]fastq[.]gz$", "", basename(metadata$read1))
+sample_ids <- setdiff(names(counts), "gene_id")
+metadata <- metadata[match(sample_ids, metadata$analysis_id), , drop = FALSE]
+if (anyNA(metadata$sample_id)) stop("Count-matrix columns do not match the metadata")
+if (anyDuplicated(metadata$analysis_id)) stop("RNA-seq analysis_id values must be unique")
+
+rownames(metadata) <- metadata$analysis_id
+metadata$condition <- factor(metadata$condition, levels = c("condition_A", "condition_B"))
+if (anyNA(metadata$condition)) stop("Conditions must be condition_A and condition_B")
+
+print(metadata[, c("analysis_id", "sample_id", "condition", "replicate")])
+print(table(metadata$condition))
+print(identical(sample_ids, rownames(metadata)))
+```
+
+The final check must print `TRUE`. If it prints `FALSE`, stop: the counts and experimental labels are not aligned. The condition table should show two biological replicates in each condition for the teaching subset.
+
+##### Create the integer count matrix
+
+The first column contains gene identifiers, so we move it to the row names and retain only sample columns:
+
+```r
+rownames(counts) <- counts$gene_id
+count_mat <- as.matrix(counts[, sample_ids, drop = FALSE])
+storage.mode(count_mat) <- "integer"
+if (anyNA(count_mat) || any(count_mat < 0)) stop("Counts must be non-negative integers")
+
+print(dim(count_mat))
+print(head(count_mat))
+print(identical(colnames(count_mat), rownames(metadata)))
+```
+
+The second `identical()` check must also print `TRUE`. Each column of `count_mat` now corresponds to the metadata row in the same position.
+
+##### Build the DESeq2 dataset and fit the model
+
+Now combine the raw counts, sample information, and design formula. We inspect how many genes pass the simple low-count filter before fitting the model:
+
+```r
+dds <- DESeq2::DESeqDataSetFromMatrix(
+  countData = count_mat,
+  colData = metadata[, c("sample_id", "condition", "replicate"), drop = FALSE],
+  design = ~ condition
+)
+
+print(dds)
+
+keep <- rowSums(DESeq2::counts(dds)) >= 10
+print(table(keep))
+dds <- dds[keep, ]
+
+dds <- DESeq2::DESeq(dds)
+
+print(DESeq2::sizeFactors(dds))
+print(DESeq2::resultsNames(dds))
+```
+
+`DESeq()` estimates size factors, dispersions, and model coefficients. `resultsNames(dds)` shows which coefficients were fitted and helps us verify the comparison direction.
+
+##### Extract and inspect the condition result
+
+Request condition B relative to condition A explicitly:
+
+```r
+res <- DESeq2::results(
+  dds,
+  contrast = c("condition", "condition_B", "condition_A")
+)
+
+print(summary(res))
+
+res_table <- as.data.frame(res)
+res_table$gene_id <- rownames(res_table)
+res_table <- res_table[, c("gene_id", setdiff(names(res_table), "gene_id"))]
+
+top <- res_table[!is.na(res_table$padj), , drop = FALSE]
+top <- top[order(top$padj, -abs(top$log2FoldChange)), , drop = FALSE]
+
+print(head(
+  top[, c("gene_id", "baseMean", "log2FoldChange", "lfcSE", "padj")],
+  20
+))
+```
+
+With no `alpha` argument supplied, `summary(res)` reports results using DESeq2's default adjusted-p-value threshold of 0.1, together with low-count and outlier categories. Inspecting `top` connects the model quantities from Sections 5.1–5.10 to the values in the result table. The file `top_deg.tsv` is a ranked teaching table; appearing in its first 20 rows does not by itself make a gene statistically significant.
+
+##### Save the tables and diagnostic plots
+
+Keep `res` as a DESeq2 result object for the MA plot and use `res_table` for files and the ggplot2 volcano plot:
+
+```r
+write.csv(metadata[, c("analysis_id", "sample_id", "condition", "replicate")],
+          file.path(out_dir, "sample_design.csv"), row.names = FALSE)
+write.table(res_table, file.path(out_dir, "deseq2_results.tsv"),
+            sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(head(top, 20), file.path(out_dir, "top_deg.tsv"),
+            sep = "\t", quote = FALSE, row.names = FALSE)
+
+vsd <- DESeq2::vst(dds, blind = TRUE)
+
+pdf(file.path(out_dir, "pca.pdf"))
+print(DESeq2::plotPCA(vsd, intgroup = "condition"))
+dev.off()
+
+pdf(file.path(out_dir, "dispersion_plot.pdf"))
+DESeq2::plotDispEsts(dds)
+dev.off()
+
+pdf(file.path(out_dir, "ma_plot.pdf"))
+DESeq2::plotMA(res)
+dev.off()
+
+res_table$minus_log10_padj <- -log10(
+  pmax(res_table$padj, .Machine$double.xmin)
+)
+
+volcano <- ggplot2::ggplot(
+  res_table,
+  ggplot2::aes(x = log2FoldChange, y = minus_log10_padj)
+) +
+  ggplot2::geom_point(alpha = 0.6, size = 1, na.rm = TRUE) +
+  ggplot2::theme_bw() +
+  ggplot2::labs(
+    x = "log2 fold change (condition_B / condition_A)",
+    y = "-log10 adjusted p-value"
+  )
+
+ggplot2::ggsave(
+  file.path(out_dir, "volcano.pdf"),
+  volcano,
+  width = 6,
+  height = 5
+)
+
+info <- sessionInfo()
+print(info)
+writeLines(capture.output(info), file.path(out_dir, "sessionInfo.txt"))
+
+print(list.files(out_dir))
+```
+
+Do not wait until the whole script is finished before looking at the data. Run each block at the R prompt and resolve any unexpected dimensions, sample order, condition labels, or coefficient names before continuing.
+
+After the final block, use the VS Code Explorer to open the PDFs under:
+
+```text
+results/day2_rnaseq/deseq2/
+```
+
+Because this folder is mounted into the container, new files appear immediately on the laptop. When the interactive analysis is finished, leave R with:
+
+```r
+q(save = "no")
+```
+
+The container is removed, but the saved R script and all files under the mounted project remain.
+
+The R workflow performs these steps:
 
 | R step | Meaning |
 |---|---|
-| Read raw count matrix | Load integer counts from featureCounts |
-| Infer sample design | Build `condition` and `replicate` from sample names such as `WT_1_WT_control` |
+| Read featureCounts output | Load the complete table while skipping its initial command line |
+| Select count columns | Remove the five annotation columns, clean the BAM-derived sample names, and save `gene_count_matrix.tsv` |
+| Read sample design | Derive `analysis_id` from `read1`, match it to the count-matrix columns, and retain the sample labels |
 | Create `DESeqDataSet` | Combine counts, metadata, and design formula |
 | Filter very low-count genes | Remove genes with too little information |
 | Run `DESeq()` | Estimate size factors, dispersions, and condition effects |
 | Save results | Write log2 fold changes, standard errors, p-values, and adjusted p-values |
 | Make diagnostic plots | PCA, dispersion plot, MA plot, and volcano plot |
 
-The script writes the inferred design table to:
+The workflow writes the design table used by DESeq2 to:
 
 ```text
-results/day2_rnaseq/deseq2/inferred_sample_design.csv
+results/day2_rnaseq/deseq2/sample_design.csv
 ```
 
-Always inspect this file. If condition labels are wrong, the sample names are not following the expected Day 1 pattern.
+Always inspect this file. Its row order must match the count-matrix columns, and its condition labels must match the experimental design.
 
 Common DESeq2 result columns:
 
@@ -779,7 +1721,64 @@ Important plots:
 
 Do not treat the volcano plot as the analysis itself. It is a summary of the fitted model results.
 
-## 7. Optional: make RNA-seq bigWig tracks
+##### Optional: convert the script to automatic command-line execution
+
+During the workshop, the fixed paths make every input and output visible. After the script has been understood and inspected interactively, it can be made reusable for other paths.
+
+Replace the opening lines from `library(DESeq2)` through the two data-import commands with:
+
+```r
+#!/usr/bin/env Rscript
+
+args <- commandArgs(trailingOnly = TRUE)
+if (length(args) != 3) {
+  stop("Usage: 04_deseq2_analysis.R featureCounts_table.txt samples.csv out_dir")
+}
+
+required <- c("DESeq2", "ggplot2")
+missing <- required[!vapply(required, requireNamespace, logical(1), quietly = TRUE)]
+if (length(missing)) {
+  stop("Missing R packages: ", paste(missing, collapse = ", "))
+}
+
+counts_file <- args[[1]]
+metadata_file <- args[[2]]
+out_dir <- args[[3]]
+count_matrix_file <- file.path(dirname(counts_file), "gene_count_matrix.tsv")
+
+featurecounts <- read.delim(
+  counts_file,
+  comment.char = "#",
+  check.names = FALSE
+)
+metadata <- read.csv(metadata_file, stringsAsFactors = FALSE, check.names = FALSE)
+```
+
+Keep the rest of the script, beginning with `dir.create(out_dir, ...)`, unchanged. The three values after the script name are now read in this order:
+
+```text
+1. complete featureCounts table
+2. sample metadata
+3. output directory
+```
+
+The automated version can then be run without entering the R console:
+
+```bash
+docker run --rm \
+  --platform linux/amd64 \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-r-bioc:latest \
+  Rscript scripts/day2_rnaseq/04_deseq2_analysis.R \
+  results/day2_rnaseq/counts/featureCounts_all_samples.txt \
+  raw_data/metadata/samples.csv \
+  results/day2_rnaseq/deseq2
+```
+
+This command-line interface is useful for repeating the same inspected analysis with different input files or output folders.
+
+## 6. Optional: make RNA-seq bigWig tracks
 
 bigWig files store genome-wide coverage signal. They are useful for IGV inspection but are not inputs to DESeq2.
 
@@ -839,7 +1838,7 @@ results/day2_rnaseq/bigwig/*.cpm.bw
 
 Use these files later for genome-browser inspection together with BAM files, ChIP-seq peaks, and gene annotation.
 
-## 8. Summarize Day 2 logs with MultiQC
+## 7. Summarize Day 2 logs with MultiQC
 
 MultiQC collects tool logs into one HTML report. This makes it easier to compare samples side by side instead of opening each Bowtie2, samtools, and featureCounts log separately.
 
@@ -898,16 +1897,18 @@ results/day2_rnaseq/qc/multiqc_report.html
 
 Open the report in a browser and check whether one sample has a clearly different alignment rate, properly paired rate, or featureCounts assignment rate.
 
-## 9. Files needed by Day 4
+## 8. Files needed by Day 4
 
 Day 4 integration uses the RNA-seq results from this page together with ChIP-seq peaks and genome annotation. Keep these files and names stable:
 
 ```text
 reference_genome/genome.fa
 reference_genome/annotation.gff3
+results/day2_rnaseq/counts/featureCounts_all_samples.txt
 results/day2_rnaseq/counts/gene_count_matrix.tsv
 results/day2_rnaseq/deseq2/deseq2_results.tsv
-results/day2_rnaseq/deseq2/inferred_sample_design.csv
+results/day2_rnaseq/deseq2/top_deg.tsv
+results/day2_rnaseq/deseq2/sample_design.csv
 results/day2_rnaseq/bam/*.filtered.bam
 results/day2_rnaseq/bam/*.filtered.bam.bai
 results/day2_rnaseq/bigwig/*.cpm.bw
@@ -916,27 +1917,37 @@ results/day2_rnaseq/qc/multiqc_report.html
 
 The BAM and bigWig files are large generated files. Keep them locally for IGV and downstream inspection, but do not commit them unless the instructor explicitly provides tiny example files.
 
-## 10. Checkpoint route
+## 9. Checkpoint route
 
 If local mapping or counting is too slow, continue from instructor-provided checkpoint files:
 
 ```text
-checkpoints/rnaseq/gene_count_matrix.tsv
+checkpoints/rnaseq/featureCounts_all_samples.txt
 checkpoints/rnaseq/bigwig/
 checkpoints/rnaseq/qc/multiqc_report.html
 ```
+
+Copy the featureCounts checkpoint to the path used by the R script:
+
+```bash
+mkdir -p results/day2_rnaseq/counts
+cp checkpoints/rnaseq/featureCounts_all_samples.txt \
+  results/day2_rnaseq/counts/featureCounts_all_samples.txt
+```
+
+Only use checkpoints generated by remapping to `GCF_025998455.1`. A count table or track from another assembly is not a valid substitute.
 
 Record this in `workflow_execution.md`:
 
 ```markdown
 ## Day 2
 
-Mapping and counting were demonstrated in class. I used the provided RNA-seq count-matrix checkpoint for DESeq2 because local mapping/counting was not feasible on this laptop.
+Mapping and counting were demonstrated in class. I used the provided RNA-seq featureCounts-table checkpoint for DESeq2 because local mapping/counting was not feasible on this laptop.
 ```
 
 Do not pretend that local mapping was completed if you used checkpoint files.
 
-## 11. Final commit of Day 2
+## 10. Final commit of Day 2
 
 Before committing, check what Git sees:
 
@@ -951,6 +1962,7 @@ Add only scripts, metadata notes, small logs, tables, and plots:
 ```bash
 git add scripts/day2_rnaseq
 git add results/logs/day2
+git add results/day2_rnaseq/counts/featureCounts_all_samples.txt
 git add results/day2_rnaseq/counts/gene_count_matrix.tsv
 git add results/day2_rnaseq/deseq2
 git add results/day2_rnaseq/qc/multiqc_report.html
@@ -967,12 +1979,23 @@ git commit -m "Complete Day 2 RNA-seq mapping counts and DESeq2"
 git push
 ```
 
-## 12. Self-check questions
+## 11. Self-check questions
 
 1. Why is Bowtie2 suitable for this bacterial RNA-seq dataset but not the usual default for mammalian spliced RNA-seq?
 2. What is the difference between SAM, BAM, and BAI?
 3. Which mapping and pairing metrics would you inspect before trusting the count matrix?
-4. Why can a sample map well but still have poor featureCounts assignment?
-5. Why does DESeq2 use raw integer counts rather than CPM, TPM, or bigWig signal?
-6. What does the dispersion parameter represent intuitively?
-7. What does `log2FoldChange` estimate, and why do we also need `lfcSE` and `padj`?
+4. How does the relationship between R1 and the transcript determine whether featureCounts uses `-s 0`, `-s 1`, or `-s 2`?
+5. Why can a sample map well but still have poor featureCounts assignment?
+6. Why does DESeq2 use raw integer counts rather than CPM, TPM, or bigWig signal?
+7. What does the dispersion parameter represent intuitively?
+8. What does `log2FoldChange` estimate, and why do we also need `lfcSE` and `padj`?
+
+## 12. Common problems
+
+| Symptom | Likely cause | Check |
+|---|---|---|
+| Bowtie2 cannot find the index | Day 2 index build was skipped or used another prefix | `reference_genome/bowtie2_index/genome*.bt2` |
+| Mapping is unexpectedly low | Wrong assembly, damaged FASTQ, contamination, or overly strict filtering | Day 1 fastp report, reference accession, Bowtie2 log |
+| featureCounts assignment is low | Annotation mismatch, wrong feature/ID field, or wrong strandedness | GFF3, `-t gene -g ID`, and the metadata/RSeQC-supported `-s` value |
+| DESeq2 sample mismatch | Count column names differ from metadata-derived `analysis_id` | `samples.csv` and count-matrix header |
+| Volcano plot has few points | Low counts, high dispersion, or adjusted p-values are `NA` | Count summary, PCA, dispersion and MA plots |

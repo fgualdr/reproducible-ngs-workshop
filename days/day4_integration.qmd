@@ -18,6 +18,7 @@ The goal is careful prioritization of candidate regulatory relationships, not ov
 ```text
 DESeq2 result table
   + Day 3 consensus ChIP-seq peak file
+  + Day 3 differential peak result table
   + genome annotation
   -> genomic interval objects
   -> peak-to-gene table
@@ -60,11 +61,21 @@ Use your own outputs or checkpoint files:
 results/day2_rnaseq/deseq2/deseq2_results.tsv
 results/day3_chipseq/peaks/consensus/day4_consensus_peaks.bed
 results/day3_chipseq/counts/consensus_peak_counts.tsv
+results/day3_chipseq/differential_peaks/differential_peak_results.tsv
 reference_genome/annotation.gff3
 raw_data/metadata/samples.csv
 ```
 
 If checkpoint files are used, record their source in `scripts/day4_integration/execution_note.md`.
+
+Before integration, verify that the annotation and Day 3 BED file both use chromosome `NZ_AP026446.1`:
+
+```bash
+grep -v '^#' reference_genome/annotation.gff3 | head -1
+head -1 results/day3_chipseq/peaks/consensus/day4_consensus_peaks.bed
+```
+
+Day 4 must stop rather than translate or guess coordinates if any input was generated against another assembly.
 
 ## Time plan
 
@@ -257,7 +268,7 @@ Create `scripts/day4_integration/execution_note.md` in VS Code and paste:
 
 ## R script for interval integration
 
-Create `scripts/day4_integration/peak_gene_integration.R` in VS Code, or open it with `nano`, paste this code, save, and adapt column names as needed:
+The maintained `scripts/day4_integration/peak_gene_integration.R` is authoritative. It checks sequence-name compatibility, applies the documented promoter window, joins RNA-seq and differential ChIP-seq results, and writes the tables and plots listed below. The following excerpt introduces the core interval objects; do not maintain a second independent copy of the script.
 
 ```r
 #!/usr/bin/env Rscript
@@ -331,8 +342,9 @@ combined <- peak_gene %>%
   left_join(de, by = "gene_id") %>%
   mutate(
     is_de = !is.na(padj) & padj < 0.05 & abs(log2FoldChange) >= 1,
+    is_nearby = distance_to_gene <= 500,
     candidate_class = case_when(
-      is_de ~ "DE gene with nearby peak",
+      is_de & is_nearby ~ "DE gene with promoter-proximal peak",
       TRUE ~ "Nearby peak without DE evidence"
     )
   )
@@ -352,7 +364,9 @@ docker run --rm \
   2>&1 | tee results/logs/day4/01_peak_gene_integration.log
 ```
 
-## Example plots
+## Outputs and plots
+
+The authoritative script creates the distance histogram, candidate table, and—when the Day 3 differential peak table is available—the RNA-versus-ChIP change quadrant plot in one run. Use the snippets below only to explore the tables interactively.
 
 Distance-to-gene plot:
 
@@ -379,7 +393,7 @@ Candidate-target table:
 combined <- read_tsv("results/day4_integration/tables/peak_gene_deseq2_join.tsv")
 
 candidate_targets <- combined %>%
-  filter(!is.na(padj), padj < 0.05, abs(log2FoldChange) >= 1) %>%
+  filter(!is.na(padj), padj < 0.05, abs(log2FoldChange) >= 1, is_nearby) %>%
   arrange(padj, desc(abs(log2FoldChange)))
 
 write_tsv(candidate_targets, "results/day4_integration/tables/candidate_direct_targets.tsv")
@@ -411,6 +425,7 @@ which files were provided
 which steps were demonstrated but not run locally
 which analyses were run by the student
 how the checkpoint files relate to the full workflow
+confirmation that every checkpoint uses GCF_025998455.1
 ```
 
 The final repository should make it clear whether the student performed:
@@ -475,6 +490,15 @@ git push
 4. What evidence supports a candidate direct target?
 5. Which result from your analysis would be most convincing in a lab meeting?
 6. What is the most important limitation of your analysis?
+
+## Common problems
+
+| Symptom | Likely cause | Check |
+|---|---|---|
+| No shared sequence names | Reference, annotation, and peaks use different assemblies or chromosome labels | FASTA headers, GFF3 column 1, and BED column 1 |
+| Most joined RNA values are missing | `gene_id` values differ between featureCounts and the annotation | First column of the DESeq2 table and GFF3 `ID`/`gene_id` attributes |
+| ChIP-change columns are empty | Day 3 differential peak analysis was skipped or used different peak IDs | `differential_peak_results.tsv` and `day4_consensus_peaks.bed` |
+| Quadrant plot is absent | No matched finite RNA and ChIP log2 fold changes were available | The joined integration table |
 
 ## How to report issues
 

@@ -18,11 +18,12 @@ following runtime coverage.
 |---|---|---|---|
 | Day 1 ENA/reference downloads | `Dockerfile.curl` | `docker.io/fgualdr/ngs-curl:latest` | `curl`, `awk`, `gzip` |
 | Day 1 optional SRA route | `Dockerfile.sra-tools` | `docker.io/fgualdr/ngs-sra-tools:latest` | `prefetch`, `fasterq-dump` |
-| Day 1 FASTQ QC | `Dockerfile.fastqc` | `docker.io/fgualdr/ngs-fastqc:latest` | `fastqc` |
-| Day 1 trimming/QC | `Dockerfile.fastp` | `docker.io/fgualdr/ngs-fastp:latest` | `fastp` |
+| Optional standalone FastQC | `Dockerfile.fastqc` | `docker.io/fgualdr/ngs-fastqc:latest` | `fastqc` |
+| Day 1 preprocessing/QC | `Dockerfile.fastp` | `docker.io/fgualdr/ngs-fastp:latest` | `fastp` |
 | Optional NCBI datasets route | `Dockerfile.ncbi-datasets` | `docker.io/fgualdr/ngs-ncbi-datasets:latest` | `datasets`, `unzip` |
 | Day 2/3 mapping and BAM cleanup | `Dockerfile.bowtie2-samtools` | `docker.io/fgualdr/ngs-bowtie2-samtools:latest` | `bowtie2`, `bowtie2-build`, `samtools` |
 | Day 2 gene counting | `Dockerfile.featurecounts` | `docker.io/fgualdr/ngs-featurecounts:latest` | `featureCounts` |
+| Day 2 strandedness inference | `Dockerfile.rseqc` | `docker.io/fgualdr/ngs-rseqc:latest` | `infer_experiment.py` |
 | Day 2/4 R/Bioconductor | `Dockerfile.r-bioc` | `docker.io/fgualdr/ngs-r-bioc:latest` | `Rscript`, `DESeq2`, `tidyverse`, `GenomicRanges`, `rtracklayer` |
 | Day 2 MultiQC report | `Dockerfile.multiqc` | `docker.io/fgualdr/ngs-multiqc:latest` | `multiqc` |
 | Day 2/3 bigWig tracks | `Dockerfile.deeptools` | `docker.io/fgualdr/ngs-deeptools:latest` | `bamCoverage` |
@@ -49,8 +50,8 @@ docker run --rm \
   --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  docker.io/fgualdr/ngs-fastqc:latest \
-  bash scripts/day1/01_fastqc_raw.sh
+  docker.io/fgualdr/ngs-fastp:latest \
+  bash scripts/day1/02_trim_fastq.sh
 ```
 
 Use two threads by default in scripts:
@@ -169,6 +170,7 @@ docker buildx build --platform linux/amd64 -f Docker_files/Dockerfile.fastp -t d
 docker buildx build --platform linux/amd64 -f Docker_files/Dockerfile.ncbi-datasets -t docker.io/fgualdr/ngs-ncbi-datasets:latest --push .
 docker buildx build --platform linux/amd64 -f Docker_files/Dockerfile.bowtie2-samtools -t docker.io/fgualdr/ngs-bowtie2-samtools:latest --push .
 docker buildx build --platform linux/amd64 -f Docker_files/Dockerfile.featurecounts -t docker.io/fgualdr/ngs-featurecounts:latest --push .
+docker buildx build --platform linux/amd64 -f Docker_files/Dockerfile.rseqc -t docker.io/fgualdr/ngs-rseqc:latest --push .
 docker buildx build --platform linux/amd64 -f Docker_files/Dockerfile.r-bioc -t docker.io/fgualdr/ngs-r-bioc:latest --push .
 docker buildx build --platform linux/amd64 -f Docker_files/Dockerfile.multiqc -t docker.io/fgualdr/ngs-multiqc:latest --push .
 docker buildx build --platform linux/amd64 -f Docker_files/Dockerfile.deeptools -t docker.io/fgualdr/ngs-deeptools:latest --push .
@@ -208,6 +210,7 @@ docker run --rm --platform linux/amd64 docker.io/fgualdr/ngs-fastp:latest fastp 
 docker run --rm --platform linux/amd64 docker.io/fgualdr/ngs-ncbi-datasets:latest datasets --version
 docker run --rm --platform linux/amd64 docker.io/fgualdr/ngs-bowtie2-samtools:latest bowtie2 --version
 docker run --rm --platform linux/amd64 docker.io/fgualdr/ngs-featurecounts:latest featureCounts -v
+docker run --rm --platform linux/amd64 docker.io/fgualdr/ngs-rseqc:latest --version
 docker run --rm --platform linux/amd64 docker.io/fgualdr/ngs-r-bioc:latest Rscript -e 'library(DESeq2); library(tidyverse); library(rtracklayer); sessionInfo()'
 docker run --rm --platform linux/amd64 docker.io/fgualdr/ngs-multiqc:latest multiqc --version
 docker run --rm --platform linux/amd64 docker.io/fgualdr/ngs-deeptools:latest bamCoverage --version

@@ -1,78 +1,118 @@
 #!/usr/bin/env Rscript
 
-suppressPackageStartupMessages({
-  library(GenomicRanges)
-  library(rtracklayer)
-  library(tidyverse)
-})
+required <- c("GenomicRanges", "rtracklayer", "ggplot2")
+missing <- required[!vapply(required, requireNamespace, logical(1), quietly = TRUE)]
+if (length(missing)) stop("Missing R packages: ", paste(missing, collapse = ", "))
 
-# Inputs
 peak_file <- "results/day3_chipseq/peaks/consensus/day4_consensus_peaks.bed"
 annotation_file <- "reference_genome/annotation.gff3"
-deseq_file <- "results/day2_rnaseq/deseq2/deseq2_results.tsv"
-out_dir <- "results/day4_integration/tables"
+rna_file <- "results/day2_rnaseq/deseq2/deseq2_results.tsv"
+chip_file <- "results/day3_chipseq/differential_peaks/differential_peak_results.tsv"
+table_dir <- "results/day4_integration/tables"
+plot_dir <- "results/day4_integration/plots"
 
-if (!file.exists(peak_file)) {
-  stop("Peak file not found: ", peak_file)
+for (input_file in c(peak_file, annotation_file, rna_file)) {
+  if (!file.exists(input_file)) stop("Required input not found: ", input_file)
 }
-if (!file.exists(annotation_file)) {
-  stop("Annotation file not found: ", annotation_file)
-}
-if (!file.exists(deseq_file)) {
-  stop("DESeq2 result file not found: ", deseq_file)
-}
+dir.create(table_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(plot_dir, recursive = TRUE, showWarnings = FALSE)
 
-dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+peaks <- rtracklayer::import(peak_file, format = "BED")
+annotation <- rtracklayer::import(annotation_file)
+rna <- read.delim(rna_file, check.names = FALSE)
+if (!length(peaks)) stop("No peaks were imported")
 
-# Import data
-peaks <- import(peak_file, format = "BED")
-annotation <- import(annotation_file)
-de <- read_tsv(deseq_file, show_col_types = FALSE)
-
-# Keep gene-like features. Adapt this line to the organism annotation.
-genes <- annotation[annotation$type %in% c("gene", "CDS")]
-if (length(peaks) == 0) {
-  stop("No peaks were imported from: ", peak_file)
-}
-if (length(genes) == 0) {
-  stop("No gene or CDS features were imported from: ", annotation_file)
+genes <- annotation[annotation$type == "gene"]
+if (!length(genes)) genes <- annotation[annotation$type == "CDS"]
+if (!length(genes)) stop("No gene or CDS features were imported")
+if (!length(intersect(as.character(GenomicRanges::seqnames(peaks)),
+                      as.character(GenomicRanges::seqnames(genes))))) {
+  stop("Peak and annotation sequence names do not overlap")
 }
 
-# Create stable gene identifiers from available metadata.
-gene_id <- mcols(genes)$gene_id
-if (is.null(gene_id)) gene_id <- mcols(genes)$ID
-if (is.null(gene_id)) gene_id <- mcols(genes)$locus_tag
-if (is.null(gene_id)) gene_id <- paste0("gene_", seq_along(genes))
-mcols(genes)$gene_id <- as.character(gene_id)
+gene_id <- S4Vectors::mcols(genes)$gene_id
+if (is.null(gene_id)) gene_id <- S4Vectors::mcols(genes)$ID
+if (is.null(gene_id)) gene_id <- S4Vectors::mcols(genes)$locus_tag
+if (is.null(gene_id) || anyNA(gene_id)) stop("Annotation lacks a complete gene identifier column")
 
-# Nearest gene per peak. Peak intervals are unstranded, so ignore strand here.
-nearest_hits <- distanceToNearest(peaks, genes, ignore.strand = TRUE)
-peak_gene <- tibble(
-  peak_index = queryHits(nearest_hits),
-  gene_index = subjectHits(nearest_hits),
-  distance_to_gene = mcols(nearest_hits)$distance,
-  gene_id = mcols(genes)$gene_id[subjectHits(nearest_hits)],
-  peak_chr = as.character(seqnames(peaks))[queryHits(nearest_hits)],
-  peak_start = start(peaks)[queryHits(nearest_hits)],
-  peak_end = end(peaks)[queryHits(nearest_hits)]
+peak_id <- S4Vectors::mcols(peaks)$name
+if (is.null(peak_id) || anyNA(peak_id) || any(peak_id == "")) {
+  peak_id <- sprintf("peak_%04d", seq_along(peaks))
+}
+
+nearest <- GenomicRanges::nearest(peaks, genes, ignore.strand = TRUE)
+if (anyNA(nearest)) stop("At least one peak has no gene on the same sequence")
+distance_to_gene <- GenomicRanges::distance(peaks, genes[nearest], ignore.strand = TRUE)
+
+promoters <- GenomicRanges::promoters(genes, upstream = 500, downstream = 100)
+GenomicRanges::start(promoters) <- pmax(1L, GenomicRanges::start(promoters))
+nearest_promoter <- promoters[nearest]
+promoter_overlap <-
+  as.character(GenomicRanges::seqnames(peaks)) == as.character(GenomicRanges::seqnames(nearest_promoter)) &
+  GenomicRanges::start(peaks) <= GenomicRanges::end(nearest_promoter) &
+  GenomicRanges::end(peaks) >= GenomicRanges::start(nearest_promoter)
+
+links <- data.frame(
+  peak_id = as.character(peak_id),
+  peak_chr = as.character(GenomicRanges::seqnames(peaks)),
+  peak_start = GenomicRanges::start(peaks),
+  peak_end = GenomicRanges::end(peaks),
+  gene_id = as.character(gene_id[nearest]),
+  distance_to_gene = distance_to_gene,
+  promoter_overlap = promoter_overlap,
+  stringsAsFactors = FALSE
+)
+write.table(links, file.path(table_dir, "peak_nearest_gene.tsv"),
+            sep = "\t", quote = FALSE, row.names = FALSE)
+
+if (!"gene_id" %in% names(rna)) names(rna)[1] <- "gene_id"
+rna$gene_id <- as.character(rna$gene_id)
+combined <- merge(links, rna, by = "gene_id", all.x = TRUE, sort = FALSE)
+
+if (file.exists(chip_file)) {
+  chip <- read.delim(chip_file, check.names = FALSE)
+  chip <- chip[, c("peak_id", "log2FoldChange", "padj")]
+  names(chip) <- c("peak_id", "chip_log2FoldChange", "chip_padj")
+  combined <- merge(combined, chip, by = "peak_id", all.x = TRUE, sort = FALSE)
+} else {
+  combined$chip_log2FoldChange <- NA_real_
+  combined$chip_padj <- NA_real_
+  warning("Differential peak table not found; ChIP-change columns will be NA")
+}
+
+combined$is_de <- !is.na(combined$padj) & combined$padj < 0.05 & abs(combined$log2FoldChange) >= 1
+combined$is_nearby <- combined$promoter_overlap | combined$distance_to_gene <= 500
+combined$candidate_class <- ifelse(
+  combined$is_de & combined$is_nearby,
+  "DE gene with promoter-proximal peak",
+  "Insufficient combined evidence"
 )
 
-write_tsv(peak_gene, file.path(out_dir, "peak_nearest_gene.tsv"))
+write.table(combined, file.path(table_dir, "peak_gene_deseq2_join.tsv"),
+            sep = "\t", quote = FALSE, row.names = FALSE)
+candidates <- combined[combined$is_de & combined$is_nearby, , drop = FALSE]
+candidates <- candidates[order(candidates$padj, candidates$distance_to_gene), , drop = FALSE]
+write.table(candidates, file.path(table_dir, "candidate_direct_targets.tsv"),
+            sep = "\t", quote = FALSE, row.names = FALSE)
 
-# Join with DESeq2 results. Adapt the gene ID column if needed.
-if (!"gene_id" %in% names(de)) {
-  first_col <- names(de)[1]
-  de <- de %>% rename(gene_id = all_of(first_col))
+distance_plot <- ggplot2::ggplot(links, ggplot2::aes(distance_to_gene)) +
+  ggplot2::geom_histogram(bins = 40) +
+  ggplot2::theme_bw() +
+  ggplot2::labs(x = "Distance from peak to nearest gene (bp)", y = "Number of peaks")
+ggplot2::ggsave(file.path(plot_dir, "peak_gene_distance_histogram.pdf"),
+                distance_plot, width = 7, height = 5)
+
+if (any(!is.na(combined$chip_log2FoldChange) & !is.na(combined$log2FoldChange))) {
+  quadrant_plot <- ggplot2::ggplot(
+    combined,
+    ggplot2::aes(chip_log2FoldChange, log2FoldChange, colour = is_de & is_nearby)
+  ) +
+    ggplot2::geom_hline(yintercept = 0, colour = "grey70") +
+    ggplot2::geom_vline(xintercept = 0, colour = "grey70") +
+    ggplot2::geom_point(alpha = 0.7, na.rm = TRUE) +
+    ggplot2::scale_colour_manual(values = c("grey60", "#B2182B"), guide = "none") +
+    ggplot2::theme_bw() +
+    ggplot2::labs(x = "ChIP-seq log2 fold change", y = "RNA-seq log2 fold change")
+  ggplot2::ggsave(file.path(plot_dir, "rna_chip_change_quadrant.pdf"),
+                  quadrant_plot, width = 6, height = 5)
 }
-de <- de %>% mutate(gene_id = as.character(gene_id))
-combined <- peak_gene %>%
-  left_join(de, by = "gene_id") %>%
-  mutate(
-    is_de = !is.na(padj) & padj < 0.05 & abs(log2FoldChange) >= 1,
-    candidate_class = case_when(
-      is_de ~ "DE gene with nearby peak",
-      TRUE ~ "Nearby peak without DE evidence"
-    )
-  )
-
-write_tsv(combined, file.path(out_dir, "peak_gene_deseq2_join.tsv"))

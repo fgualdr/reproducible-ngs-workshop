@@ -40,9 +40,10 @@ Also check that the reference genome and the Bowtie2 index are present:
 ```bash
 ls -lh reference_genome/genome.fa
 ls -lh reference_genome/bowtie2_index/genome*.bt2
+grep '^>' reference_genome/genome.fa | grep 'NZ_AP026446.1'
 ```
 
-If the Bowtie2 index is missing, run the Day 2 index-building step before continuing. The same genome index can be used for RNA-seq and ChIP-seq because both workflows map reads to the same *H. pylori* reference genome.
+If the Bowtie2 index is missing, run the Day 2 index-building step before continuing. The same `GCF_025998455.1` genome index must be used for RNA-seq and ChIP-seq.
 
 ## 2. Overview of the day
 
@@ -59,6 +60,7 @@ trimmed ChIP-seq FASTQ
   -> MACS3 peak calling with paired-end BAM input
   -> consensus peak set for Day 4
   -> simple peak-count matrix
+  -> differential peak analysis
   -> peak DNA sequences
   -> STREME motif discovery
 ```
@@ -87,6 +89,7 @@ results/day3_chipseq/peaks/no_input/*_peaks.narrowPeak
 results/day3_chipseq/peaks/no_input/*_summits.bed
 results/day3_chipseq/peaks/consensus/day4_consensus_peaks.bed
 results/day3_chipseq/counts/consensus_peak_counts.tsv
+results/day3_chipseq/differential_peaks/differential_peak_results.tsv
 results/day3_chipseq/motifs/day4_consensus_peak_sequences.fa
 results/day3_chipseq/motifs/streme/
 results/logs/day3/
@@ -460,7 +463,7 @@ The command in this practical uses:
 |---|---|
 | `-t` | Treatment file, here the filtered ChIP-seq BAM |
 | `-f BAMPE` | Paired-end BAM input; MACS3 uses the fragment extents |
-| `-g 1.7e6` | Approximate mappable genome size for this small bacterial genome |
+| `-g 1696601` | Assembly length in bases for the single `NZ_AP026446.1` chromosome; used here as the teaching effective genome size |
 | `-n` | Output name prefix |
 | `--outdir` | Output folder |
 | `--keep-dup all` | Keep duplicate-position reads for this teaching run |
@@ -480,7 +483,7 @@ set -euo pipefail
 bam_dir="results/day3_chipseq/bam"
 out_dir="results/day3_chipseq/peaks/no_input"
 log_dir="results/logs/day3"
-genome_size="1.7e6"
+genome_size="1696601"
 
 mkdir -p "${out_dir}" "${log_dir}"
 
@@ -678,7 +681,32 @@ head results/day3_chipseq/counts/consensus_peak_counts.tsv
 cat results/logs/day3/consensus_peak_counts.log
 ```
 
-## 9. Optional QC: replicate peak consistency with IDR
+## 9. Differential peak analysis
+
+The consensus count matrix provides raw counts for a simplified condition comparison. Run DESeq2 with the same `condition_A` reference and `condition_B` comparison used for RNA-seq:
+
+```bash
+docker run --rm \
+  --platform linux/amd64 \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-r-bioc:latest \
+  Rscript scripts/day3_chipseq/09_differential_peak_analysis.R \
+  results/day3_chipseq/counts/consensus_peak_counts.tsv \
+  raw_data/metadata/samples.csv \
+  results/day3_chipseq/differential_peaks \
+  2>&1 | tee results/logs/day3/differential_peak_analysis.log
+```
+
+This is a simplified teaching analysis. The `bedtools multicov` matrix counts overlapping alignments; a publication-grade paired-end analysis should use fragment-aware counting and should model the complete experimental design. Keep raw counts—not CPM-normalized bigWig signal—as the DESeq2 input.
+
+Expected handoff to Day 4:
+
+```text
+results/day3_chipseq/differential_peaks/differential_peak_results.tsv
+```
+
+## 10. Optional QC: replicate peak consistency with IDR
 
 This section is useful as an instructor demonstration or optional replicate QC if there is enough time.
 
@@ -771,7 +799,7 @@ When reading the IDR output, focus on:
 - whether the IDR plot looks similar across conditions;
 - whether IDR-supported peaks also look plausible in the bigWig tracks.
 
-## 10. Input controls and peak-calling design
+## 11. Input controls and peak-calling design
 
 Input DNA is fragmented DNA sequenced before immunoprecipitation. It is not a perfect negative control, but when it is well matched and sufficiently sequenced it helps model background effects such as:
 
@@ -792,7 +820,7 @@ The two common MACS3 routes are:
 
 Our small teaching workflow captures the logic of the published analysis, but it is simplified for laptop-scale execution.
 
-## 11. Extract peak sequences
+## 12. Extract peak sequences
 
 Motif discovery uses DNA sequences, not BAM files or bigWig tracks. To test whether the called peaks contain enriched sequence patterns, we extract the reference genome sequence under the Day 4 consensus peak intervals.
 
@@ -868,7 +896,7 @@ head results/day3_chipseq/motifs/day4_consensus_peak_sequences.fa
 cat results/logs/day3/extract_peak_sequences.log
 ```
 
-## 12. Motif discovery with STREME
+## 13. Motif discovery with STREME
 
 A transcription factor often recognizes a family of related DNA words rather than one exact sequence. A motif summarizes base preferences at each position. Motif discovery asks whether some short DNA patterns occur more often in the peak sequences than expected by chance or relative to a background model.
 
@@ -941,9 +969,11 @@ When reading STREME output, focus on:
 - whether the motif is biologically plausible for the protein and organism;
 - whether the peaks came from an input-free or input-controlled analysis.
 
-## 13. Checkpoint route
+## 14. Checkpoint route
 
 If mapping, BAM processing, MACS3 peak calling, consensus-peak construction, or STREME is not feasible locally, continue from instructor-provided checkpoint files.
+
+Accept only checkpoints generated against `GCF_025998455.1` with chromosome `NZ_AP026446.1`.
 
 Record the checkpoint route explicitly in your project notes:
 
@@ -953,7 +983,7 @@ ChIP-seq mapping, peak calling, consensus peak construction, and motif discovery
 
 Do not hide checkpoint use. A reproducible analysis record should say which files were generated locally and which files were provided.
 
-## 14. Git checkpoint
+## 15. Git checkpoint
 
 Before committing, check what Git sees:
 
@@ -982,7 +1012,7 @@ If you are using GitHub:
 git push
 ```
 
-## 15. Expected outputs
+## 16. Expected outputs
 
 By the end of Day 3, you should have some combination of:
 
@@ -995,6 +1025,7 @@ results/day3_chipseq/peaks/no_input/*_peaks.narrowPeak
 results/day3_chipseq/peaks/no_input/*_summits.bed
 results/day3_chipseq/peaks/consensus/day4_consensus_peaks.bed
 results/day3_chipseq/counts/consensus_peak_counts.tsv
+results/day3_chipseq/differential_peaks/differential_peak_results.tsv
 results/day3_chipseq/idr/
 results/day3_chipseq/motifs/day4_consensus_peak_sequences.fa
 results/day3_chipseq/motifs/streme/
@@ -1005,20 +1036,20 @@ results/logs/day3/consensus_peak_counts.log
 
 Large BAM and bigWig files are working files, not normal Git files. Small peak tables, logs, motif outputs, and notes are appropriate to commit unless the instructor says otherwise.
 
-## 16. Common problems
+## 17. Common problems
 
 | Problem | Likely cause | What to check |
 |---|---|---|
 | No FASTQ files found | Day 1 was skipped or files are in a different folder | `ls results/day1_qc/trimmed_fastq/chipseq/` |
 | Bowtie2 index missing | Day 2 index step was not run | `ls reference_genome/bowtie2_index/` |
-| Low alignment rate | Wrong reference, contamination, poor FASTQ quality, or wrong sample labels | Bowtie2 logs and Day 1 FastQC reports |
+| Low alignment rate | Wrong reference, contamination, poor FASTQ quality, or wrong sample labels | Bowtie2 logs and Day 1 fastp reports |
 | Few reads after filtering | R1/R2 pairing problem, strict MAPQ behavior, or poor mapping | Compare unfiltered and filtered `flagstat` files |
 | Strong phantom peak | Read-length artifact, low-complexity library, weak enrichment, or duplicate-driven structure | Phantom peak plot, cross-correlation table, duplicate behavior, and bigWig tracks |
 | MACS3 calls many odd peaks | No input control, repetitive regions, duplicate artifacts, or noisy library | BigWig tracks, peak scores, and replicate consistency |
 | Consensus peak file is empty | MACS3 called no peaks, peak filenames are missing, or peak coordinates failed sorting/merging | MACS3 logs and `results/day3_chipseq/peaks/no_input/` |
 | STREME finds no clear motif | Too few peaks, noisy peaks, broad/non-specific binding, or weak motif signal | Number of sequences, peak quality, and input-control limitations |
 
-## 17. Self-check questions
+## 18. Self-check questions
 
 1. Why is ChIP-seq normally mapped as non-spliced genomic DNA?
 2. Why do we filter BAM files before making signal tracks and calling peaks?

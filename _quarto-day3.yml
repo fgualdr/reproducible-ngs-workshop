@@ -1,0 +1,34 @@
+project:
+  render:
+    - days/day0_setup.qmd
+    - days/day1_reproducible_project.qmd
+    - days/day2_rnaseq.qmd
+    - days/day3_chipseq.qmd
+    - modules/git_github.qmd
+    - modules/containers_docker_podman.qmd
+    - modules/public_data_retrieval.qmd
+    - modules/reference_genomes.qmd
+    - modules/rnaseq_concepts.qmd
+    - modules/chipseq_concepts.qmd
+
+website:
+  sidebar:
+    contents:
+      - section: "Day-by-day lessons"
+        contents:
+          - text: "Day 0 - Setup"
+            href: days/day0_setup.qmd
+          - text: "Day 1 - Reproducible project"
+            href: days/day1_reproducible_project.qmd
+          - text: "Day 2 - RNA-seq"
+            href: days/day2_rnaseq.qmd
+          - text: "Day 3 - ChIP-seq"
+            href: days/day3_chipseq.qmd
+      - section: "Core modules"
+        contents:
+          - modules/git_github.qmd
+          - modules/containers_docker_podman.qmd
+          - modules/public_data_retrieval.qmd
+          - modules/reference_genomes.qmd
+          - modules/rnaseq_concepts.qmd
+          - modules/chipseq_concepts.qmd

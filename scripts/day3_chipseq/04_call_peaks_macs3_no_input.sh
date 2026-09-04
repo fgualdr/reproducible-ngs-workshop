@@ -4,7 +4,7 @@ set -euo pipefail
 bam_dir="results/day3_chipseq/bam"
 out_dir="results/day3_chipseq/peaks/no_input"
 log_dir="results/logs/day3"
-genome_size="1.7e6"
+genome_size="1696601"
 
 mkdir -p "${out_dir}" "${log_dir}"
 

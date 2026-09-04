@@ -15,50 +15,82 @@ GSE study -> GSM sample -> SRP project -> SRX experiment -> SRR run
 
 ENA and ArrayExpress may provide clearer FASTQ URLs for some datasets. Record the route used.
 
-## ENA route
+## ENA/ArrayExpress route
 
-Use stable HTTPS/FTP links from ENA metadata when available. In the workshop, the ENA table is turned into a small CSV and each URL is downloaded with `curl`:
+The main workshop route starts from the two ArrayExpress SDRF files:
 
 ```bash
-docker run --rm \
-  --platform linux/amd64 \
-  -v "$PWD:/work" \
-  -w /work \
-  docker.io/fgualdr/ngs-curl:latest \
-  curl \
-  -L URL_TO_FASTQ_GZ \
-  -o raw_data/fastq/rnaseq/SAMPLE_R1.fastq.gz
+mkdir -p raw_data/metadata
+
+curl -fL \
+  https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/025/E-MTAB-13025/Files/E-MTAB-13025.sdrf.txt \
+  -o raw_data/metadata/E-MTAB-13025.sdrf.txt
+
+curl -fL \
+  https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/026/E-MTAB-13026/Files/E-MTAB-13026.sdrf.txt \
+  -o raw_data/metadata/E-MTAB-13026.sdrf.txt
 ```
 
-## SRA route
+Keep the original SDRFs unchanged. In VS Code, copy the selected FASTQ rows into `raw_data/metadata/selected_fastq_files.csv`, use one row per FASTQ file, and replace `ftp://` with `https://` before saving:
 
-SRA Toolkit is useful for future projects that do not provide direct FASTQ URLs. Start from the CSV downloaded from SRA Run Selector and save it as:
-
-```text
-raw_data/metadata/SraRunTable.csv
+```csv
+assay,fastq_name,fastq_url
+rnaseq,WT_1_condition_A_R1.fastq.gz,https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR114/010/ERR11479310/ERR11479310_1.fastq.gz
+rnaseq,WT_1_condition_A_R2.fastq.gz,https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR114/010/ERR11479310/ERR11479310_2.fastq.gz
 ```
 
-The first column is `Run`, for example `SRR13090294`. The optional example below downloads every run listed in that first column:
+The maintained download script contains one simple loop:
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-csv_file="raw_data/metadata/SraRunTable.csv"
+metadata="raw_data/metadata/selected_fastq_files.csv"
+log_file="results/logs/day1/ena_download.log"
+
+mkdir -p raw_data/fastq/rnaseq raw_data/fastq/chipseq results/logs/day1
+: > "${log_file}"
+
+for row in $(tail -n +2 "${metadata}" | tr -d '\r')
+do
+  IFS=, read -r assay fastq_name fastq_url <<< "${row}"
+
+  echo "Downloading ${fastq_name}" | tee -a "${log_file}"
+  curl -fL "${fastq_url}" -o "raw_data/fastq/${assay}/${fastq_name}"
+done
+```
+
+This simple `for` loop is appropriate only because the curated CSV fields contain no spaces.
+
+## Optional GEO/SRA route
+
+SRA Toolkit is useful for future projects that do not provide direct FASTQ URLs. The SRA Run Selector exports a large metadata table. For this optional example, create a smaller one-column CSV at:
+
+```text
+raw_data/metadata/sra_example.csv
+```
+
+Its header is `run_accession`, and each following row contains one run to download:
+
+```text
+run_accession
+SRR11192680
+SRR11192681
+```
+
+The optional example below skips the header and downloads both runs:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+csv_file="raw_data/metadata/sra_example.csv"
 out_dir="raw_data/fastq/sra_example"
 
 mkdir -p "${out_dir}"
 
-if [[ ! -f "${csv_file}" ]]; then
-  echo "ERROR: CSV file not found: ${csv_file}" >&2
-  exit 1
-fi
-
-tail -n +2 "${csv_file}" | cut -d, -f1 | tr -d '\r' |
-while read -r run_accession
+for run_accession in $(tail -n +2 "${csv_file}")
 do
-  [[ -n "${run_accession}" ]] || continue
-
   echo "Downloading ${run_accession}"
   fasterq-dump "${run_accession}" \
     --split-files \

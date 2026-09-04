@@ -10,3 +10,4 @@ Expected files may include:
 
 These files are not committed by default.
 
+Peak, BAM, and bigWig checkpoints must use chromosome `NZ_AP026446.1`. BED files from another assembly cannot be combined with the workshop annotation.

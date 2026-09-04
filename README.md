@@ -87,6 +87,13 @@ Current examples include:
 - *Helicobacter pylori* RNA-seq (E-MTAB-13025)
 - *Helicobacter pylori* ChIP-seq (E-MTAB-13026)
 
+All workshop FASTQ files are remapped to the NCBI RefSeq reference assembly
+`GCF_025998455.1` (`ASM2599845v1`, strain CHC155; chromosome
+`NZ_AP026446.1`). The matching RefSeq GFF3 is the primary gene annotation;
+the GTF is retained as a companion format. Counts, genome
+tracks, peaks, and integrated interval tables are regenerated in this common
+coordinate system.
+
 Additional datasets may be incorporated in future releases.
 
 ---

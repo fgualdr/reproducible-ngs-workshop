@@ -42,6 +42,9 @@ reference_genome/*.fasta
 reference_genome/*.gff
 reference_genome/*.gff3
 reference_genome/*.gtf
+reference_genome/*.bed
+reference_genome/*.gbff
+reference_genome/*.gbk
 reference_genome/*.gz
 reference_genome/*_ncbi_dataset/
 reference_genome/*_ncbi_dataset.zip

@@ -1,0 +1,25 @@
+FROM docker.io/library/python:3.11-slim-bookworm AS builder
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+      build-essential \
+      zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python -m venv /opt/rseqc \
+    && /opt/rseqc/bin/python -m pip install --no-cache-dir --upgrade pip \
+    && /opt/rseqc/bin/python -m pip install --no-cache-dir RSeQC==5.0.5
+
+FROM docker.io/library/python:3.11-slim-bookworm
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends zlib1g \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /opt/rseqc /opt/rseqc
+
+ENV PATH="/opt/rseqc/bin:${PATH}"
+
+WORKDIR /work
+
+ENTRYPOINT ["infer_experiment.py"]

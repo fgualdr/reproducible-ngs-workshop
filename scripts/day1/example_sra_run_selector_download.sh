@@ -1,21 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-csv_file="raw_data/metadata/SraRunTable.csv"
+csv_file="raw_data/metadata/sra_example.csv"
 out_dir="raw_data/fastq/sra_example"
 
 mkdir -p "${out_dir}"
 
-if [[ ! -f "${csv_file}" ]]; then
-  echo "ERROR: CSV file not found: ${csv_file}" >&2
-  exit 1
-fi
-
-tail -n +2 "${csv_file}" | cut -d, -f1 | tr -d '\r' |
-while read -r run_accession
+for run_accession in $(tail -n +2 "${csv_file}")
 do
-  [[ -n "${run_accession}" ]] || continue
-
   echo "Downloading ${run_accession}"
   fasterq-dump "${run_accession}" \
     --split-files \

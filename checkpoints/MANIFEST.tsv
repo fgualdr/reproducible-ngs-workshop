@@ -1,4 +1,3 @@
 file_id	assay	step	filename	description	source	generated_by	software	version	checksum	public_url
-TODO_COUNTS	rnaseq	counting	counts.tsv	Gene-level raw count matrix	TODO	TODO	featureCounts	TODO	TODO	TODO
+TODO_COUNTS	rnaseq	counting	featureCounts_all_samples.txt	Complete featureCounts gene-level table	TODO	TODO	featureCounts	TODO	TODO	TODO
 TODO_PEAKS	chipseq	peak_calling	peaks.narrowPeak	MACS3 narrowPeak file	TODO	TODO	MACS3	TODO	TODO	TODO
-

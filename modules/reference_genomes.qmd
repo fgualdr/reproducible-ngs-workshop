@@ -16,6 +16,10 @@ execute:
 
 Use genome and annotation files from the same source and release whenever possible. Mismatched references are a common source of failed counting and broken interval annotation.
 
+The workshop reference bundle is NCBI RefSeq assembly `GCF_025998455.1` (`ASM2599845v1`) for *H. pylori* strain CHC155. Its chromosome accession is `NZ_AP026446.1`. The FASTA, GFF3, and GTF files are downloaded together from the same NCBI assembly directory; GFF3 is the primary annotation used by featureCounts and Day 4 interval analysis.
+
+Processed files using another coordinate system are not compatible with this workshop reference. Raw reads must be remapped and all downstream coordinates regenerated.
+
 ## Bowtie2 index
 
 ```bash

@@ -1,8 +1,5 @@
 project:
-  type: website
-  output-dir: docs
   render:
-    - index.qmd
     - days/day0_setup.qmd
     - days/day1_reproducible_project.qmd
     - days/day2_rnaseq.qmd
@@ -18,21 +15,10 @@ project:
     - scripts/README.md
     - checkpoints/README.md
     - assessments/submission_checklist.md
-    - "!docs/**"
 
 website:
-  title: "Reproducible NGS Data Analysis"
-  site-url: "https://fgualdr.github.io/reproducible-ngs-workshop/"
-  repo-url: "https://github.com/fgualdr/reproducible-ngs-workshop"
-  page-footer:
-    left: "Author: Francesco Gualdrini"
-    right: "Source: [github.com/fgualdr/reproducible-ngs-workshop](https://github.com/fgualdr/reproducible-ngs-workshop)"
   sidebar:
-    style: docked
-    search: true
     contents:
-      - text: "Home"
-        href: index.qmd
       - section: "Day-by-day lessons"
         contents:
           - text: "Day 0 - Setup"
@@ -60,17 +46,3 @@ website:
         href: checkpoints/README.md
       - text: "Assessment"
         href: assessments/submission_checklist.md
-
-format:
-  html:
-    theme: cosmo
-    toc: true
-    toc-depth: 3
-    number-sections: false
-    code-copy: true
-    css: assets/css/styles.css
-
-execute:
-  freeze: auto
-  eval: false
-

@@ -102,7 +102,9 @@ Noszka M. et al. "Profiling of the *Helicobacter pylori* redox switch HP1021 reg
 
 The full study includes multiple conditions and analyses. In this workshop, we focus on a small teaching subset of the wild-type strain under microaerobic and aerobic conditions.
 
-Our small teaching workflow captures the logic of the published analysis, but it is simplified for laptop-scale execution. It should not be interpreted as a full reproduction of the paper.
+The publication provides biological context and raw-data provenance; it does not define the workshop reference coordinates. We reprocess the selected FASTQ files against the current NCBI RefSeq reference assembly `GCF_025998455.1` (`ASM2599845v1`, strain CHC155; chromosome `NZ_AP026446.1`) using its matching RefSeq annotation. All BAM, bigWig, count, peak, and integration outputs are regenerated in that coordinate system rather than reused from the publication.
+
+This is a simplified, laptop-scale reanalysis and is not expected to reproduce the paper's coordinate-dependent results.
 
 ***
 
