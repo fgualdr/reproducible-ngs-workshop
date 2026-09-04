@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Reproducible NGS Data Analysis</title>
+<title>Public Data Retrieval – Reproducible NGS Data Analysis</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -23,26 +23,61 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="site_libs/quarto-nav/headroom.min.js"></script>
-<script src="site_libs/clipboard/clipboard.min.js"></script>
-<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="site_libs/quarto-search/fuse.min.js"></script>
-<script src="site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="./">
-<script src="site_libs/quarto-html/quarto.js" type="module"></script>
-<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="site_libs/quarto-html/popper.min.js"></script>
-<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="site_libs/quarto-html/anchor.min.js"></script>
-<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-b2f8562db502321fccc31d8c3603b84b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-b2f8562db502321fccc31d8c3603b84b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -72,7 +107,7 @@ ul.task-list li input[type="checkbox"] {
 }</script>
 
 
-<link rel="stylesheet" href="assets/css/styles.css">
+<link rel="stylesheet" href="../assets/css/styles.css">
 </head>
 
 <body class="nav-sidebar docked quarto-light">
@@ -84,7 +119,7 @@ ul.task-list li input[type="checkbox"] {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html">Home</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../modules/git_github.html">Core modules</a></li><li class="breadcrumb-item"><a href="../modules/public_data_retrieval.html">Public Data Retrieval</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -99,7 +134,7 @@ ul.task-list li input[type="checkbox"] {
   <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
     <div class="sidebar-title mb-0 py-0">
-      <a href="./">Reproducible NGS Data Analysis</a> 
+      <a href="../">Reproducible NGS Data Analysis</a> 
     </div>
       </div>
         <div class="mt-2 flex-shrink-0 align-items-center">
@@ -111,7 +146,7 @@ ul.task-list li input[type="checkbox"] {
     <ul class="list-unstyled mt-1">
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./index.html" class="sidebar-item-text sidebar-link active">
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Home</span></a>
   </div>
 </li>
@@ -126,13 +161,13 @@ ul.task-list li input[type="checkbox"] {
       <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./days/day0_setup.html" class="sidebar-item-text sidebar-link">
+  <a href="../days/day0_setup.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Day 0 - Setup</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./days/day1_reproducible_project.html" class="sidebar-item-text sidebar-link">
+  <a href="../days/day1_reproducible_project.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Day 1 - Reproducible project</span></a>
   </div>
 </li>
@@ -149,25 +184,25 @@ ul.task-list li input[type="checkbox"] {
       <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./modules/git_github.html" class="sidebar-item-text sidebar-link">
+  <a href="../modules/git_github.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Git and GitHub</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./modules/containers_docker_podman.html" class="sidebar-item-text sidebar-link">
+  <a href="../modules/containers_docker_podman.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Containers with Docker</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./modules/public_data_retrieval.html" class="sidebar-item-text sidebar-link">
+  <a href="../modules/public_data_retrieval.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">Public Data Retrieval</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./modules/reference_genomes.html" class="sidebar-item-text sidebar-link">
+  <a href="../modules/reference_genomes.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Reference Genomes</span></a>
   </div>
 </li>
@@ -183,24 +218,19 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#welcome" id="toc-welcome" class="nav-link active" data-scroll-target="#welcome">Welcome</a></li>
-  <li><a href="#learning-objectives" id="toc-learning-objectives" class="nav-link" data-scroll-target="#learning-objectives">Learning objectives</a></li>
-  <li><a href="#workshop-structure" id="toc-workshop-structure" class="nav-link" data-scroll-target="#workshop-structure">Workshop structure</a></li>
-  <li><a href="#what-students-will-build" id="toc-what-students-will-build" class="nav-link" data-scroll-target="#what-students-will-build">What students will build</a></li>
-  <li><a href="#datasets" id="toc-datasets" class="nav-link" data-scroll-target="#datasets">Datasets</a></li>
-  <li><a href="#before-you-start" id="toc-before-you-start" class="nav-link" data-scroll-target="#before-you-start">Before you start</a></li>
-  <li><a href="#repository" id="toc-repository" class="nav-link" data-scroll-target="#repository">Repository</a></li>
-  <li><a href="#questions-and-issue-reporting" id="toc-questions-and-issue-reporting" class="nav-link" data-scroll-target="#questions-and-issue-reporting">Questions and issue reporting</a></li>
+  <li><a href="#accession-logic" id="toc-accession-logic" class="nav-link active" data-scroll-target="#accession-logic">Accession logic</a></li>
+  <li><a href="#enaarrayexpress-route" id="toc-enaarrayexpress-route" class="nav-link" data-scroll-target="#enaarrayexpress-route">ENA/ArrayExpress route</a></li>
+  <li><a href="#optional-geosra-route" id="toc-optional-geosra-route" class="nav-link" data-scroll-target="#optional-geosra-route">Optional GEO/SRA route</a></li>
+  <li><a href="#reproducibility-record" id="toc-reproducibility-record" class="nav-link" data-scroll-target="#reproducibility-record">Reproducibility record</a></li>
   </ul>
 </nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default">
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../modules/git_github.html">Core modules</a></li><li class="breadcrumb-item"><a href="../modules/public_data_retrieval.html">Public Data Retrieval</a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title">Reproducible NGS Data Analysis</h1>
-<p class="subtitle lead">RNA-seq, ChIP-seq, containers, Git, and public sequencing data</p>
+<h1 class="title">Public Data Retrieval</h1>
 </div>
 
 
@@ -217,150 +247,86 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<section id="welcome" class="level1">
-<h1>Welcome</h1>
-<p>Modern sequencing projects require much more than running bioinformatics tools.</p>
-<p>A reproducible analysis requires:</p>
-<pre class="text"><code>metadata retrieval
--&gt; raw data retrieval
--&gt; workflow execution
--&gt; design-specific analysis
--&gt; documentation
--&gt; version control</code></pre>
-<p>This workshop introduces a practical workflow for organizing, executing, documenting, and interpreting RNA-seq and ChIP-seq analyses using public datasets and lightweight computational infrastructure.</p>
-<p>The practical examples focus on bacterial genomes and small datasets that can be explored on personal laptops, while introducing concepts that can also scale to larger projects and institutional computing environments.</p>
-<div class="callout callout-style-default callout-important callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-Important
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>This workshop teaches a reproducible approach to RNA-seq and ChIP-seq analysis using public sequencing datasets, containers, Git/GitHub, and structured project documentation.</p>
-<p>Rather than focusing on a single software package, the workshop emphasizes workflows that can be understood, reproduced, shared, and adapted to real research projects.</p>
-<p>The goal is to give you practical experience with the core steps of reference-based NGS analysis and to provide a project framework that you can reuse in your own research or laboratory work.</p>
-</div>
-</div>
-<hr>
+<section id="accession-logic" class="level2">
+<h2 class="anchored" data-anchor-id="accession-logic">Accession logic</h2>
+<p>For GEO/SRA, teach the hierarchy:</p>
+<pre class="text"><code>GSE study -&gt; GSM sample -&gt; SRP project -&gt; SRX experiment -&gt; SRR run</code></pre>
+<p>ENA and ArrayExpress may provide clearer FASTQ URLs for some datasets. Record the route used.</p>
 </section>
-<section id="learning-objectives" class="level1">
-<h1>Learning objectives</h1>
-<p>By the end of the workshop, you should be able to:</p>
-<ul>
-<li>Create a reproducible NGS project structure</li>
-<li>Use Git and GitHub to document analyses</li>
-<li>Use Docker containers to run bioinformatics tools</li>
-<li>Retrieve public sequencing datasets from SRA, ENA, and ArrayExpress</li>
-<li>Generate and interpret quality-control reports</li>
-<li>Perform basic RNA-seq and ChIP-seq analyses</li>
-<li>Produce differential expression and peak-calling results</li>
-<li>Associate regulatory regions with nearby genes</li>
-<li>Document and communicate results through reports and figures</li>
-</ul>
-<hr>
+<section id="enaarrayexpress-route" class="level2">
+<h2 class="anchored" data-anchor-id="enaarrayexpress-route">ENA/ArrayExpress route</h2>
+<p>The main workshop route starts from the two ArrayExpress SDRF files:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> raw_data/metadata</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-fL</span> <span class="dt">\</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/025/E-MTAB-13025/Files/E-MTAB-13025.sdrf.txt <span class="dt">\</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">-o</span> raw_data/metadata/E-MTAB-13025.sdrf.txt</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-fL</span> <span class="dt">\</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/026/E-MTAB-13026/Files/E-MTAB-13026.sdrf.txt <span class="dt">\</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">-o</span> raw_data/metadata/E-MTAB-13026.sdrf.txt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Keep the original SDRFs unchanged. In VS Code, copy the selected FASTQ rows into <code>raw_data/metadata/selected_fastq_files.csv</code>, use one row per FASTQ file, and replace <code>ftp://</code> with <code>https://</code> before saving:</p>
+<pre class="csv"><code>assay,fastq_name,fastq_url
+rnaseq,WT_1_condition_A_R1.fastq.gz,https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR114/010/ERR11479310/ERR11479310_1.fastq.gz
+rnaseq,WT_1_condition_A_R2.fastq.gz,https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR114/010/ERR11479310/ERR11479310_2.fastq.gz</code></pre>
+<p>The maintained download script contains one simple loop:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="va">metadata</span><span class="op">=</span><span class="st">"raw_data/metadata/selected_fastq_files.csv"</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="va">log_file</span><span class="op">=</span><span class="st">"results/logs/day1/ena_download.log"</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> raw_data/fastq/rnaseq raw_data/fastq/chipseq results/logs/day1</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="bu">:</span> <span class="op">&gt;</span> <span class="st">"</span><span class="va">${log_file}</span><span class="st">"</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> row <span class="kw">in</span> <span class="va">$(</span><span class="fu">tail</span> <span class="at">-n</span> +2 <span class="st">"</span><span class="va">${metadata}</span><span class="st">"</span> <span class="kw">|</span> <span class="fu">tr</span> <span class="at">-d</span> <span class="st">'\r'</span><span class="va">)</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="cf">do</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="va">IFS</span><span class="op">=</span>, <span class="bu">read</span> <span class="at">-r</span> <span class="va">assay</span> <span class="va">fastq_name</span> <span class="va">fastq_url</span> <span class="op">&lt;&lt;&lt;</span> <span class="st">"</span><span class="va">${row}</span><span class="st">"</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">"Downloading </span><span class="va">${fastq_name}</span><span class="st">"</span> <span class="kw">|</span> <span class="fu">tee</span> <span class="at">-a</span> <span class="st">"</span><span class="va">${log_file}</span><span class="st">"</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>  <span class="ex">curl</span> <span class="at">-fL</span> <span class="st">"</span><span class="va">${fastq_url}</span><span class="st">"</span> <span class="at">-o</span> <span class="st">"raw_data/fastq/</span><span class="va">${assay}</span><span class="st">/</span><span class="va">${fastq_name}</span><span class="st">"</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This simple <code>for</code> loop is appropriate only because the curated CSV fields contain no spaces.</p>
 </section>
-<section id="workshop-structure" class="level1">
-<h1>Workshop structure</h1>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 50%">
-<col style="width: 50%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Day</th>
-<th>Main topic</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Day 0</td>
-<td>Setup and readiness</td>
-</tr>
-<tr class="even">
-<td>Day 1</td>
-<td>Reproducible project setup, FASTQ QC/trimming, and reference files</td>
-</tr>
-<tr class="odd">
-<td>Day 2</td>
-<td>RNA-seq workflow and analysis</td>
-</tr>
-<tr class="even">
-<td>Day 3</td>
-<td>ChIP-seq workflow and analysis</td>
-</tr>
-<tr class="odd">
-<td>Day 4</td>
-<td>Data integration and reporting</td>
-</tr>
-</tbody>
-</table>
-<hr>
+<section id="optional-geosra-route" class="level2">
+<h2 class="anchored" data-anchor-id="optional-geosra-route">Optional GEO/SRA route</h2>
+<p>SRA Toolkit is useful for future projects that do not provide direct FASTQ URLs. The SRA Run Selector exports a large metadata table. For this optional example, create a smaller one-column CSV at:</p>
+<pre class="text"><code>raw_data/metadata/sra_example.csv</code></pre>
+<p>Its header is <code>run_accession</code>, and each following row contains one run to download:</p>
+<pre class="text"><code>run_accession
+SRR11192680
+SRR11192681</code></pre>
+<p>The optional example below skips the header and downloads both runs:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env bash</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-euo</span> pipefail</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="va">csv_file</span><span class="op">=</span><span class="st">"raw_data/metadata/sra_example.csv"</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="va">out_dir</span><span class="op">=</span><span class="st">"raw_data/fastq/sra_example"</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> <span class="st">"</span><span class="va">${out_dir}</span><span class="st">"</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> run_accession <span class="kw">in</span> <span class="va">$(</span><span class="fu">tail</span> <span class="at">-n</span> +2 <span class="st">"</span><span class="va">${csv_file}</span><span class="st">"</span><span class="va">)</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="cf">do</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">"Downloading </span><span class="va">${run_accession}</span><span class="st">"</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  <span class="ex">fasterq-dump</span> <span class="st">"</span><span class="va">${run_accession}</span><span class="st">"</span> <span class="dt">\</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">--split-files</span> <span class="dt">\</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">--threads</span> 2 <span class="dt">\</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">--outdir</span> <span class="st">"</span><span class="va">${out_dir}</span><span class="st">"</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gzip</span> <span class="at">-f</span> <span class="st">"</span><span class="va">${out_dir}</span><span class="st">/</span><span class="va">${run_accession}</span><span class="st">"</span><span class="pp">*</span>.fastq</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Run that script inside the SRA Toolkit image:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--platform</span> linux/amd64 <span class="dt">\</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  docker.io/fgualdr/ngs-sra-tools:latest <span class="dt">\</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  bash scripts/day1/example_sra_run_selector_download.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This is an example route, not the main download route for the workshop.</p>
 </section>
-<section id="what-students-will-build" class="level1">
-<h1>What students will build</h1>
-<p>Students do <strong>not</strong> clone a finished analysis repository or copy a hidden template.</p>
-<p>Instead, each participant progressively creates their own GitHub repository containing:</p>
-<ul>
-<li>a clear project structure</li>
-<li>metadata tables</li>
-<li>analysis scripts</li>
-<li>selected reports</li>
-<li>figures</li>
-<li>workflow documentation</li>
-</ul>
-<p>By the end of the workshop, each student should have:</p>
-<ol type="1">
-<li>A reproducible GitHub repository</li>
-<li>A documented RNA-seq and/or ChIP-seq workflow</li>
-<li>A short report summarizing the analysis</li>
-</ol>
-<p>The assembly of this repository will be used to evaluate student progress.</p>
-<hr>
-</section>
-<section id="datasets" class="level1">
-<h1>Datasets</h1>
-<p>The workshop uses publicly available datasets derived from small bacterial genomes.</p>
-<p>The main examples are based on <em>Helicobacter pylori</em> strain N6 datasets generated to study the HP1021 redox switch regulon under microaerophilic and aerobic growth conditions:</p>
-<ul>
-<li><em>Helicobacter pylori</em> RNA-seq: <code>E-MTAB-13025</code></li>
-<li><em>Helicobacter pylori</em> ChIP-seq: <code>E-MTAB-13026</code></li>
-</ul>
-<p>These datasets are associated with the publication:</p>
-<p>Noszka M. et al.&nbsp;“Profiling of the <em>Helicobacter pylori</em> redox switch HP1021 regulon using a multi-omics approach.” <em>Nature Communications</em> (2023).</p>
-<ul>
-<li>Publication: <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10593804/">PubMed Central</a> and <a href="https://www.nature.com/articles/s41467-023-42364-6">Nature</a></li>
-<li>RNA-seq dataset: <a href="https://www.ebi.ac.uk/biostudies/arrayexpress/studies/E-MTAB-13025?key=bf2d8677-1b26-4f1e-ac5f-b1c78c7590be">E-MTAB-13025</a></li>
-<li>ChIP-seq dataset: <a href="https://www.ebi.ac.uk/biostudies/arrayexpress/studies/E-MTAB-13026?key=2b27b413-e118-4802-859e-5da57ff1ead2">E-MTAB-13026</a></li>
-</ul>
-<p>The full study includes multiple conditions and analyses. In this workshop, we focus on a small teaching subset of the wild-type strain under microaerobic and aerobic conditions.</p>
-<p>The publication provides biological context and raw-data provenance; it does not define the workshop reference coordinates. We reprocess the selected FASTQ files against the current NCBI RefSeq reference assembly <code>GCF_025998455.1</code> (<code>ASM2599845v1</code>, strain CHC155; chromosome <code>NZ_AP026446.1</code>) using its matching RefSeq annotation. All BAM, bigWig, count, peak, and integration outputs are regenerated in that coordinate system rather than reused from the publication.</p>
-<p>This is a simplified, laptop-scale reanalysis and is not expected to reproduce the paper’s coordinate-dependent results.</p>
-<hr>
-</section>
-<section id="before-you-start" class="level1">
-<h1>Before you start</h1>
-<p>If this is your first visit, begin with:</p>
-<p><strong>Day 0 - Setup and readiness</strong></p>
-<p>Then continue through the lessons in sequence using the navigation panel on the left. Each day page will be released as the corresponding lesson becomes available.</p>
-<hr>
-</section>
-<section id="repository" class="level1">
-<h1>Repository</h1>
-<p>Source repository:</p>
-<p><a href="https://github.com/fgualdr/reproducible-ngs-workshop" class="uri">https://github.com/fgualdr/reproducible-ngs-workshop</a></p>
-<p>Citation information is available in <code>CITATION.cff</code>.</p>
-<hr>
-</section>
-<section id="questions-and-issue-reporting" class="level1">
-<h1>Questions and issue reporting</h1>
-<p>Questions, problems, or suggestions should preferably be reported through the GitHub repository issue tracker. This makes the discussion visible, traceable, and useful for other participants who may encounter the same problem.</p>
-<p>Repository issues: <a href="https://github.com/fgualdr/reproducible-ngs-workshop/issues" class="uri">https://github.com/fgualdr/reproducible-ngs-workshop/issues</a></p>
-<p>For questions that are not suitable for a public issue, you can also contact:</p>
-<p>francesco.gualdrini@gmail.com</p>
+<section id="reproducibility-record" class="level2">
+<h2 class="anchored" data-anchor-id="reproducibility-record">Reproducibility record</h2>
+<p>Version the accession table. Do not version downloaded FASTQ files.</p>
 
 
 </section>
