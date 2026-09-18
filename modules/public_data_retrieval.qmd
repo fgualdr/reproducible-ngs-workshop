@@ -7,113 +7,134 @@ execute:
 
 ## Accession logic
 
-For GEO/SRA, teach the hierarchy:
+GEO and SRA are linked repositories, not a single strict hierarchy. A common navigation path is:
 
 ```text
-GSE study -> GSM sample -> SRP project -> SRX experiment -> SRR run
+GEO metadata/processed-data layer:  GSE series -> GSM sample
+                                           |
+                                           | linked/brokered raw HTS data
+                                           v
+SRA raw-data layer:                 SRP study -> SRX experiment -> SRR run
 ```
 
-ENA and ArrayExpress may provide clearer FASTQ URLs for some datasets. Record the route used.
+The mapping is not necessarily one-to-one: a GEO sample may link to multiple SRA experiments or runs. GEO retains the metadata and processed-data layer and brokers submitted HTS raw files to SRA ([NCBI guidance](https://www.ncbi.nlm.nih.gov/geo/info/seq.html)).
 
-## ENA/ArrayExpress route
+The **ArrayExpress collection in BioStudies** provides functional-genomics study records and SDRF metadata. Raw HTS reads linked from the collection are brokered to ENA, which provides the run records and FASTQ download routes ([EMBL-EBI explanation](https://www.ebi.ac.uk/biostudies/arrayexpress/)). Always record which route and accessions were used.
 
-The main workshop route starts from the two ArrayExpress SDRF files:
+## ArrayExpress collection in BioStudies + ENA route
 
-```bash
-mkdir -p raw_data/metadata
-
-curl -fL \
-  https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/025/E-MTAB-13025/Files/E-MTAB-13025.sdrf.txt \
-  -o raw_data/metadata/E-MTAB-13025.sdrf.txt
-
-curl -fL \
-  https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/026/E-MTAB-13026/Files/E-MTAB-13026.sdrf.txt \
-  -o raw_data/metadata/E-MTAB-13026.sdrf.txt
-```
-
-Keep the original SDRFs unchanged. In VS Code, copy the selected FASTQ rows into `raw_data/metadata/selected_fastq_files.csv`, use one row per FASTQ file, and replace `ftp://` with `https://` before saving:
-
-```csv
-assay,fastq_name,fastq_url
-rnaseq,WT_1_condition_A_R1.fastq.gz,https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR114/010/ERR11479310/ERR11479310_1.fastq.gz
-rnaseq,WT_1_condition_A_R2.fastq.gz,https://ftp.sra.ebi.ac.uk/vol1/fastq/ERR114/010/ERR11479310/ERR11479310_2.fastq.gz
-```
-
-The maintained download script contains one simple loop:
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-metadata="raw_data/metadata/selected_fastq_files.csv"
-log_file="results/logs/day1/ena_download.log"
-
-mkdir -p raw_data/fastq/rnaseq raw_data/fastq/chipseq results/logs/day1
-: > "${log_file}"
-
-for row in $(tail -n +2 "${metadata}" | tr -d '\r')
-do
-  IFS=, read -r assay fastq_name fastq_url <<< "${row}"
-
-  echo "Downloading ${fastq_name}" | tee -a "${log_file}"
-  curl -fL "${fastq_url}" -o "raw_data/fastq/${assay}/${fastq_name}"
-done
-```
-
-This simple `for` loop is appropriate only because the curated CSV fields contain no spaces.
-
-## Optional GEO/SRA route
-
-SRA Toolkit is useful for future projects that do not provide direct FASTQ URLs. The SRA Run Selector exports a large metadata table. For this optional example, create a smaller one-column CSV at:
+The main workshop route uses the single script created in Day 1:
 
 ```text
-raw_data/metadata/sra_example.csv
+ArrayExpress collection SDRFs from BioStudies
+  -> retain the WT samples
+  -> convert ENA FTP links to HTTPS
+  -> add simple FASTQ filenames
+  -> download the RNA-seq and ChIP-seq FASTQ files
 ```
 
-Its header is `run_accession`, and each following row contains one run to download:
+The complete copy-paste code and its block-by-block explanation are in Day 1, Section 7.3. The saved script is:
 
 ```text
-run_accession
-SRR11192680
-SRR11192681
+scripts/day1/02_download_ena_fastq.sh
 ```
 
-The optional example below skips the header and downloads both runs:
+It creates two filtered run-level metadata tables:
+
+```text
+raw_data/metadata/RNAseq_metadata.txt
+raw_data/metadata/Chipseq_metadata.txt
+```
+
+Each table retains the original SDRF columns and adds `HTTPS_FASTQ_URI` and `FASTQ_NAME` as its final two columns. Separate, visible `while` loops read those final fields and download the RNA-seq and ChIP-seq files. These two tables provide the metadata used by the later workshop steps.
+
+Run the complete retrieval directly from the project root:
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-csv_file="raw_data/metadata/sra_example.csv"
-out_dir="raw_data/fastq/sra_example"
-
-mkdir -p "${out_dir}"
-
-for run_accession in $(tail -n +2 "${csv_file}")
-do
-  echo "Downloading ${run_accession}"
-  fasterq-dump "${run_accession}" \
-    --split-files \
-    --threads 2 \
-    --outdir "${out_dir}"
-
-  gzip -f "${out_dir}/${run_accession}"*.fastq
-done
+bash scripts/day1/02_download_ena_fastq.sh
 ```
 
-Run that script inside the SRA Toolkit image:
+::: {.callout-note title="Optional Docker route for this download"}
+If the required host commands are unavailable, the same script can run in the supplied curl image:
 
 ```bash
 docker run --rm \
   --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  docker.io/fgualdr/ngs-sra-tools:latest \
-  bash scripts/day1/example_sra_run_selector_download.sh
+  docker.io/fgualdr/ngs-curl@sha256:5f878548820cdccec01ac62cf7db648f7a47f0541e3390cc43ab2225f072669c \
+  bash scripts/day1/02_download_ena_fastq.sh
 ```
 
-This is an example route, not the main download route for the workshop.
+Containerized downloads depend on Docker's DNS, proxy, and VPN configuration. If this reports `curl: (6) Could not resolve host`, use the direct Bash command above.
+:::
+
+The reproducibility records are:
+
+```text
+raw_data/metadata/METADATA.md
+results/logs/day1/metadata_fastq_download.log
+```
+
+Do not commit the downloaded FASTQ files.
+
+## Optional GEO/SRA route
+
+The optional Day 1 route downloads complete run-level metadata reports directly from the ENA Portal API using the two SRA study accessions:
+
+```text
+raw_data/metadata/ERP147707_metadata.tsv    RNA-seq study ERP147707
+raw_data/metadata/ERP147583_metadata.tsv    ChIP-seq study ERP147583
+```
+
+No manual Run Selector download or file-moving step is required. The maintained script creates selected copies and adds the accessions and simplified paired FASTQ names needed by its download loops:
+
+```text
+scripts/day1/04_optional_sra_download.sh
+  -> curl the ERP147707 and ERP147583 read_run reports
+  -> keep columns 1, 73, 109, and 163 with cut
+  -> rename the short table header
+  -> select exact sample_title values WT_1/2/3 and WTS_1/2/3
+  -> retain experiment_accession for provenance
+  -> use run_accession for retrieval
+  -> download each ERR run with fasterq-dump --split-files
+  -> rename and compress each R1/R2 pair
+```
+
+The `ERX...` Experiment accessions are retained for provenance. The actual `fasterq-dump` argument is the associated `ERR...` Run accession because FASTQ data are retrieved at run level. This distinction matters whenever one experiment has more than one run; it also follows the [official SRA Toolkit guidance](https://github.com/ncbi/sra-tools/wiki/08.-prefetch-and-fasterq-dump).
+
+For larger transfers, `prefetch ERR_ACCESSION` can first create a resumable local SRA copy. The workshop example deliberately uses direct `fasterq-dump ERR_ACCESSION --split-files` calls so its download loops parallel the direct `curl` route.
+
+The API responses are TSV files requested with `fields=all`. In both reports, `run_accession` is column 1, `sample_title` is column 73, `library_layout` is column 109, and `experiment_accession` is column 163. The script verifies those headers, uses `cut` to keep only the four required fields, and adds simple column names and paired FASTQ names. It selects the six sample titles explicitly because long descriptive fields mention both genotypes on every row; a whole-line `grep -v "ΔHP1021"` would therefore remove the WT runs too.
+
+Run the script only if the optional example is assigned:
+
+```bash
+docker run --rm \
+  --platform linux/amd64 \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-sra-tools@sha256:83d9d94db767b4f13692fb576e3effc1ca0e24dab2d157273ed71bc3ec689060 \
+  bash scripts/day1/04_optional_sra_download.sh
+```
+
+The selected metadata, provenance record, and log are written to:
+
+```text
+raw_data/metadata/ERP147707_metadata.tsv
+raw_data/metadata/ERP147583_metadata.tsv
+raw_data/metadata/ERP147707_WT_metadata.tsv
+raw_data/metadata/ERP147583_WT_metadata.tsv
+raw_data/metadata/SRA_METADATA.md
+results/logs/day1/sra_fastq_download.log
+```
+
+The paired outputs use the same FASTQ names as the main ENA route, for example `WT_1_R1.fastq.gz` and `WT_1_R2.fastq.gz`, under `raw_data/fastq/rnaseq/` or `raw_data/fastq/chipseq/`. The SRA tables do not replace the SDRF-derived downstream design metadata used in Days 2 and 3. Use this as a future-project example unless the instructor supplies matching downstream design metadata, and do not run it over files already downloaded through ENA.
+
+`fasterq-dump` creates large uncompressed files and requires additional scratch space. Check available disk space first, and use instructor-provided FASTQ files or checkpoints rather than starting simultaneous class-wide downloads.
+
+The complete copy-paste script, including both `curl` commands, and its block-by-block explanation are in Day 1, Section 7.4. This remains an example route, not the main workshop download route.
 
 ## Reproducibility record
 
-Version the accession table. Do not version downloaded FASTQ files.
+Version the accession and metadata tables. Do not version downloaded FASTQ files.

@@ -99,7 +99,7 @@ mkdir -p results/day2_rnaseq/deseq2
 mkdir -p results/logs/day2
 ```
 
-Day 1 named each FASTQ using the pattern `sample_condition`, for example `WT_1_condition_A` and `WTS_1_condition_B`. Day 2 keeps that naming convention. The DESeq2 script reads condition and replicate labels from the stable metadata table rather than guessing the design from filenames.
+Day 1 named each FASTQ from the publication sample and mate, for example `WT_1_R1.fastq.gz` and `WTS_1_R1.fastq.gz`. Day 2 keeps the sample part (`WT_1`, `WTS_1`, and so on) in the BAM and count-column names. The DESeq2 script reads condition and replicate labels directly from `RNAseq_metadata.txt` rather than guessing the design from filenames.
 
 Each practical section below follows the same pattern:
 
@@ -249,10 +249,9 @@ Run it:
 
 ```bash
 docker run --rm \
-  --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  docker.io/fgualdr/ngs-bowtie2-samtools:latest \
+  docker.io/fgualdr/ngs-bowtie2-samtools \
   bash scripts/day2_rnaseq/01_build_bowtie2_index.sh
 ```
 
@@ -403,10 +402,9 @@ The filtered BAM is also indexed and summarized with `samtools flagstat`. Compar
 
 ```bash
 docker run --rm \
-  --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  docker.io/fgualdr/ngs-bowtie2-samtools:latest \
+  docker.io/fgualdr/ngs-bowtie2-samtools \
   bash scripts/day2_rnaseq/02_map_bowtie2_sort_index.sh
 ```
 
@@ -467,7 +465,7 @@ Genes are transcribed from either the `+` or the `-` genomic strand. RNA-seq lib
 | R1 has the same orientation as the transcript | Forward/sense stranded | `-s 1` |
 | R1 has the opposite orientation to the transcript | Reverse/antisense stranded | `-s 2` |
 
-First obtain this information from the library-preparation metadata. The metadata for `E-MTAB-13025` describes a prokaryotic directional library made with strand-selective second-strand and USER-enzyme chemistry. In this protocol, R1 has the opposite orientation to the original transcript. We will therefore use `featureCounts -s 2` for the workshop RNA-seq samples.
+Day 1 established that `E-MTAB-13025` is an rRNA-depleted, directional prokaryotic PE150 library made with dUTP/USER-based strand-selective chemistry. For this protocol, R1 has the opposite orientation to the original transcript. We will therefore use `featureCounts -s 2` for the workshop RNA-seq samples.
 
 If the metadata is missing or ambiguous, infer the relationship empirically with [`infer_experiment.py`](https://rseqc.sourceforge.net/#infer-experiment-py) from RSeQC. Use the 12-column BED gene model created by the Day 1 reference script:
 
@@ -477,15 +475,15 @@ reference_genome/genes.bed
 
 This BED file must describe the same `GCF_025998455.1` assembly as the BAM files and must use the same sequence name, `NZ_AP026446.1`. A BED file made for the study's original `NC_000915.1` alignment cannot be used with the workshop BAM files.
 
-The workshop supplies a prebuilt image containing [RSeQC 5.0.5](https://pypi.org/project/RSeQC/5.0.5/). Inspect one representative filtered BAM:
+The workshop uses a digest-pinned BioContainers image containing [RSeQC 5.0.4](https://bioconda.github.io/recipes/rseqc/README.html). Inspect one representative filtered BAM:
 
 ```bash
 docker run --rm \
-  --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  docker.io/fgualdr/ngs-rseqc:latest \
-  -i results/day2_rnaseq/bam/WT_1_condition_A.filtered.bam \
+  docker.io/getwilds/rseqc \
+  infer_experiment.py \
+  -i results/day2_rnaseq/bam/WT_1.filtered.bam \
   -r reference_genome/genes.bed
 ```
 
@@ -564,15 +562,16 @@ featureCounts \
   --countReadPairs \
   -B \
   -C \
-  -s 2 \
+  -s 1 \
   -t gene \
-  -g ID \
+  -g Name \
   -a "${annotation}" \
   -o "${featurecounts_out}" \
   "${bam_files[@]}" \
   2>&1 | tee "${log_dir}/featureCounts_all_samples.log"
 
 echo "Wrote ${featurecounts_out}"
+
 ```
 
 The script performs these steps:
@@ -589,24 +588,23 @@ The script performs these steps:
 | `--countReadPairs` | Count one fragment for each read pair instead of counting the two read ends separately. |
 | `-B` | Count a fragment only when both ends are aligned. |
 | `-C` | Exclude chimeric pairs whose two ends align to different chromosomes. |
-| `-s 2` | Assign fragments when R1 is opposite to the annotated gene strand, as determined above. |
+| `-s 1` | Assign fragments when R1 is with same orientation to the annotated gene strand, as determined above. |
 | `-t gene` | Count overlaps with GFF3 records whose feature type is `gene`. |
-| `-g ID` | Use the GFF3 `ID` attribute as the gene identifier. |
+| `-g Name` | Use the GFF3 `Name` attribute as the gene identifier or pick one from the GFF3 file. |
 | `-a "${annotation}"` | Supply the annotation file. |
 | `-o "${featurecounts_out}"` | Write the complete count table to this file. |
 | `"${bam_files[@]}"` | Pass all filtered BAM files to one featureCounts command, producing one count column per sample. |
 | `2>&1 \| tee ...` | Show the featureCounts messages in the terminal and save the same messages in a log file. |
 
-The choices `-t gene -g ID` match the NCBI-style bacterial GFF3 used in this workshop. Another annotation may use a different feature type or identifier attribute. The chosen `-s` value is also study-specific and must follow the metadata or empirical RSeQC result.
+The chosen `-s` value is also study-specific and must follow the metadata or empirical RSeQC result.
 
 Run it:
 
 ```bash
 docker run --rm \
-  --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  docker.io/fgualdr/ngs-featurecounts:latest \
+  docker.io/fgualdr/ngs-featurecounts \
   bash scripts/day2_rnaseq/03_featurecounts_all_samples.sh
 ```
 
@@ -626,7 +624,7 @@ These logs tell us how many aligned fragments were assigned to genes. This is a 
 The complete featureCounts table should look like this:
 
 ```text
-Geneid  Chr           Start  End  Strand  Length  results/day2_rnaseq/bam/WT_1_condition_A.filtered.bam  ...
+Geneid  Chr           Start  End  Strand  Length  results/day2_rnaseq/bam/WT_1.filtered.bam  ...
 geneA   NZ_AP026446.1  100    450  +       351     120                                                   ...
 geneB   NZ_AP026446.1  600    900  -       301     5                                                     ...
 ```
@@ -674,18 +672,18 @@ $$
 K_{ij}
 $$
 
-Suppose we have two conditions with two biological replicates each:
+Suppose we have two conditions with three biological replicates each, as in the workshop data:
 
 ```text
-condition_A: A1  A2
-condition_B: B1  B2
+condition_A: A1  A2  A3
+condition_B: B1  B2  B3
 ```
 
 For one gene we might observe:
 
 ```text
-           A1    A2    B1    B2
-counts    100   120   200   220
+           A1    A2    A3    B1    B2    B3
+counts    100   120   110   200   220   210
 ```
 
 Intuitively, DESeq2 needs to learn two things:
@@ -1140,7 +1138,8 @@ It is the uncertainty of the estimated condition coefficient produced by the neg
 
 #### 5.8 Testing whether the condition effect differs from zero
 
-DESeq2 uses a Wald test to compare the estimated effect with its standard error:
+DESeq2 uses a Wald test to assess whether an estimated effect differs significantly from zero relative to its uncertainty. This approach is particularly suitable for testing individual contrasts, such as treated versus untreated conditions. For each gene, DESeq2 divides the estimated log2 fold change by its standard error to obtain a Wald statistic. Under the null hypothesis of no differential expression, this statistic is approximately standard normally distributed, allowing a P value to be calculated from the probability of observing an equally or more extreme value.
+
 
 $$
 z_i
@@ -1427,10 +1426,9 @@ From the root of `workshop_ngs`, launch R inside the Bioconductor image:
 
 ```bash
 docker run --rm -it \
-  --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  docker.io/fgualdr/ngs-r-bioc:latest \
+  docker.io/fgualdr/ngs-r-bioc \
   R --vanilla
 ```
 
@@ -1454,7 +1452,7 @@ library(DESeq2)
 library(ggplot2)
 
 counts_file <- "results/day2_rnaseq/counts/featureCounts_all_samples.txt"
-metadata_file <- "raw_data/metadata/samples.csv"
+metadata_file <- "raw_data/metadata/RNAseq_metadata.txt"
 out_dir <- "results/day2_rnaseq/deseq2"
 count_matrix_file <- file.path(dirname(counts_file), "gene_count_matrix.tsv")
 
@@ -1463,16 +1461,21 @@ featurecounts <- read.delim(
   comment.char = "#",
   check.names = FALSE
 )
-metadata <- read.csv(metadata_file, stringsAsFactors = FALSE, check.names = FALSE)
+metadata_runs <- read.delim(
+  metadata_file,
+  stringsAsFactors = FALSE,
+  check.names = FALSE
+)
 
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
 print(dim(featurecounts))
 print(head(featurecounts))
-print(metadata)
+print(dim(metadata_runs))
+print(head(metadata_runs))
 ```
 
-`comment.char = "#"` skips the first featureCounts line, which records the command used to create the file. The imported table should contain the six annotation columns followed by one count column per BAM file. The metadata inspection should show the stable columns created on Day 1.
+`comment.char = "#"` skips the first featureCounts line, which records the command used to create the file. The imported count table should contain the six annotation columns followed by one count column per BAM file. `RNAseq_metadata.txt` is tab-delimited and contains one row per FASTQ file, so paired-end samples initially appear twice: once for R1 and once for R2.
 
 ##### Select the count columns in R
 
@@ -1502,26 +1505,46 @@ print(head(counts))
 `counts[, -c(2:6)]` keeps the first `Geneid` column and all sample-count columns while excluding featureCounts columns 2–6. `basename()` removes the folder from each BAM column name, and `sub()` removes the `.filtered.bam` suffix. The saved `gene_count_matrix.tsv` is therefore a simple table with genes as rows and samples as columns:
 
 ```text
-gene_id  WT_1_condition_A  WT_2_condition_A  WTS_1_condition_B  WTS_2_condition_B
-geneA    120               134               62                 70
-geneB    5                 8                 6                  7
+gene_id  WT_1  WT_2  WT_3  WTS_1  WTS_2  WTS_3
+geneA    120   134   128   62     70     66
+geneB    5     8     6     6      7      9
 ```
 
 These remain raw integer counts. The R code has changed only which columns and names are retained; it has not normalized the values.
 
 ##### Match the metadata to the count matrix
 
-The count-matrix column names came from the BAM filenames. We create `analysis_id` from the `read1` filename and reorder the RNA-seq metadata to exactly match those columns:
+The count-matrix column names came from the BAM filenames. First select the R1 rows so that each biological sample appears once. Then use the SDRF columns to create the small design table needed by DESeq2 and reorder it to exactly match the count columns:
 
 ```r
-required_columns <- c("sample_id", "assay", "condition", "replicate", "read1")
-if (!all(required_columns %in% names(metadata))) {
+required_columns <- c(
+  "Source Name",
+  "Characteristics[replicate]",
+  "Characteristics[environmental stress]",
+  "FASTQ_NAME"
+)
+if (!all(required_columns %in% names(metadata_runs))) {
   stop("Metadata is missing required columns")
 }
 if (!"gene_id" %in% names(counts)) stop("Count matrix requires a gene_id column")
 
-metadata <- metadata[metadata$assay == "rnaseq", , drop = FALSE]
-metadata$analysis_id <- sub("_R1[.]fastq[.]gz$", "", basename(metadata$read1))
+metadata_runs <- metadata_runs[
+  grepl("_R1[.]fastq[.]gz$", metadata_runs[["FASTQ_NAME"]]),
+  ,
+  drop = FALSE
+]
+
+metadata <- data.frame(
+  analysis_id = metadata_runs[["Source Name"]],
+  sample_id = metadata_runs[["Source Name"]],
+  condition = metadata_runs[["Characteristics[environmental stress]"]],
+  replicate = metadata_runs[["Characteristics[replicate]"]],
+  stringsAsFactors = FALSE
+)
+
+metadata$condition[metadata$condition == "no stress (5% O2)"] <- "condition_A"
+metadata$condition[metadata$condition == "oxidative stress (21% O2)"] <- "condition_B"
+
 sample_ids <- setdiff(names(counts), "gene_id")
 metadata <- metadata[match(sample_ids, metadata$analysis_id), , drop = FALSE]
 if (anyNA(metadata$sample_id)) stop("Count-matrix columns do not match the metadata")
@@ -1536,7 +1559,9 @@ print(table(metadata$condition))
 print(identical(sample_ids, rownames(metadata)))
 ```
 
-The final check must print `TRUE`. If it prints `FALSE`, stop: the counts and experimental labels are not aligned. The condition table should show two biological replicates in each condition for the teaching subset.
+`FASTQ_NAME` identifies the R1 rows. `Source Name` supplies the sample names used in the BAM filenames, while the environmental-stress and replicate columns supply the experimental design. The two published stress descriptions are recoded as `condition_A` and `condition_B` to keep the model formula concise.
+
+The final check must print `TRUE`. If it prints `FALSE`, stop: the counts and experimental labels are not aligned. The condition table should show three biological replicates in each condition.
 
 ##### Create the integer count matrix
 
@@ -1684,7 +1709,7 @@ The R workflow performs these steps:
 |---|---|
 | Read featureCounts output | Load the complete table while skipping its initial command line |
 | Select count columns | Remove the five annotation columns, clean the BAM-derived sample names, and save `gene_count_matrix.tsv` |
-| Read sample design | Derive `analysis_id` from `read1`, match it to the count-matrix columns, and retain the sample labels |
+| Read sample design | Select R1 rows from `RNAseq_metadata.txt`, derive the condition and replicate labels, and match them to the count-matrix columns |
 | Create `DESeqDataSet` | Combine counts, metadata, and design formula |
 | Filter very low-count genes | Remove genes with too little information |
 | Run `DESeq()` | Estimate size factors, dispersions, and condition effects |
@@ -1732,7 +1757,7 @@ Replace the opening lines from `library(DESeq2)` through the two data-import com
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) != 3) {
-  stop("Usage: 04_deseq2_analysis.R featureCounts_table.txt samples.csv out_dir")
+  stop("Usage: 04_deseq2_analysis.R featureCounts_table.txt RNAseq_metadata.txt out_dir")
 }
 
 required <- c("DESeq2", "ggplot2")
@@ -1751,7 +1776,11 @@ featurecounts <- read.delim(
   comment.char = "#",
   check.names = FALSE
 )
-metadata <- read.csv(metadata_file, stringsAsFactors = FALSE, check.names = FALSE)
+metadata_runs <- read.delim(
+  metadata_file,
+  stringsAsFactors = FALSE,
+  check.names = FALSE
+)
 ```
 
 Keep the rest of the script, beginning with `dir.create(out_dir, ...)`, unchanged. The three values after the script name are now read in this order:
@@ -1766,13 +1795,12 @@ The automated version can then be run without entering the R console:
 
 ```bash
 docker run --rm \
-  --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  docker.io/fgualdr/ngs-r-bioc:latest \
+  docker.io/fgualdr/ngs-r-bioc \
   Rscript scripts/day2_rnaseq/04_deseq2_analysis.R \
   results/day2_rnaseq/counts/featureCounts_all_samples.txt \
-  raw_data/metadata/samples.csv \
+  raw_data/metadata/RNAseq_metadata.txt \
   results/day2_rnaseq/deseq2
 ```
 
@@ -1823,10 +1851,9 @@ Run it:
 
 ```bash
 docker run --rm \
-  --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  docker.io/fgualdr/ngs-deeptools:latest \
+  docker.io/fgualdr/ngs-deeptools \
   bash scripts/day2_rnaseq/05_make_bigwig_bamcoverage.sh
 ```
 
@@ -1882,10 +1909,9 @@ Run it:
 
 ```bash
 docker run --rm \
-  --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  multiqc/multiqc:latest \
+  docker.io/multiqc/multiqc \
   bash scripts/day2_rnaseq/06_multiqc_day2.sh
 ```
 
@@ -1997,5 +2023,5 @@ git push
 | Bowtie2 cannot find the index | Day 2 index build was skipped or used another prefix | `reference_genome/bowtie2_index/genome*.bt2` |
 | Mapping is unexpectedly low | Wrong assembly, damaged FASTQ, contamination, or overly strict filtering | Day 1 fastp report, reference accession, Bowtie2 log |
 | featureCounts assignment is low | Annotation mismatch, wrong feature/ID field, or wrong strandedness | GFF3, `-t gene -g ID`, and the metadata/RSeQC-supported `-s` value |
-| DESeq2 sample mismatch | Count column names differ from metadata-derived `analysis_id` | `samples.csv` and count-matrix header |
+| DESeq2 sample mismatch | Count column names differ from metadata-derived `analysis_id` | `RNAseq_metadata.txt` and count-matrix header |
 | Volcano plot has few points | Low counts, high dispersion, or adjusted p-values are `NA` | Count summary, PCA, dispersion and MA plots |

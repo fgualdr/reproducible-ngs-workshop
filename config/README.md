@@ -1,8 +1,6 @@
 # Configuration files
 
-These files are examples and should be copied into student repositories before editing.
-
-- `teaching_subset_samples.csv`: WT-only oxidative-stress teaching subset for RNA-seq and ChIP-seq.
+These files contain small examples and repository-release settings. The workshop sample information is read directly from `raw_data/metadata/RNAseq_metadata.txt` and `raw_data/metadata/Chipseq_metadata.txt`, which are created by the Day 1 download script.
 
 SRA Toolkit is shown in Day 1 as a future-use example, not as the main workshop download route.
 

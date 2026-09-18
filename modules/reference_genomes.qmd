@@ -9,6 +9,7 @@ execute:
 
 - Genome FASTA.
 - Gene annotation GFF3 or GTF.
+- BED12 gene model derived from the matched annotation for RSeQC.
 - Optional chromosome sizes file.
 - Bowtie2 index generated from the FASTA.
 
@@ -16,7 +17,7 @@ execute:
 
 Use genome and annotation files from the same source and release whenever possible. Mismatched references are a common source of failed counting and broken interval annotation.
 
-The workshop reference bundle is NCBI RefSeq assembly `GCF_025998455.1` (`ASM2599845v1`) for *H. pylori* strain CHC155. Its chromosome accession is `NZ_AP026446.1`. The FASTA, GFF3, and GTF files are downloaded together from the same NCBI assembly directory; GFF3 is the primary annotation used by featureCounts and Day 4 interval analysis.
+The workshop reference bundle is NCBI RefSeq assembly `GCF_025998455.1` (`ASM2599845v1`) for *H. pylori* strain CHC155. Its chromosome accession is `NZ_AP026446.1`. The FASTA, GFF3, and GTF files are downloaded together from the same NCBI assembly directory; GFF3 is the primary annotation used by featureCounts and Day 4 interval analysis. Day 1 also converts its intron-free gene rows into the matched 12-column `reference_genome/genes.bed` file used for RSeQC strandedness inference, records provenance in `reference_genome/REFERENCE.md`, and records source-file content in `reference_genome/reference_files.sha256`.
 
 Processed files using another coordinate system are not compatible with this workshop reference. Raw reads must be remapped and all downstream coordinates regenerated.
 

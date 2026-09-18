@@ -23,15 +23,18 @@ The lesson page is authoritative for student-facing Day 0 setup and readiness.
 ## Day 1
 
 ```text
-scripts/day1/00_download_ena_fastq.sh
-scripts/day1/02_trim_fastq.sh
-scripts/day1/03_reference_genome_annotation.sh
+scripts/day1/01_reference_genome_annotation.sh
+scripts/day1/02_download_ena_fastq.sh
+scripts/day1/03_trim_fastq.sh
 ```
 
-Optional future-use SRA example:
+Optional future-use SRA example. This script downloads the two run-level
+metadata reports from their SRA study accessions through the ENA Portal API,
+retains the WT samples, downloads each paired run with `fasterq-dump`, and
+renames the files to the same sample-based names used by the main ENA route:
 
 ```text
-scripts/day1/example_sra_run_selector_download.sh
+scripts/day1/04_optional_sra_download.sh
 ```
 
 ## Day 2 RNA-seq
@@ -67,15 +70,23 @@ scripts/day4_integration/peak_gene_integration.R
 
 ## Runtime convention
 
-Each shell script is meant to run inside the matching Docker image. The lesson page shows the run command, for example:
+Day 1 download scripts that require only Bash and standard commands such as `curl`, `awk`, and `gzip` run directly on the host, for example:
+
+```bash
+bash scripts/day1/01_reference_genome_annotation.sh
+```
+
+The lesson pages retain `ngs-curl` as an optional fallback. Because network access inside a container uses Docker's DNS, proxy, and VPN configuration, the host command is preferred for downloads.
+
+Scripts that require specialist bioinformatics tools run inside the matching Docker image, for example:
 
 ```bash
 docker run --rm \
   --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  docker.io/fgualdr/ngs-fastp:latest \
-  bash scripts/day1/02_trim_fastq.sh
+  docker.io/fgualdr/ngs-fastp@sha256:67d843e80a94d529e9fbcc8e0767c3e018f62c1c9560087214dc1db998b74650 \
+  bash scripts/day1/03_trim_fastq.sh
 ```
 
-The matching Dockerfiles are in `Docker_files/` for rebuilding images one tool at a time.
+The `@sha256:...` digest identifies the exact runtime content; mutable tags such as `latest` are not used for analysis commands. The full release inventory is in `Docker_files/images.lock.tsv`. Matching Dockerfiles are retained as build recipes for the custom images.

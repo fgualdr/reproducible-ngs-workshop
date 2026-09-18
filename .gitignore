@@ -49,6 +49,7 @@ reference_genome/*.gz
 reference_genome/*_ncbi_dataset/
 reference_genome/*_ncbi_dataset.zip
 reference_genome/bowtie2_index/
+results/logs/day1/sra_tmp/
 
 
 /.quarto/

@@ -431,7 +431,6 @@ Then run:
 
 ```bash
 docker run --rm \
-  --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
   alpine:latest \

@@ -2,7 +2,7 @@ library(DESeq2)
 library(ggplot2)
 
 counts_file <- "results/day2_rnaseq/counts/featureCounts_all_samples.txt"
-metadata_file <- "raw_data/metadata/samples.csv"
+metadata_file <- "raw_data/metadata/RNAseq_metadata.txt"
 out_dir <- "results/day2_rnaseq/deseq2"
 count_matrix_file <- file.path(dirname(counts_file), "gene_count_matrix.tsv")
 
@@ -11,13 +11,18 @@ featurecounts <- read.delim(
   comment.char = "#",
   check.names = FALSE
 )
-metadata <- read.csv(metadata_file, stringsAsFactors = FALSE, check.names = FALSE)
+metadata_runs <- read.delim(
+  metadata_file,
+  stringsAsFactors = FALSE,
+  check.names = FALSE
+)
 
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
 print(dim(featurecounts))
 print(head(featurecounts))
-print(metadata)
+print(dim(metadata_runs))
+print(head(metadata_runs))
 
 counts <- featurecounts[, -c(2:6), drop = FALSE]
 names(counts)[1] <- "gene_id"
@@ -38,14 +43,34 @@ write.table(
 print(dim(counts))
 print(head(counts))
 
-required_columns <- c("sample_id", "assay", "condition", "replicate", "read1")
-if (!all(required_columns %in% names(metadata))) {
+required_columns <- c(
+  "Source Name",
+  "Characteristics[replicate]",
+  "Characteristics[environmental stress]",
+  "FASTQ_NAME"
+)
+if (!all(required_columns %in% names(metadata_runs))) {
   stop("Metadata is missing required columns")
 }
 if (!"gene_id" %in% names(counts)) stop("Count matrix requires a gene_id column")
 
-metadata <- metadata[metadata$assay == "rnaseq", , drop = FALSE]
-metadata$analysis_id <- sub("_R1[.]fastq[.]gz$", "", basename(metadata$read1))
+metadata_runs <- metadata_runs[
+  grepl("_R1[.]fastq[.]gz$", metadata_runs[["FASTQ_NAME"]]),
+  ,
+  drop = FALSE
+]
+
+metadata <- data.frame(
+  analysis_id = metadata_runs[["Source Name"]],
+  sample_id = metadata_runs[["Source Name"]],
+  condition = metadata_runs[["Characteristics[environmental stress]"]],
+  replicate = metadata_runs[["Characteristics[replicate]"]],
+  stringsAsFactors = FALSE
+)
+
+metadata$condition[metadata$condition == "no stress (5% O2)"] <- "condition_A"
+metadata$condition[metadata$condition == "oxidative stress (21% O2)"] <- "condition_B"
+
 sample_ids <- setdiff(names(counts), "gene_id")
 metadata <- metadata[match(sample_ids, metadata$analysis_id), , drop = FALSE]
 if (anyNA(metadata$sample_id)) stop("Count-matrix columns do not match the metadata")

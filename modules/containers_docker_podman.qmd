@@ -7,16 +7,20 @@ execute:
 
 ## Runtime convention
 
-All course scripts are meant to run inside the Docker image that contains the required tool. The script contains the analysis logic; the Docker command only chooses the software environment and mounts the project folder:
+Scripts that require specialist bioinformatics tools run inside the Docker image that contains the required tool. The script contains the analysis logic; the Docker command only chooses the software environment and mounts the project folder:
 
 ```bash
 docker run --rm \
   --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  docker.io/fgualdr/ngs-fastp:latest \
-  bash scripts/day1/02_trim_fastq.sh
+  docker.io/fgualdr/ngs-fastp@sha256:67d843e80a94d529e9fbcc8e0767c3e018f62c1c9560087214dc1db998b74650 \
+  bash scripts/day1/03_trim_fastq.sh
 ```
+
+The `@sha256:...` suffix is an immutable content digest. A tag such as `latest` can be moved to new content, so a tag alone does not identify the exact environment. The course records its release image set in `Docker_files/images.lock.tsv`. Dockerfiles remain useful build recipes, but live package repositories can resolve differently during a later rebuild unless their dependencies are also locked.
+
+Day 1 download scripts are the exception: because they require only Bash and standard commands such as `curl`, `awk`, and `gzip`, they run directly on the host. Their lesson sections show the curl image only as an optional fallback and explain the DNS, proxy, or VPN issues that can affect network access from inside Docker.
 
 ## Why this matters
 

@@ -63,7 +63,8 @@ results/day3_chipseq/peaks/consensus/day4_consensus_peaks.bed
 results/day3_chipseq/counts/consensus_peak_counts.tsv
 results/day3_chipseq/differential_peaks/differential_peak_results.tsv
 reference_genome/annotation.gff3
-raw_data/metadata/samples.csv
+raw_data/metadata/RNAseq_metadata.txt
+raw_data/metadata/Chipseq_metadata.txt
 ```
 
 If checkpoint files are used, record their source in `scripts/day4_integration/execution_note.md`.
@@ -356,10 +357,9 @@ Run the script you just saved:
 
 ```bash
 docker run --rm \
-  --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  docker.io/fgualdr/ngs-r-bioc:latest \
+  docker.io/fgualdr/ngs-r-bioc \
   Rscript scripts/day4_integration/peak_gene_integration.R \
   2>&1 | tee results/logs/day4/01_peak_gene_integration.log
 ```
@@ -406,9 +406,11 @@ Prepare three slides in `slides/final_summary.qmd` or another slide format assig
 ```text
 Slide 1 - Data and design
   organism, biological question, conditions, replicates, public accessions or checkpoint source
+  use the current archive name: ArrayExpress collection in BioStudies; linked raw reads in ENA
 
 Slide 2 - Workflow and quality control
   execution route, main commands/tools, QC summary, mapping/counting or peak-calling summary
+  explicitly state: teaching WT-only/no-external-control ChIP reanalysis ≠ published WT/ΔHP1021 csaw/edgeR + MACS3 analysis
 
 Slide 3 - Biological result and limitation
   one key RNA-seq or ChIP-seq result, integration summary, one limitation and one next step

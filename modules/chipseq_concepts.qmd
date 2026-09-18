@@ -7,7 +7,7 @@ execute:
 
 ## Experimental logic
 
-ChIP-seq measures enrichment of protein-associated DNA fragments. Input controls estimate background from chromatin accessibility, mappability, and library biases.
+ChIP-seq measures enrichment of protein-associated DNA fragments. A matched input samples fragmentation, mappability, copy-number, and library background before immunoprecipitation; a mock or target-negative IP addresses different nonspecific background. MACS3 can call peaks without an external control by estimating a coarser background from the ChIP sample itself, but that route must be reported as a limitation and supported by replicate, track, motif, and orthogonal checks.
 
 ## Peak types
 
@@ -25,4 +25,4 @@ Histone marks may require broad peak methods and different interpretation.
 - Low signal to noise
 - Chip-seq that did not produced enrichments leads to low number of recovered peaks and little recovery of mapped reads within peaks.
 - Low quality Chip-seq present a high phantom peak in strand cross-correlation (when peak offset  match exactly the sequencing read length)
-- Contaminants 
+- Contaminants

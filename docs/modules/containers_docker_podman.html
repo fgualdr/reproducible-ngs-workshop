@@ -165,6 +165,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Day 0 - Setup</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../days/day1_reproducible_project.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Day 1 - Reproducible project</span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item sidebar-item-section">
@@ -186,6 +192,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <div class="sidebar-item-container"> 
   <a href="../modules/containers_docker_podman.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">Containers with Docker</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modules/public_data_retrieval.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Public Data Retrieval</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modules/reference_genomes.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Reference Genomes</span></a>
   </div>
 </li>
       </ul>
@@ -230,13 +248,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <section id="runtime-convention" class="level2">
 <h2 class="anchored" data-anchor-id="runtime-convention">Runtime convention</h2>
-<p>All course scripts are meant to run inside the Docker image that contains the required tool. The script contains the analysis logic; the Docker command only chooses the software environment and mounts the project folder:</p>
+<p>Scripts that require specialist bioinformatics tools run inside the Docker image that contains the required tool. The script contains the analysis logic; the Docker command only chooses the software environment and mounts the project folder:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--platform</span> linux/amd64 <span class="dt">\</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  docker.io/fgualdr/ngs-fastp:latest <span class="dt">\</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  bash scripts/day1/02_trim_fastq.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  docker.io/fgualdr/ngs-fastp@sha256:67d843e80a94d529e9fbcc8e0767c3e018f62c1c9560087214dc1db998b74650 <span class="dt">\</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  bash scripts/day1/03_trim_fastq.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The <code>@sha256:...</code> suffix is an immutable content digest. A tag such as <code>latest</code> can be moved to new content, so a tag alone does not identify the exact environment. The course records its release image set in <code>Docker_files/images.lock.tsv</code>. Dockerfiles remain useful build recipes, but live package repositories can resolve differently during a later rebuild unless their dependencies are also locked.</p>
+<p>Day 1 download scripts are the exception: because they require only Bash and standard commands such as <code>curl</code>, <code>awk</code>, and <code>gzip</code>, they run directly on the host. Their lesson sections show the curl image only as an optional fallback and explain the DNS, proxy, or VPN issues that can affect network access from inside Docker.</p>
 </section>
 <section id="why-this-matters" class="level2">
 <h2 class="anchored" data-anchor-id="why-this-matters">Why this matters</h2>

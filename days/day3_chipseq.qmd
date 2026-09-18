@@ -67,6 +67,12 @@ trimmed ChIP-seq FASTQ
 
 ![ChIP-seq concept flow](../assets/images/day3/chipseq_concept_flow.svg){#fig-day3-chipseq-flow width="100%" fig-alt="ChIP-seq workflow showing IP reads mapped to the genome, signal tracks, peak calling, consensus peaks, and motif discovery."}
 
+::: {.callout-warning title="Published analysis ≠ teaching analysis"}
+The workflow below is **not** the pipeline used by [Noszka et al.](https://www.nature.com/articles/s41467-023-42364-6). The publication analyzed HP1021 ChIP-seq from wild-type and ΔHP1021 material under both oxygen conditions, mapped to *H. pylori* 26695 (`NC_000915.1`), identified differentially bound regions with a `csaw`/`edgeR` sliding-window analysis, and confirmed candidate regions with MACS3 using ΔHP1021 libraries as a target-negative control.
+
+The workshop retains only wild-type-genotype samples, maps them to `GCF_025998455.1` (`NZ_AP026446.1`), calls each sample with MACS3 without an external control, merges overlapping calls into a permissive Day 4 peak set, counts BAM overlaps, and uses DESeq2 for a condition comparison. This teaches the analysis logic; it is not expected to reproduce the paper's peak coordinates, significance values, or biological conclusions.
+:::
+
 Optional or instructor-demo QC steps:
 
 ```text
@@ -239,10 +245,9 @@ Run it:
 
 ```bash
 docker run --rm \
-  --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  docker.io/fgualdr/ngs-bowtie2-samtools:latest \
+  docker.io/fgualdr/ngs-bowtie2-samtools \
   bash scripts/day3_chipseq/01_map_bowtie2_sort_index.sh
 ```
 
@@ -361,10 +366,9 @@ Run it:
 
 ```bash
 docker run --rm \
-  --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  docker.io/fgualdr/ngs-chipseq-qc:latest \
+  quay.io/biocontainers/phantompeakqualtools \
   bash scripts/day3_chipseq/02_phantom_peak_cross_correlation.sh
 ```
 
@@ -435,10 +439,9 @@ Run it:
 
 ```bash
 docker run --rm \
-  --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  docker.io/fgualdr/ngs-deeptools:latest \
+  docker.io/fgualdr/ngs-deeptools \
   bash scripts/day3_chipseq/03_make_chipseq_bigwigs.sh
 ```
 
@@ -453,7 +456,7 @@ ls -lh results/logs/day3/*.bamCoverage.log
 
 Peak calling asks which genomic intervals have more ChIP-seq signal than expected from background. For a transcription-factor-like protein, true binding often appears as a relatively narrow local enrichment.
 
-For this workshop we use input-free MACS3 peak calling as the main route because it keeps the practical small and consistent. This is a teaching simplification, not a claim that input controls are unimportant.
+For this workshop we use MACS3 without an external control because it keeps the practical small and consistent. MACS3 can call peaks this way by estimating its background from the ChIP/treatment data, including a large local window and a genome-wide component when no control is supplied. This makes no-control calling usable for an explicitly exploratory teaching analysis; it is not equivalent to measuring background in a matched input or target-negative library. Section 11 explains the tradeoff.
 
 Because the teaching FASTQ files are paired-end, we call MACS3 with `-f BAMPE`. This tells MACS3 to use paired-end fragment information from the BAM file rather than treating each alignment as an independent single-end read.
 
@@ -514,10 +517,9 @@ Run it:
 
 ```bash
 docker run --rm \
-  --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  docker.io/fgualdr/ngs-macs3:latest \
+  docker.io/fgualdr/ngs-macs3 \
   bash scripts/day3_chipseq/04_call_peaks_macs3_no_input.sh
 ```
 
@@ -551,7 +553,7 @@ The peak interval is a statistical call, not a direct observation. Always compar
 
 ## 8. Make a consensus peak set and count table
 
-Day 4 needs one stable peak file to integrate with RNA-seq and annotation. Instead of choosing one replicate, we create a simple consensus peak set by merging overlapping MACS3 peaks across the samples.
+Day 4 needs one stable peak file to integrate with RNA-seq and annotation. Instead of choosing one replicate, we create a simple peak set by merging overlapping MACS3 peaks across the samples. Here, “consensus” means a **permissive union**: every region called in at least one sample enters the merged set, and no replicate-support threshold is applied. This transparent teaching handoff is not the publication's `csaw`/`edgeR` region set.
 
 This step writes:
 
@@ -664,10 +666,9 @@ Run it:
 
 ```bash
 docker run --rm \
-  --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  docker.io/fgualdr/ngs-bedtools:latest \
+  docker.io/fgualdr/ngs-bedtools \
   bash scripts/day3_chipseq/06_make_consensus_peak_counts.sh
 ```
 
@@ -687,18 +688,19 @@ The consensus count matrix provides raw counts for a simplified condition compar
 
 ```bash
 docker run --rm \
-  --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  docker.io/fgualdr/ngs-r-bioc:latest \
+  docker.io/fgualdr/ngs-r-bioc \
   Rscript scripts/day3_chipseq/09_differential_peak_analysis.R \
   results/day3_chipseq/counts/consensus_peak_counts.tsv \
-  raw_data/metadata/samples.csv \
+  raw_data/metadata/Chipseq_metadata.txt \
   results/day3_chipseq/differential_peaks \
   2>&1 | tee results/logs/day3/differential_peak_analysis.log
 ```
 
-This is a simplified teaching analysis. The `bedtools multicov` matrix counts overlapping alignments; a publication-grade paired-end analysis should use fragment-aware counting and should model the complete experimental design. Keep raw counts—not CPM-normalized bigWig signal—as the DESeq2 input.
+The R script selects the R1 rows from `Chipseq_metadata.txt` so that each biological sample appears once. It obtains sample names and replicate numbers from the SDRF, recodes `none` as `condition_A` and `21 percent oxygen` as `condition_B`, and matches those sample names to the peak-count columns before fitting DESeq2.
+
+This is a simplified teaching analysis. The `bedtools multicov` matrix counts overlapping alignments; a publication-grade paired-end analysis should use fragment-aware counting and should model the complete experimental design. This DESeq2 result is a condition comparison within the workshop union peak set, not the paper's `csaw`/`edgeR` sliding-window analysis. Keep raw counts—not CPM-normalized bigWig signal—as the DESeq2 input.
 
 Expected handoff to Day 4:
 
@@ -741,47 +743,50 @@ fi
 
 found_pair=0
 
-for rep1_peak in "${peak_dir}"/*_1_*_peaks.narrowPeak
+for group in WT WTS
 do
-  [[ -e "${rep1_peak}" ]] || continue
+  for pair in 1_2 1_3 2_3
+  do
+    replicate1="${pair%_*}"
+    replicate2="${pair#*_}"
+    sample1="${group}_${replicate1}"
+    sample2="${group}_${replicate2}"
+    rep1_peak="${peak_dir}/${sample1}_peaks.narrowPeak"
+    rep2_peak="${peak_dir}/${sample2}_peaks.narrowPeak"
 
-  sample1="$(basename "${rep1_peak}" _peaks.narrowPeak)"
-  prefix="${sample1%%_1_*}"
-  condition="${sample1#${prefix}_1_}"
-  sample2="${prefix}_2_${condition}"
-  rep2_peak="${peak_dir}/${sample2}_peaks.narrowPeak"
+    if [[ ! -f "${rep1_peak}" || ! -f "${rep2_peak}" ]]; then
+      echo "Skipping ${sample1} versus ${sample2}: peak file not found" >&2
+      continue
+    fi
 
-  if [[ ! -f "${rep2_peak}" ]]; then
-    echo "Skipping ${condition}: expected replicate peak file not found: ${rep2_peak}" >&2
-    continue
-  fi
-
-  found_pair=1
-  echo "Running IDR for ${condition}: ${sample1} versus ${sample2}"
-  idr \
-    --samples "${rep1_peak}" "${rep2_peak}" \
-    --input-file-type narrowPeak \
-    --rank p.value \
-    --idr-threshold 0.05 \
-    --output-file "${out_dir}/${condition}.idr.narrowPeak" \
-    --plot \
-    --log-output-file "${log_dir}/${condition}.idr.log"
+    found_pair=1
+    echo "Running IDR for ${sample1} versus ${sample2}"
+    idr \
+      --samples "${rep1_peak}" "${rep2_peak}" \
+      --input-file-type narrowPeak \
+      --rank p.value \
+      --idr-threshold 0.05 \
+      --output-file "${out_dir}/${sample1}_vs_${sample2}.idr.narrowPeak" \
+      --plot \
+      --log-output-file "${log_dir}/${sample1}_vs_${sample2}.idr.log"
+  done
 done
 
 if [[ "${found_pair}" -eq 0 ]]; then
-  echo "ERROR: No replicate 1/2 peak pairs found in ${peak_dir}" >&2
+  echo "ERROR: No replicate peak pairs found in ${peak_dir}" >&2
   exit 1
 fi
 ```
+
+For each condition, the script compares the three replicate pairs: 1 versus 2, 1 versus 3, and 2 versus 3. In a pair such as `1_3`, `${pair%_*}` keeps the first replicate number and `${pair#*_}` keeps the second. Each comparison receives its own IDR output and log.
 
 Run it:
 
 ```bash
 docker run --rm \
-  --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  docker.io/fgualdr/ngs-chipseq-qc:latest \
+  quay.io/biocontainers/idr \
   bash scripts/day3_chipseq/05_idr_replicate_qc.sh
 ```
 
@@ -801,7 +806,7 @@ When reading the IDR output, focus on:
 
 ## 11. Input controls and peak-calling design
 
-Input DNA is fragmented DNA sequenced before immunoprecipitation. It is not a perfect negative control, but when it is well matched and sufficiently sequenced it helps model background effects such as:
+Input DNA is an aliquot of the same crosslinked and sonicated material taken **before antibody immunoprecipitation**, then processed in parallel into a sequencing library. It is not a perfect negative control, but a well-matched input can reveal background effects such as:
 
 - local mappability differences;
 - fragmentation or GC bias;
@@ -809,16 +814,21 @@ Input DNA is fragmented DNA sequenced before immunoprecipitation. It is not a pe
 - copy-number or amplification effects;
 - regions with high non-specific accessibility.
 
-The important design point is that input is not automatically informative just because it exists. If the input library is shallow, its reads may be too sparse to estimate local noise or mappability effects at the same resolution as the ChIP sample. In that situation, the apparent control signal can be unstable, and MACS3's local background model may contribute more to the final thresholding than the sparse input track.
+Input does not pass through the antibody pull-down, so it does not measure antibody-specific nonspecific recovery as directly as a mock IP or a target-negative sample. The publication's ΔHP1021 MACS3 control was a **target-negative ChIP library**, not input DNA.
 
-The two common MACS3 routes are:
+Control depth also matters. Classic [ENCODE/modENCODE guidance](https://pmc.ncbi.nlm.nih.gov/articles/PMC3431496/) recommends at least the same usable-fragment depth as the deepest ChIP library, and preferably greater depth. This is a design target rather than a universal read-number rule: appropriate depth depends on genome size, library complexity, and signal distribution. For this 1.7-Mb bacterium, mammalian absolute read targets should not be copied mechanically. Preparing matched controls for every relevant condition or batch and sequencing them deeply enough adds real cost.
 
-| Route | Command idea | Strength | Limitation |
+With `-c`, MACS3 estimates a dynamic expected background from the supplied control at several spatial scales and includes a genome-wide component; it uses the maximum applicable value as the local background, or local lambda. If the control is shallow, fine-scale estimates are sparse and the additional information may be marginal; a broader-window or genome-wide component can determine the local lambda. This does **not** mean MACS3 has created an equally informative independent control—the systematic biases of the ChIP library have still not been measured well.
+
+Without `-c`, MACS3 estimates the background track from the treatment data itself. In this mode the fragment-size and small-local control terms are unavailable, while the large-local and genome-wide terms provide a coarse baseline ([MACS3 documentation](https://macs3-project.github.io/MACS/docs/callpeak.html)). Input-free analysis is therefore possible, but it is not equivalent to a controlled experiment.
+
+| Route | What it measures | Strength | Main limitation |
 |---|---|---|---|
-| With input | `macs3 callpeak -t IP.bam -c input.bam ...` | Can improve background modeling when the input is matched and deep enough | Expensive; shallow or noisy input may add little local information |
-| Without input | `macs3 callpeak -t IP.bam ...` | Simple, useful for teaching and some pilot analyses; relies strongly on local background modeling | More dependent on peak shape, replicate behavior, and downstream biological validation |
+| Matched input | Fragmentation, mappability, copy-number, and library background before IP | Independent background measurement when well matched and adequately sequenced | Extra library and sequencing cost; shallow input may add little fine-scale information |
+| Mock or target-negative IP | Background that also passes through immunoprecipitation | Can expose antibody/bead nonspecific recovery; the paper used ΔHP1021 for MACS3 confirmation | Must be biologically and technically matched; genotype or antibody controls can introduce their own differences |
+| No external control | Background inferred from the ChIP/treatment library | Feasible for this teaching exercise and some exploratory or pilot analyses | Cannot independently identify systematic ChIP-library background |
 
-Our small teaching workflow captures the logic of the published analysis, but it is simplified for laptop-scale execution.
+For this workshop, no-control MACS3 is acceptable as an **explicitly labeled exploratory teaching route**. We compensate in interpretation—not statistically—by checking replicate concordance, coverage tracks, peak shape and score, motif plausibility, and selected loci. A research study should choose controls during experimental design and validate key binding claims orthogonally.
 
 ## 12. Extract peak sequences
 
@@ -881,10 +891,9 @@ Run it:
 
 ```bash
 docker run --rm \
-  --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  docker.io/fgualdr/ngs-bedtools:latest \
+  docker.io/fgualdr/ngs-bedtools \
   bash scripts/day3_chipseq/07_extract_peak_sequences.sh
 ```
 
@@ -946,10 +955,9 @@ Run it:
 
 ```bash
 docker run --rm \
-  --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  docker.io/fgualdr/ngs-streme:latest \
+  docker.io/fgualdr/ngs-streme \
   bash scripts/day3_chipseq/08_run_streme.sh
 ```
 
@@ -967,7 +975,7 @@ When reading STREME output, focus on:
 - enrichment strength;
 - whether the motif appears in many peaks or only a small subset;
 - whether the motif is biologically plausible for the protein and organism;
-- whether the peaks came from an input-free or input-controlled analysis.
+- whether the peaks came from a no-external-control or externally controlled analysis, and which control type was used.
 
 ## 14. Checkpoint route
 

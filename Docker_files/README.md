@@ -1,234 +1,257 @@
 # Docker Images for the NGS Workshop
 
-This folder contains task-specific Dockerfiles for the workshop commands. Each
-image is intentionally narrow: one image per tool or small workflow step. This
-keeps the teaching commands readable and avoids hiding the analysis in a large
-pipeline image.
+This folder contains the task-specific Dockerfiles used by the workshop. Each custom image is intentionally narrow: one image per tool or small workflow step. This keeps the teaching commands readable and makes the software environment explicit.
 
-Students normally use the prebuilt images from Docker Hub. Rebuild these images
-only when maintaining the workshop, changing tool versions, or preparing for a
-class where internet access to Docker Hub is unreliable.
+## Multi-architecture policy
 
-## Image Inventory
+All custom `fgualdr` workshop images are intended to be published as a single Docker tag containing both:
 
-The current workshop pages and scripts use, or can be supported by, the
-following runtime coverage.
+- `linux/amd64` — Intel/AMD Linux, Intel Macs, and the usual Windows/WSL2 route;
+- `linux/arm64` — Apple Silicon Macs and ARM64 Linux.
 
-| Workshop use | Dockerfile | Docker Hub image | Main commands |
-|---|---|---|---|
-| Day 1 ENA/reference downloads | `Dockerfile.curl` | `docker.io/fgualdr/ngs-curl:latest` | `curl`, `awk`, `gzip` |
-| Day 1 optional SRA route | `Dockerfile.sra-tools` | `docker.io/fgualdr/ngs-sra-tools:latest` | `prefetch`, `fasterq-dump` |
-| Optional standalone FastQC | `Dockerfile.fastqc` | `docker.io/fgualdr/ngs-fastqc:latest` | `fastqc` |
-| Day 1 preprocessing/QC | `Dockerfile.fastp` | `docker.io/fgualdr/ngs-fastp:latest` | `fastp` |
-| Optional NCBI datasets route | `Dockerfile.ncbi-datasets` | `docker.io/fgualdr/ngs-ncbi-datasets:latest` | `datasets`, `unzip` |
-| Day 2/3 mapping and BAM cleanup | `Dockerfile.bowtie2-samtools` | `docker.io/fgualdr/ngs-bowtie2-samtools:latest` | `bowtie2`, `bowtie2-build`, `samtools` |
-| Day 2 gene counting | `Dockerfile.featurecounts` | `docker.io/fgualdr/ngs-featurecounts:latest` | `featureCounts` |
-| Day 2 strandedness inference | `Dockerfile.rseqc` | `docker.io/fgualdr/ngs-rseqc:latest` | `infer_experiment.py` |
-| Day 2/4 R/Bioconductor | `Dockerfile.r-bioc` | `docker.io/fgualdr/ngs-r-bioc:latest` | `Rscript`, `DESeq2`, `tidyverse`, `GenomicRanges`, `rtracklayer` |
-| Day 2 MultiQC report | `Dockerfile.multiqc` | `docker.io/fgualdr/ngs-multiqc:latest` | `multiqc` |
-| Day 2/3 bigWig tracks | `Dockerfile.deeptools` | `docker.io/fgualdr/ngs-deeptools:latest` | `bamCoverage` |
-| Day 3 ChIP-seq QC | `Dockerfile.chipseq-qc` | `docker.io/fgualdr/ngs-chipseq-qc:latest` | `run_spp.R`, `idr`, `samtools` |
-| Day 3 peak calling | `Dockerfile.macs3` | `docker.io/fgualdr/ngs-macs3:latest` | `macs3` |
-| Day 3 consensus peaks and FASTA extraction | `Dockerfile.bedtools` | `docker.io/fgualdr/ngs-bedtools:latest` | `bedtools merge`, `bedtools multicov`, `bedtools getfasta` |
-| Day 3 motif discovery | `Dockerfile.streme` | `docker.io/fgualdr/ngs-streme:latest` | `streme` |
+Student-facing `docker run` commands should therefore **not** force `--platform linux/amd64`. Docker should select the native image automatically.
 
-Day 0 uses public Docker test images such as `hello-world` and `alpine`; those
-do not need workshop Dockerfiles.
+`--platform` remains useful for maintainer smoke tests, where both architectures are tested deliberately.
 
-The Day 2 page currently uses the upstream `multiqc/multiqc:latest` image.
-`Dockerfile.multiqc` is included so the workshop can publish a pinned
-`docker.io/fgualdr/ngs-multiqc:latest` equivalent when instructors want all
-course images under the same Docker Hub namespace.
+Publishing with the existing tag `:latest` updates/overwrites the previous Docker Hub `latest` reference with the newly pushed multi-platform manifest.
 
-## Runtime Convention
+## Custom image inventory
 
-All workshop images use `/work` as the working directory. Student commands mount
-the repository root into `/work` and run a script from there:
+| Dockerfile | Docker Hub image | Main commands |
+|---|---|---|
+| `Dockerfile.curl` | `docker.io/fgualdr/ngs-curl:latest` | `curl`, `awk`, `gzip` |
+| `Dockerfile.sra-tools` | `docker.io/fgualdr/ngs-sra-tools:latest` | `curl`, `prefetch`, `fasterq-dump`, `pigz` |
+| `Dockerfile.fastqc` | `docker.io/fgualdr/ngs-fastqc:latest` | `fastqc` |
+| `Dockerfile.fastp` | `docker.io/fgualdr/ngs-fastp:latest` | `fastp` |
+| `Dockerfile.ncbi-datasets` | `docker.io/fgualdr/ngs-ncbi-datasets:latest` | `datasets`, `unzip` |
+| `Dockerfile.bowtie2-samtools` | `docker.io/fgualdr/ngs-bowtie2-samtools:latest` | `bowtie2`, `bowtie2-build`, `samtools` |
+| `Dockerfile.featurecounts` | `docker.io/fgualdr/ngs-featurecounts:latest` | `featureCounts` |
+| `Dockerfile.rseqc` | `docker.io/fgualdr/ngs-rseqc:latest` | `infer_experiment.py` |
+| `Dockerfile.r-bioc` | `docker.io/fgualdr/ngs-r-bioc:latest` | `Rscript`, DESeq2, GenomicRanges, rtracklayer |
+| `Dockerfile.multiqc` | `docker.io/fgualdr/ngs-multiqc:latest` | `multiqc` |
+| `Dockerfile.deeptools` | `docker.io/fgualdr/ngs-deeptools:latest` | `bamCoverage` |
+| `Dockerfile.chipseq-qc` | `docker.io/fgualdr/ngs-chipseq-qc:latest` | `run_spp.R`, `idr`, `samtools` |
+| `Dockerfile.macs3` | `docker.io/fgualdr/ngs-macs3:latest` | `macs3` |
+| `Dockerfile.bedtools` | `docker.io/fgualdr/ngs-bedtools:latest` | `bedtools` |
+| `Dockerfile.streme` | `docker.io/fgualdr/ngs-streme:latest` | `streme` |
+
+## One-time Buildx setup
+
+If the `multiarch` builder does not yet exist:
 
 ```bash
-docker run --rm \
-  --platform linux/amd64 \
-  -v "$PWD:/work" \
-  -w /work \
-  docker.io/fgualdr/ngs-fastp:latest \
-  bash scripts/day1/02_trim_fastq.sh
-```
-
-Use two threads by default in scripts:
-
-```bash
-THREADS="${THREADS:-2}"
-```
-
-## Cross-Platform Strategy
-
-The most reliable workshop target is `linux/amd64`.
-
-Reason: many bioinformatics packages used here come from Bioconda. Bioconda
-coverage is strongest for `linux/amd64`; native `linux/arm64` builds are not
-guaranteed for every package. For a teaching workshop, a single tested
-`linux/amd64` image per tool is more reliable than an untested multi-arch image.
-
-Recommended approach:
-
-1. Build and publish `linux/amd64` images.
-2. Keep `--platform linux/amd64` in student `docker run` commands.
-3. Let Docker Desktop emulate `linux/amd64` on Apple Silicon and Windows/WSL2.
-4. Test the same run command on macOS, Windows WSL2, and Linux before class.
-
-For Apple Silicon Macs, Docker Desktop may run these images through emulation.
-That is usually acceptable for small teaching datasets. If performance is poor,
-use checkpoint files or university machines rather than changing the lesson to
-untested native ARM images.
-
-## Optional True Multi-Arch Builds
-
-Only build true multi-architecture images when every package in the image solves
-and runs on each target platform.
-
-Create and select a Buildx builder:
-
-```bash
-docker buildx create --name ngs-workshop-builder --use
+docker buildx create --name multiarch --driver docker-container --use
 docker buildx inspect --bootstrap
 ```
 
-Build a test image for both `linux/amd64` and `linux/arm64`:
+If it already exists:
 
 ```bash
-docker buildx build \
-  --platform linux/amd64,linux/arm64 \
-  -f Docker_files/Dockerfile.curl \
-  -t docker.io/fgualdr/ngs-curl:latest \
-  --push \
-  .
+docker buildx use multiarch
+docker buildx inspect --bootstrap
 ```
 
-Do not publish a multi-arch tag unless both platforms have been tested. For most
-Bioconda-heavy images in this workshop, prefer the `linux/amd64` build commands
-below.
+The platform list must include both `linux/amd64` and `linux/arm64`.
 
-## Login to Docker Hub
-
-Authenticate before pushing:
+Authenticate once:
 
 ```bash
 docker login
 ```
 
-Use a Docker Hub access token rather than an account password when possible.
-The image names below assume the Docker Hub namespace is `fgualdr`.
+## Build location
 
-## Build One Image
-
-Run from the repository root:
+Run all build commands from the repository root:
 
 ```bash
-docker buildx build \
-  --platform linux/amd64 \
-  -f Docker_files/Dockerfile.fastqc \
-  -t docker.io/fgualdr/ngs-fastqc:latest \
-  --load \
-  .
+cd /Users/ieo5244/Documents/NGS_Workshop
 ```
 
-Smoke test locally:
+The Dockerfiles are expected under `Docker_files/`.
+
+## Rebuild every image and overwrite `latest`
+
+Each command builds both architectures and pushes the multi-platform image directly to Docker Hub.
+
+### curl
 
 ```bash
-docker run --rm \
-  --platform linux/amd64 \
-  docker.io/fgualdr/ngs-fastqc:latest \
-  fastqc --version
+docker buildx build --builder multiarch --platform linux/amd64,linux/arm64 --pull -f Docker_files/Dockerfile.curl -t docker.io/fgualdr/ngs-curl:latest --push .
 ```
 
-Push after the smoke test:
+### SRA Toolkit
 
 ```bash
-docker push docker.io/fgualdr/ngs-fastqc:latest
+docker buildx build --builder multiarch --platform linux/amd64,linux/arm64 --pull -f Docker_files/Dockerfile.sra-tools -t docker.io/fgualdr/ngs-sra-tools:latest --push .
 ```
 
-For a remote builder where `--load` is not available, build and push in one step:
+### FastQC
 
 ```bash
-docker buildx build \
-  --platform linux/amd64 \
-  -f Docker_files/Dockerfile.fastqc \
-  -t docker.io/fgualdr/ngs-fastqc:latest \
-  --push \
-  .
+docker buildx build --builder multiarch --platform linux/amd64,linux/arm64 --pull -f Docker_files/Dockerfile.fastqc -t docker.io/fgualdr/ngs-fastqc:latest --push .
 ```
 
-## Build All Workshop Images
-
-Run from the repository root after `docker login`.
+### fastp
 
 ```bash
-docker buildx build --platform linux/amd64 -f Docker_files/Dockerfile.curl -t docker.io/fgualdr/ngs-curl:latest --push .
-docker buildx build --platform linux/amd64 -f Docker_files/Dockerfile.sra-tools -t docker.io/fgualdr/ngs-sra-tools:latest --push .
-docker buildx build --platform linux/amd64 -f Docker_files/Dockerfile.fastqc -t docker.io/fgualdr/ngs-fastqc:latest --push .
-docker buildx build --platform linux/amd64 -f Docker_files/Dockerfile.fastp -t docker.io/fgualdr/ngs-fastp:latest --push .
-docker buildx build --platform linux/amd64 -f Docker_files/Dockerfile.ncbi-datasets -t docker.io/fgualdr/ngs-ncbi-datasets:latest --push .
-docker buildx build --platform linux/amd64 -f Docker_files/Dockerfile.bowtie2-samtools -t docker.io/fgualdr/ngs-bowtie2-samtools:latest --push .
-docker buildx build --platform linux/amd64 -f Docker_files/Dockerfile.featurecounts -t docker.io/fgualdr/ngs-featurecounts:latest --push .
-docker buildx build --platform linux/amd64 -f Docker_files/Dockerfile.rseqc -t docker.io/fgualdr/ngs-rseqc:latest --push .
-docker buildx build --platform linux/amd64 -f Docker_files/Dockerfile.r-bioc -t docker.io/fgualdr/ngs-r-bioc:latest --push .
-docker buildx build --platform linux/amd64 -f Docker_files/Dockerfile.multiqc -t docker.io/fgualdr/ngs-multiqc:latest --push .
-docker buildx build --platform linux/amd64 -f Docker_files/Dockerfile.deeptools -t docker.io/fgualdr/ngs-deeptools:latest --push .
-docker buildx build --platform linux/amd64 -f Docker_files/Dockerfile.chipseq-qc -t docker.io/fgualdr/ngs-chipseq-qc:latest --push .
-docker buildx build --platform linux/amd64 -f Docker_files/Dockerfile.macs3 -t docker.io/fgualdr/ngs-macs3:latest --push .
-docker buildx build --platform linux/amd64 -f Docker_files/Dockerfile.bedtools -t docker.io/fgualdr/ngs-bedtools:latest --push .
-docker buildx build --platform linux/amd64 -f Docker_files/Dockerfile.streme -t docker.io/fgualdr/ngs-streme:latest --push .
+docker buildx build --builder multiarch --platform linux/amd64,linux/arm64 --pull -f Docker_files/Dockerfile.fastp -t docker.io/fgualdr/ngs-fastp:latest --push .
 ```
 
-## Versioned Tags
-
-Use `latest` for student-facing workshop commands only after testing. For
-maintenance, also publish a dated immutable tag:
+### NCBI Datasets
 
 ```bash
-TAG_DATE="2026-07"
-docker buildx build \
-  --platform linux/amd64 \
-  -f Docker_files/Dockerfile.fastqc \
-  -t docker.io/fgualdr/ngs-fastqc:latest \
-  -t docker.io/fgualdr/ngs-fastqc:${TAG_DATE} \
-  --push \
-  .
+docker buildx build --builder multiarch --platform linux/amd64,linux/arm64 --pull -f Docker_files/Dockerfile.ncbi-datasets -t docker.io/fgualdr/ngs-ncbi-datasets:latest --push .
 ```
 
-The dated tag gives instructors a stable fallback if `latest` is rebuilt later.
-
-## Suggested Smoke Tests
-
-Run these after building or pulling images:
+### Bowtie2 + samtools
 
 ```bash
-docker run --rm --platform linux/amd64 docker.io/fgualdr/ngs-curl:latest curl --version
-docker run --rm --platform linux/amd64 docker.io/fgualdr/ngs-sra-tools:latest fasterq-dump --version
-docker run --rm --platform linux/amd64 docker.io/fgualdr/ngs-fastqc:latest fastqc --version
+docker buildx build --builder multiarch --platform linux/amd64,linux/arm64 --pull -f Docker_files/Dockerfile.bowtie2-samtools -t docker.io/fgualdr/ngs-bowtie2-samtools:latest --push .
+```
+
+### featureCounts
+
+```bash
+docker buildx build --builder multiarch --platform linux/amd64,linux/arm64 --pull -f Docker_files/Dockerfile.featurecounts -t docker.io/fgualdr/ngs-featurecounts:latest --push .
+```
+
+### RSeQC
+
+```bash
+docker buildx build --builder multiarch --platform linux/amd64,linux/arm64 --pull -f Docker_files/Dockerfile.rseqc -t docker.io/fgualdr/ngs-rseqc:latest --push .
+```
+
+### R / Bioconductor
+
+```bash
+docker buildx build --builder multiarch --platform linux/amd64,linux/arm64 --pull -f Docker_files/Dockerfile.r-bioc -t docker.io/fgualdr/ngs-r-bioc:latest --push .
+```
+
+### MultiQC
+
+```bash
+docker buildx build --builder multiarch --platform linux/amd64,linux/arm64 --pull -f Docker_files/Dockerfile.multiqc -t docker.io/fgualdr/ngs-multiqc:latest --push .
+```
+
+### deepTools
+
+```bash
+docker buildx build --builder multiarch --platform linux/amd64,linux/arm64 --pull -f Docker_files/Dockerfile.deeptools -t docker.io/fgualdr/ngs-deeptools:latest --push .
+```
+
+### ChIP-seq QC
+
+```bash
+docker buildx build --builder multiarch --platform linux/amd64,linux/arm64 --pull -f Docker_files/Dockerfile.chipseq-qc -t docker.io/fgualdr/ngs-chipseq-qc:latest --push .
+```
+
+### MACS3
+
+```bash
+docker buildx build --builder multiarch --platform linux/amd64,linux/arm64 --pull -f Docker_files/Dockerfile.macs3 -t docker.io/fgualdr/ngs-macs3:latest --push .
+```
+
+### BEDTools
+
+```bash
+docker buildx build --builder multiarch --platform linux/amd64,linux/arm64 --pull -f Docker_files/Dockerfile.bedtools -t docker.io/fgualdr/ngs-bedtools:latest --push .
+```
+
+### STREME / MEME Suite
+
+```bash
+docker buildx build --builder multiarch --platform linux/amd64,linux/arm64 --pull -f Docker_files/Dockerfile.streme -t docker.io/fgualdr/ngs-streme:latest --push .
+```
+
+The same commands are available in `rebuild_multiarch.sh`.
+
+## Verify each published manifest
+
+For one image:
+
+```bash
+docker buildx imagetools inspect docker.io/fgualdr/ngs-fastp:latest
+```
+
+You should see both `linux/amd64` and `linux/arm64`.
+
+For all images:
+
+```bash
+for image in ngs-curl ngs-sra-tools ngs-fastqc ngs-fastp ngs-ncbi-datasets ngs-bowtie2-samtools ngs-featurecounts ngs-rseqc ngs-r-bioc ngs-multiqc ngs-deeptools ngs-chipseq-qc ngs-macs3 ngs-bedtools ngs-streme
+do
+  echo "===== ${image} ====="
+  docker buildx imagetools inspect "docker.io/fgualdr/${image}:latest"
+done
+```
+
+## Smoke tests
+
+Normal student use should not specify a platform:
+
+```bash
+docker run --rm docker.io/fgualdr/ngs-fastp:latest fastp --version
+```
+
+During release validation, test both architectures explicitly:
+
+```bash
 docker run --rm --platform linux/amd64 docker.io/fgualdr/ngs-fastp:latest fastp --version
-docker run --rm --platform linux/amd64 docker.io/fgualdr/ngs-ncbi-datasets:latest datasets --version
-docker run --rm --platform linux/amd64 docker.io/fgualdr/ngs-bowtie2-samtools:latest bowtie2 --version
-docker run --rm --platform linux/amd64 docker.io/fgualdr/ngs-featurecounts:latest featureCounts -v
-docker run --rm --platform linux/amd64 docker.io/fgualdr/ngs-rseqc:latest --version
-docker run --rm --platform linux/amd64 docker.io/fgualdr/ngs-r-bioc:latest Rscript -e 'library(DESeq2); library(tidyverse); library(rtracklayer); sessionInfo()'
-docker run --rm --platform linux/amd64 docker.io/fgualdr/ngs-multiqc:latest multiqc --version
-docker run --rm --platform linux/amd64 docker.io/fgualdr/ngs-deeptools:latest bamCoverage --version
-docker run --rm --platform linux/amd64 docker.io/fgualdr/ngs-chipseq-qc:latest bash -lc 'command -v run_spp.R && idr --version'
-docker run --rm --platform linux/amd64 docker.io/fgualdr/ngs-macs3:latest macs3 --version
-docker run --rm --platform linux/amd64 docker.io/fgualdr/ngs-bedtools:latest bedtools --version
-docker run --rm --platform linux/amd64 docker.io/fgualdr/ngs-streme:latest streme --version
+docker run --rm --platform linux/arm64 docker.io/fgualdr/ngs-fastp:latest fastp --version
 ```
 
-## Maintenance Checklist
+Representative native-architecture checks:
 
-Before a workshop release:
+```bash
+docker run --rm docker.io/fgualdr/ngs-curl:latest curl --version
+docker run --rm docker.io/fgualdr/ngs-sra-tools:latest fasterq-dump --version
+docker run --rm docker.io/fgualdr/ngs-fastqc:latest fastqc --version
+docker run --rm docker.io/fgualdr/ngs-fastp:latest fastp --version
+docker run --rm docker.io/fgualdr/ngs-ncbi-datasets:latest datasets --version
+docker run --rm docker.io/fgualdr/ngs-bowtie2-samtools:latest bowtie2 --version
+docker run --rm docker.io/fgualdr/ngs-featurecounts:latest featureCounts -v
+docker run --rm docker.io/fgualdr/ngs-rseqc:latest --version
+docker run --rm docker.io/fgualdr/ngs-r-bioc:latest Rscript -e 'library(DESeq2); sessionInfo()'
+docker run --rm docker.io/fgualdr/ngs-multiqc:latest multiqc --version
+docker run --rm docker.io/fgualdr/ngs-deeptools:latest bamCoverage --version
+docker run --rm docker.io/fgualdr/ngs-chipseq-qc:latest bash -c 'command -v run_spp.R; idr --version; samtools --version | head -n1'
+docker run --rm docker.io/fgualdr/ngs-macs3:latest macs3 --version
+docker run --rm docker.io/fgualdr/ngs-bedtools:latest bedtools --version
+docker run --rm docker.io/fgualdr/ngs-streme:latest streme --version
+```
 
-1. Confirm every `docker.io/fgualdr/ngs-*` image in the lessons has a matching
-   Dockerfile in this folder.
-2. Rebuild images only from committed Dockerfiles.
-3. Run the smoke tests above.
-4. Run at least one representative mounted-folder command with `-v "$PWD:/work"`.
-5. Update this README if a lesson adds or removes a tool image.
-6. Push both `latest` and a dated tag for images used in student commands.
-7. Avoid changing student-facing image tags during a live workshop.
+`Dockerfile.rseqc` defines `infer_experiment.py` as its entrypoint, so `--version` is passed directly to that entrypoint.
+
+## Runtime convention
+
+All workshop commands mount the project root at `/work`:
+
+```bash
+docker run --rm   -v "$PWD:/work"   -w /work   docker.io/fgualdr/ngs-fastp:latest   bash scripts/day1/03_trim_fastq.sh
+```
+
+Do not add `--platform` to normal student commands after the image has been verified as multi-architecture.
+
+## Important: ARM64 package availability
+
+The Buildx command can target both architectures only if every package in that Dockerfile is available or buildable on both platforms.
+
+If one architecture fails during Conda/Bioconda dependency resolution, do not treat that image as successfully converted to multiarch. Update the relevant pinned package version or recipe, rebuild, and smoke-test both architectures before using it in the workshop.
+
+This is especially important for older Bioconda packages and the larger R/Bioconductor image.
+
+## `images.lock.tsv`
+
+The attached `images.lock.tsv` describes the previous AMD64-only release. Its current digests become stale after rebuilding `:latest`.
+
+For a multiarch release there is a top-level image-index digest plus separate per-platform manifest digests. Regenerate the lock file if you want to return to digest-pinned student runtimes.
+
+## Maintenance checklist
+
+1. Build every custom image for `linux/amd64,linux/arm64`.
+2. Confirm both platforms with `docker buildx imagetools inspect`.
+3. Run the relevant version smoke test.
+4. Test at least one mounted project command.
+5. Test representative images on Apple Silicon macOS and Windows/WSL2.
+6. Keep `--platform` out of student-facing `docker run` commands.
+7. Regenerate `images.lock.tsv` if digest pinning is required for the release.

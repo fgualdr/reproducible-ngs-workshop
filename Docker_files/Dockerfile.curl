@@ -9,4 +9,4 @@ RUN apk add --no-cache \
 
 WORKDIR /work
 
-ENTRYPOINT []
+CMD ["/bin/bash"]

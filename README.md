@@ -25,6 +25,8 @@ The website contains:
 
 Modern sequencing projects require more than the ability to run bioinformatics tools. Reproducible research depends on well-organized projects, documented workflows, version control, portable software environments, and clear reporting.
 
+The course frames this explicitly as **inputs/provenance + code/parameters + software environment**. Runtime containers are digest-pinned, and the exact image references are recorded in `Docker_files/images.lock.tsv`.
+
 This workshop introduces a practical framework for organizing and executing RNA-seq and ChIP-seq analyses using publicly available datasets and lightweight computational infrastructures.
 
 Topics include:
@@ -32,7 +34,7 @@ Topics include:
 - Reproducible computational research
 - Git and GitHub for scientific projects
 - Docker containers
-- Public sequencing repositories (GEO, SRA, ENA, ArrayExpress)
+- Public sequencing repositories (GEO/SRA and the ArrayExpress collection in BioStudies/ENA)
 - RNA-seq analysis and differential expression
 - ChIP-seq analysis, peak calling, and motif discovery
 - Genomic intervals and peak-to-gene integration

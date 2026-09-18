@@ -6,7 +6,7 @@ project:
     - "!docs/**"
 
 profile:
-  default: day0
+  default: day4
   group:
     - [day0, day1, day2, day3, day4]
 

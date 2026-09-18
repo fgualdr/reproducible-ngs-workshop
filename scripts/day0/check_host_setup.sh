@@ -7,7 +7,7 @@ printf 'Working directory: %s\n' "$PWD"
 
 status=0
 
-for cmd in git gawk curl wget unzip docker; do
+for cmd in git gawk awk curl wget gzip unzip docker; do
   if command -v "$cmd" >/dev/null 2>&1; then
     printf 'OK: %s -> %s\n' "$cmd" "$(command -v "$cmd")"
   else

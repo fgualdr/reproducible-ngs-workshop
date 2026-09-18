@@ -7,6 +7,8 @@ subtitle: "RNA-seq, ChIP-seq, containers, Git, and public sequencing data"
 
 Modern sequencing projects require much more than running bioinformatics tools.
 
+Throughout the workshop, **reproducible analysis = inputs/provenance + code/parameters + software environment**. The exact reference assembly belongs to the first component, and digest-pinned container images identify the third.
+
 A reproducible analysis requires:
 
 ```text
@@ -39,7 +41,7 @@ By the end of the workshop, you should be able to:
 - Create a reproducible NGS project structure
 - Use Git and GitHub to document analyses
 - Use Docker containers to run bioinformatics tools
-- Retrieve public sequencing datasets from SRA, ENA, and ArrayExpress
+- Retrieve public sequencing datasets through the GEO/SRA and ArrayExpress collection in BioStudies/ENA routes
 - Generate and interpret quality-control reports
 - Perform basic RNA-seq and ChIP-seq analyses
 - Produce differential expression and peak-calling results
@@ -100,7 +102,7 @@ Noszka M. et al. "Profiling of the *Helicobacter pylori* redox switch HP1021 reg
 - RNA-seq dataset: [E-MTAB-13025](https://www.ebi.ac.uk/biostudies/arrayexpress/studies/E-MTAB-13025?key=bf2d8677-1b26-4f1e-ac5f-b1c78c7590be)
 - ChIP-seq dataset: [E-MTAB-13026](https://www.ebi.ac.uk/biostudies/arrayexpress/studies/E-MTAB-13026?key=2b27b413-e118-4802-859e-5da57ff1ead2)
 
-The full study includes multiple conditions and analyses. In this workshop, we focus on a small teaching subset of the wild-type strain under microaerobic and aerobic conditions.
+The full study includes multiple genotypes and analyses. In this workshop, we retain the wild-type samples: three biological replicates under microaerobic conditions and three under aerobic oxidative stress for each assay.
 
 The publication provides biological context and raw-data provenance; it does not define the workshop reference coordinates. We reprocess the selected FASTQ files against the current NCBI RefSeq reference assembly `GCF_025998455.1` (`ASM2599845v1`, strain CHC155; chromosome `NZ_AP026446.1`) using its matching RefSeq annotation. All BAM, bigWig, count, peak, and integration outputs are regenerated in that coordinate system rather than reused from the publication.
 

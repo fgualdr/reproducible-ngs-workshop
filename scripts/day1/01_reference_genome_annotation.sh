@@ -33,6 +33,21 @@ $3 == "gene" {
 }
 ' "${out_dir}/annotation.gff3" > "${out_dir}/genes.bed"
 
+echo "Recording reference-file SHA-256 checksums" | tee -a "${log_file}"
+if command -v sha256sum >/dev/null 2>&1; then
+  sha256sum \
+    "${out_dir}/genome.fa" \
+    "${out_dir}/annotation.gff3" \
+    "${out_dir}/annotation.gtf" \
+    > "${out_dir}/reference_files.sha256"
+else
+  shasum -a 256 \
+    "${out_dir}/genome.fa" \
+    "${out_dir}/annotation.gff3" \
+    "${out_dir}/annotation.gtf" \
+    > "${out_dir}/reference_files.sha256"
+fi
+
 cat > "${out_dir}/REFERENCE.md" <<EOF
 # Reference genome and annotation
 
@@ -44,8 +59,10 @@ cat > "${out_dir}/REFERENCE.md" <<EOF
 - Companion annotation: reference_genome/annotation.gtf
 - RSeQC BED12 gene model: reference_genome/genes.bed
 - Genome FASTA: reference_genome/genome.fa
+- SHA-256 checksums: reference_genome/reference_files.sha256
 - NCBI FTP directory: ${base_url}/
-- Download script: scripts/day1/03_reference_genome_annotation.sh
+- Download script: scripts/day1/01_reference_genome_annotation.sh
+- Downloaded (UTC): $(date -u '+%Y-%m-%dT%H:%M:%SZ')
 
 All workshop reads and all derived coordinates are generated against this
 assembly. Processed files from other assemblies are not compatible.

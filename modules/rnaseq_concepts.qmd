@@ -11,11 +11,10 @@ RNA-seq differential expression is count-based. DESeq2 estimates size factors, d
 
 ## Teaching caveats
 
-- Two replicates per condition are a minimal teaching design, not an ideal study.
+- The workshop retains three biological replicates per condition; replication is what allows biological variability to be estimated.
 - PCA is a diagnostic for sample-level structure.
 - MA and volcano plots summarize effect size and uncertainty; neither replaces biological interpretation.
 
 ## Common invalid inputs
 
 Do not use TPM, FPKM, CPM coverage, or bigWig values as DESeq2 input.
-

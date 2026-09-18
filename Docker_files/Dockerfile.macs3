@@ -1,7 +1,7 @@
 FROM docker.io/mambaorg/micromamba:1.5.10
 
 RUN micromamba install -y -n base -c conda-forge -c bioconda \
-      macs3=3.0.1 \
+      macs3=3.0.4 \
     && micromamba clean -a -y
 
 WORKDIR /work

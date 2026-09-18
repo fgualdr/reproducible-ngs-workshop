@@ -13,11 +13,10 @@ candidates:
     accessions:
       rnaseq: "E-MTAB-13025"
       chipseq: "E-MTAB-13026"
-    notes: "Local metadata folders exist in this workspace; ENA/ArrayExpress route rather than SRA-first."
+    notes: "Local metadata folders exist in this workspace; ArrayExpress collection in BioStudies + ENA route rather than SRA-first."
   - name: "H_pylori_NikR"
     organism: "Helicobacter pylori"
     status: "sra_candidate_to_validate"
     accessions:
       bioproject: "PRJNA313048"
     notes: "Small-genome RNA-seq plus ChIP-seq candidate; validate size, replicates, and accessions."
-

@@ -1,49 +1,77 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="450" viewBox="0 0 1200 450" role="img" aria-labelledby="title desc">
-  <title id="title">ChIP-seq concept flow</title>
-  <desc id="desc">ChIP-seq workflow showing IP and input reads mapped to the genome and compared to call peaks and make tracks.</desc>
-  <rect width="1200" height="450" fill="#f8fafc"/>
-  <style>
-    .box{fill:#ffffff;stroke:#334155;stroke-width:2;rx:8}
-    .ip{fill:#fee2e2}
-    .input{fill:#e0f2fe}
-    .tool{fill:#ecfdf5}
-    .result{fill:#fff7ed}
-    .txt{font-family:Arial,Helvetica,sans-serif;font-size:24px;fill:#0f172a}
-    .small{font-family:Arial,Helvetica,sans-serif;font-size:17px;fill:#334155}
-    .arrow{stroke:#475569;stroke-width:3;marker-end:url(#arrow)}
-  </style>
-  <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 Z" fill="#475569"/>
-    </marker>
-  </defs>
-  <text x="40" y="42" class="txt" font-weight="700">ChIP-seq: enrichment over background</text>
-  <rect x="55" y="90" width="185" height="90" class="box ip"/>
-  <text x="147" y="126" text-anchor="middle" class="txt">IP FASTQ</text>
-  <text x="147" y="154" text-anchor="middle" class="small">protein-bound DNA</text>
-  <rect x="55" y="250" width="185" height="90" class="box input"/>
-  <text x="147" y="286" text-anchor="middle" class="txt">Input FASTQ</text>
-  <text x="147" y="314" text-anchor="middle" class="small">background DNA</text>
-  <line x1="240" y1="135" x2="315" y2="135" class="arrow"/>
-  <line x1="240" y1="295" x2="315" y2="295" class="arrow"/>
-  <rect x="315" y="90" width="190" height="90" class="box tool"/>
-  <text x="410" y="126" text-anchor="middle" class="txt">Map IP</text>
-  <text x="410" y="154" text-anchor="middle" class="small">Bowtie2 + samtools</text>
-  <rect x="315" y="250" width="190" height="90" class="box tool"/>
-  <text x="410" y="286" text-anchor="middle" class="txt">Map input</text>
-  <text x="410" y="314" text-anchor="middle" class="small">same reference</text>
-  <line x1="505" y1="135" x2="590" y2="200" class="arrow"/>
-  <line x1="505" y1="295" x2="590" y2="240" class="arrow"/>
-  <rect x="590" y="170" width="210" height="100" class="box tool"/>
-  <text x="695" y="207" text-anchor="middle" class="txt">MACS3</text>
-  <text x="695" y="235" text-anchor="middle" class="small">find enriched intervals</text>
-  <line x1="800" y1="220" x2="870" y2="220" class="arrow"/>
-  <rect x="870" y="90" width="250" height="90" class="box result"/>
-  <text x="995" y="126" text-anchor="middle" class="txt">narrowPeak</text>
-  <text x="995" y="154" text-anchor="middle" class="small">candidate binding sites</text>
-  <rect x="870" y="250" width="250" height="90" class="box result"/>
-  <text x="995" y="286" text-anchor="middle" class="txt">bigWig tracks</text>
-  <text x="995" y="314" text-anchor="middle" class="small">visual signal profiles</text>
-  <line x1="800" y1="230" x2="870" y2="285" class="arrow"/>
-  <text x="55" y="402" class="small">Key idea: peaks are places where IP coverage is higher than expected background. Input control helps avoid calling accessible or biased regions as binding sites.</text>
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 27.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 1200 450" style="enable-background:new 0 0 1200 450;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#0F172A;}
+	.st1{font-family:'Arial-BoldMT';}
+	.st2{font-size:24px;}
+	.st3{fill:#FEE2E2;stroke:#334155;stroke-width:2;}
+	.st4{font-family:'ArialMT';}
+	.st5{fill:#334155;}
+	.st6{font-size:17px;}
+	.st7{opacity:0.5;fill:#E0F2FE;stroke:#334155;stroke-width:2;}
+	.st8{opacity:0.5;fill:#0F172A;enable-background:new    ;}
+	.st9{opacity:0.5;fill:#334155;enable-background:new    ;}
+	.st10{fill:none;}
+	.st11{fill:#475569;}
+	.st12{opacity:0.5;fill:#475569;}
+	.st13{fill:#ECFDF5;stroke:#334155;stroke-width:2;}
+	.st14{opacity:0.5;fill:#ECFDF5;stroke:#334155;stroke-width:2;}
+	.st15{fill:#FFF7ED;stroke:#334155;stroke-width:2;}
+	.st16{font-size:15px;}
+	.st17{stroke:#475569;stroke-width:5;stroke-miterlimit:10;}
+	.st18{opacity:0.5;stroke:#475569;stroke-width:5;stroke-miterlimit:10;}
+	.st19{font-family:'Arial-ItalicMT';}
+</style>
+<text transform="matrix(1 0 0 1 40 42)" class="st0 st1 st2">ChIP-seq: enrichment over background</text>
+<rect x="55" y="90" class="st3" width="185" height="90"/>
+<text transform="matrix(1 0 0 1 93.2051 126)" class="st0 st4 st2">IP FASTQ</text>
+<text transform="matrix(1 0 0 1 74.2354 154)" class="st5 st4 st6">protein-bound DNA</text>
+<rect x="55" y="250" class="st7" width="185" height="90"/>
+<text transform="matrix(1 0 0 1 77.6367 286)" class="st8 st4 st2">Input FASTQ</text>
+<text transform="matrix(1 0 0 1 82.2705 314)" class="st9 st4 st6">background DNA</text>
+<path class="st10" d=""/>
+<path class="st11" d="M293.4,123l24,12l-24,12V123z"/>
+<path class="st11" d="M315,135"/>
+<path class="st10" d=""/>
+<path class="st12" d="M293.4,283l24,12l-24,12V283z"/>
+<path class="st12" d="M315,295"/>
+<rect x="315" y="90" class="st13" width="190" height="90"/>
+<text transform="matrix(1 0 0 1 371.9844 126)" class="st0 st4 st2">Map IP</text>
+<text transform="matrix(1 0 0 1 336.0608 154)" class="st5 st4 st6">Bowtie2 + samtools</text>
+<rect x="315" y="250" class="st14" width="190" height="90"/>
+<text transform="matrix(1 0 0 1 357.3008 286)" class="st8 st4 st2">Map input</text>
+<text transform="matrix(1 0 0 1 350.9441 314)" class="st9 st4 st6">same reference</text>
+<path class="st10" d=""/>
+<path class="st11" d="M577.2,189.5l8.2,25.6l-25.3-8.8L577.2,189.5z"/>
+<path class="st11" d="M590,200"/>
+<path class="st10" d=""/>
+<path class="st12" d="M559.9,234.3l25.6-8.2l-8.8,25.3L559.9,234.3z"/>
+<path class="st11" d="M590,240"/>
+<rect x="590" y="170" class="st13" width="210" height="100"/>
+<text transform="matrix(1 0 0 1 653.6562 207)" class="st0 st4 st2">MACS3</text>
+<text transform="matrix(1 0 0 1 612.3159 235)" class="st5 st4 st6">find enriched intervals</text>
+<path class="st10" d=""/>
+<path class="st11" d="M870,220"/>
+<rect x="870" y="90" class="st15" width="250" height="90"/>
+<text transform="matrix(1 0 0 1 930.9688 126)" class="st0 st4 st2">narrowPeak</text>
+<text transform="matrix(1 0 0 1 908.5225 154)" class="st5 st4 st6">candidate binding sites</text>
+<rect x="870" y="250" class="st15" width="250" height="90"/>
+<text transform="matrix(1 0 0 1 922.9824 286)" class="st0 st4 st2">bigWig tracks</text>
+<text transform="matrix(1 0 0 1 918.9358 314)" class="st5 st4 st6">visual signal profiles</text>
+<path class="st10" d=""/>
+<path class="st11" d="M870,285"/>
+<text transform="matrix(1 0 0 1 55 402)" class="st5 st4 st16">Key idea: peaks are places where IP coverage is higher than expected background. Input control helps avoid calling accessible or biased regions as binding sites.</text>
+<line class="st17" x1="240" y1="135" x2="293.4" y2="135"/>
+<line class="st18" x1="240" y1="295" x2="293.4" y2="295"/>
+<line class="st17" x1="505" y1="135" x2="568.4" y2="200"/>
+<line class="st18" x1="505" y1="295" x2="568.4" y2="240"/>
+<path class="st11" d="M861.1,272.2l8.2,25.6l-25.3-8.8L861.1,272.2z"/>
+<path class="st11" d="M843.4,165.5l25.6-8.2l-8.8,25.3L843.4,165.5z"/>
+<line class="st17" x1="800" y1="227" x2="863.4" y2="292"/>
+<line class="st17" x1="800" y1="218.7" x2="863.4" y2="163.7"/>
+<g>
+	<text transform="matrix(1 0 0 1 230.6808 235.1865)" class="st0 st19 st2">Optional</text>
+</g>
 </svg>
