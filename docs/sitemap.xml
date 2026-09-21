@@ -1,31 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://fgualdr.github.io/reproducible-ngs-workshop/modules/reference_genomes.html</loc>
-    <lastmod>2026-09-09T08:47:32.794Z</lastmod>
-  </url>
-  <url>
     <loc>https://fgualdr.github.io/reproducible-ngs-workshop/modules/containers_docker_podman.html</loc>
     <lastmod>2026-09-09T08:34:29.317Z</lastmod>
-  </url>
-  <url>
-    <loc>https://fgualdr.github.io/reproducible-ngs-workshop/days/day1_reproducible_project.html</loc>
-    <lastmod>2026-09-21T15:56:13.336Z</lastmod>
-  </url>
-  <url>
-    <loc>https://fgualdr.github.io/reproducible-ngs-workshop/index.html</loc>
-    <lastmod>2026-09-09T08:38:11.359Z</lastmod>
   </url>
   <url>
     <loc>https://fgualdr.github.io/reproducible-ngs-workshop/days/day0_setup.html</loc>
     <lastmod>2026-09-21T13:32:42.000Z</lastmod>
   </url>
   <url>
-    <loc>https://fgualdr.github.io/reproducible-ngs-workshop/modules/git_github.html</loc>
-    <lastmod>2026-06-19T14:19:35.410Z</lastmod>
+    <loc>https://fgualdr.github.io/reproducible-ngs-workshop/index.html</loc>
+    <lastmod>2026-09-09T08:38:11.359Z</lastmod>
   </url>
   <url>
-    <loc>https://fgualdr.github.io/reproducible-ngs-workshop/modules/public_data_retrieval.html</loc>
-    <lastmod>2026-09-12T12:34:50.437Z</lastmod>
+    <loc>https://fgualdr.github.io/reproducible-ngs-workshop/modules/git_github.html</loc>
+    <lastmod>2026-06-19T14:19:35.410Z</lastmod>
   </url>
 </urlset>
