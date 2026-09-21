@@ -7,7 +7,7 @@ execute:
 
 ## Overview
 
-Day 4 combines RNA-seq and ChIP-seq outputs. Students connect differential expression results to nearby ChIP-seq peaks, produce interpretable figures and prepare a concise three-slide lab-meeting summary.
+Day 4 combines RNA-seq and ChIP-seq outputs. You will connect differential expression results to nearby ChIP-seq peaks, produce interpretable figures and prepare a concise three-slide lab-meeting summary.
 
 The goal is careful prioritization of candidate regulatory relationships, not overstatement. A ChIP-seq peak near a differentially expressed gene is a candidate direct regulatory link that depends on the assumptions and quality of the data.
 
@@ -30,7 +30,7 @@ DESeq2 result table
 
 ## Learning outcomes
 
-By the end of Day 4, students should be able to:
+By the end of Day 4, you should be able to:
 
 - explain genomic intervals and coordinate-system pitfalls;
 - import DESeq2 results, peak files and gene annotations;
@@ -159,7 +159,7 @@ $$
 [end - 100,\ end + 500]
 $$
 
-The exact values are assumptions. In a teaching analysis, a fixed window such as 500 bp upstream and 100 bp downstream is acceptable if it is clearly documented.
+The exact values are assumptions. In this practical, a fixed window such as 500 bp upstream and 100 bp downstream is acceptable if it is clearly documented.
 
 ### Integrating DESeq2 and ChIP-seq results
 
@@ -410,7 +410,7 @@ Slide 1 - Data and design
 
 Slide 2 - Workflow and quality control
   execution route, main commands/tools, QC summary, mapping/counting or peak-calling summary
-  explicitly state: teaching WT-only/no-external-control ChIP reanalysis ≠ published WT/ΔHP1021 csaw/edgeR + MACS3 analysis
+  explicitly state: workshop WT-only/no-external-control ChIP reanalysis ≠ published WT/ΔHP1021 csaw/edgeR + MACS3 analysis
 
 Slide 3 - Biological result and limitation
   one key RNA-seq or ChIP-seq result, integration summary, one limitation and one next step
@@ -425,12 +425,12 @@ Checkpoint mode is acceptable if documented. Include:
 ```text
 which files were provided
 which steps were demonstrated but not run locally
-which analyses were run by the student
+which analyses you ran
 how the checkpoint files relate to the full workflow
 confirmation that every checkpoint uses GCF_025998455.1
 ```
 
-The final repository should make it clear whether the student performed:
+The final repository should make it clear whether you performed:
 
 ```text
 full local execution
@@ -504,7 +504,7 @@ git push
 
 ## How to report issues
 
-If you have a GitHub account, report Day 4 problems by opening an **Issue** in your student repository.
+If you have a GitHub account, report Day 4 problems by opening an **Issue** in your repository.
 
 Include:
 

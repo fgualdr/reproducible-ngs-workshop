@@ -59,6 +59,7 @@ trimmed ChIP-seq FASTQ
   -> normalized bigWig tracks for IGV
   -> MACS3 peak calling with paired-end BAM input
   -> consensus peak set for Day 4
+  -> CPM bigWig signal matrices and metaplots around peak centres
   -> simple peak-count matrix
   -> differential peak analysis
   -> peak DNA sequences
@@ -67,13 +68,13 @@ trimmed ChIP-seq FASTQ
 
 ![ChIP-seq concept flow](../assets/images/day3/chipseq_concept_flow.svg){#fig-day3-chipseq-flow width="100%" fig-alt="ChIP-seq workflow showing IP reads mapped to the genome, signal tracks, peak calling, consensus peaks, and motif discovery."}
 
-::: {.callout-warning title="Published analysis ≠ teaching analysis"}
+::: {.callout-warning title="Published analysis ≠ workshop analysis"}
 The workflow below is **not** the pipeline used by [Noszka et al.](https://www.nature.com/articles/s41467-023-42364-6). The publication analyzed HP1021 ChIP-seq from wild-type and ΔHP1021 material under both oxygen conditions, mapped to *H. pylori* 26695 (`NC_000915.1`), identified differentially bound regions with a `csaw`/`edgeR` sliding-window analysis, and confirmed candidate regions with MACS3 using ΔHP1021 libraries as a target-negative control.
 
-The workshop retains only wild-type-genotype samples, maps them to `GCF_025998455.1` (`NZ_AP026446.1`), calls each sample with MACS3 without an external control, merges overlapping calls into a permissive Day 4 peak set, counts BAM overlaps, and uses DESeq2 for a condition comparison. This teaches the analysis logic; it is not expected to reproduce the paper's peak coordinates, significance values, or biological conclusions.
+The workshop retains only wild-type-genotype samples, maps them to `GCF_025998455.1` (`NZ_AP026446.1`), calls each sample with MACS3 without an external control, merges overlapping calls into a permissive Day 4 peak set, counts BAM overlaps, and uses DESeq2 for a condition comparison. This lets you work through the analysis logic; it is not expected to reproduce the paper's peak coordinates, significance values, or biological conclusions.
 :::
 
-Optional or instructor-demo QC steps:
+QC steps:
 
 ```text
 filtered BAM files
@@ -83,7 +84,7 @@ per-sample MACS3 peak files
   -> IDR replicate concordance check
 ```
 
-These QC steps are useful, but they are not required for the minimal downstream Day 4 integration path.
+These QC steps are part of the Day 3 workflow. Phantom peak strand cross-correlation checks whether the mapped reads show the expected ChIP-seq strand-shift structure, whereas IDR checks whether ranked MACS3 peaks are reproducible between biological replicates. They should be inspected before carrying the ChIP-seq results into downstream interpretation and Day 4 integration.
 
 Today we will produce:
 
@@ -95,7 +96,12 @@ results/day3_chipseq/peaks/no_input/*_peaks.narrowPeak
 results/day3_chipseq/peaks/no_input/*_summits.bed
 results/day3_chipseq/peaks/consensus/day4_consensus_peaks.bed
 results/day3_chipseq/counts/consensus_peak_counts.tsv
+results/day3_chipseq/metaplot/consensus_peak_metaplot.pdf
 results/day3_chipseq/differential_peaks/differential_peak_results.tsv
+results/day3_chipseq/differential_peaks/pca.pdf
+results/day3_chipseq/differential_peaks/pca_scree.pdf
+results/day3_chipseq/differential_peaks/dispersion_plot.pdf
+results/day3_chipseq/differential_peaks/ma_plot.pdf
 results/day3_chipseq/motifs/day4_consensus_peak_sequences.fa
 results/day3_chipseq/motifs/streme/
 results/logs/day3/
@@ -111,6 +117,7 @@ mkdir -p results/day3_chipseq/bigwig
 mkdir -p results/day3_chipseq/peaks/no_input
 mkdir -p results/day3_chipseq/peaks/consensus
 mkdir -p results/day3_chipseq/counts
+mkdir -p results/day3_chipseq/metaplot
 mkdir -p results/day3_chipseq/idr
 mkdir -p results/day3_chipseq/motifs
 mkdir -p results/logs/day3
@@ -289,7 +296,7 @@ The options mean:
 | `-F 2828` | Remove unmapped, mate-unmapped, secondary, failed-QC, and supplementary records |
 | `-@ "${THREADS}"` | Use the thread setting from the script |
 
-Duplicate handling is more subtle. Coordinate duplicates can be PCR duplicates, but a real strong binding site can also create many fragments at similar positions. Removing duplicates mechanically can erase true signal; keeping all duplicates can preserve PCR artifacts. For this teaching workflow we keep duplicates and interpret peak shape, mapping quality, read depth, and input-control limitations together.
+Duplicate handling is more subtle. Coordinate duplicates can be PCR duplicates, but a real strong binding site can also create many fragments at similar positions. Removing duplicates mechanically can erase true signal; keeping all duplicates can preserve PCR artifacts. For this workshop workflow we keep duplicates and interpret peak shape, mapping quality, read depth, and input-control limitations together.
 
 In a larger project, duplicate handling should be chosen after checking library complexity and replicate behavior.
 
@@ -301,9 +308,9 @@ cat results/logs/day3/*.flagstat.txt
 cat results/logs/day3/*.filtered.flagstat.txt
 ```
 
-## 5. Optional QC: phantom peak plot
+## 5. QC: phantom peak strand cross-correlation
 
-This section is useful as an instructor demonstration or optional QC if there is enough time.
+We now evaluate the mapped ChIP-seq libraries with strand cross-correlation before moving on to signal tracks and peak interpretation.
 
 Strand cross-correlation is a ChIP-seq sanity check after mapping. For narrow transcription-factor ChIP-seq, forward-strand and reverse-strand reads often pile up on opposite sides of the same binding event. If we shift one strand relative to the other and compute how well the two profiles agree, a good library often shows a cross-correlation peak near the expected fragment length.
 
@@ -456,9 +463,49 @@ ls -lh results/logs/day3/*.bamCoverage.log
 
 Peak calling asks which genomic intervals have more ChIP-seq signal than expected from background. For a transcription-factor-like protein, true binding often appears as a relatively narrow local enrichment.
 
-For this workshop we use MACS3 without an external control because it keeps the practical small and consistent. MACS3 can call peaks this way by estimating its background from the ChIP/treatment data, including a large local window and a genome-wide component when no control is supplied. This makes no-control calling usable for an explicitly exploratory teaching analysis; it is not equivalent to measuring background in a matched input or target-negative library. Section 11 explains the tradeoff.
+### 7.1 How MACS3 models fragments, background and peaks
 
-Because the teaching FASTQ files are paired-end, we call MACS3 with `-f BAMPE`. This tells MACS3 to use paired-end fragment information from the BAM file rather than treating each alignment as an independent single-end read.
+MACS3 separates the problem into two signals:
+
+```text
+observed ChIP signal
+        versus
+expected local background
+```
+
+With `-f BAMPE`, MACS3 uses the **actual paired-end fragment intervals** to build the treatment pileup. In single-end mode, MACS3 can infer a characteristic fragment length from the offset between plus- and minus-strand reads and extend reads to approximate the original fragments. In paired-end mode that fragment-length reconstruction is unnecessary because the two mapped mates already define each sequenced fragment.
+
+The second part of the model is the expected background, usually written as a local rate \(\lambda_{\mathrm{local}}\). Conceptually, MACS3 asks how surprising the observed ChIP pileup is under a local Poisson background:
+
+$$
+X \sim \mathrm{Poisson}(\lambda_{\mathrm{local}})
+$$
+
+and evaluates the probability of observing signal at least as large as the treatment pileup.
+
+When a matched control is supplied with `-c`, MACS3 can estimate background at several spatial scales. By default, the local background can include a fragment-scale term, a **small local** window (`--slocal`, 1 kb), a **large local** window (`--llocal`, 10 kb), and a genome-wide background. MACS3 uses the maximum applicable background estimate, which helps prevent a locally noisy region from looking significant simply because the genome-wide average is low.
+
+Without an external control, MACS3 must estimate background from the treatment library itself. The fragment-scale and small-local control terms are not available; the large-local and genome-wide components provide a coarser baseline. This makes no-control peak calling possible, but it cannot independently measure fragmentation, mappability, copy-number, accessibility, or immunoprecipitation-specific background.
+
+The logic is therefore:
+
+```text
+paired-end fragments
+      ↓
+treatment pileup
+      ↓
+local/background expectation
+      ↓
+P(observed signal | local background)
+      ↓
+p-values and q-values
+      ↓
+adjacent enriched positions merged into peaks
+```
+
+For this practical we use the **no-control route** so that the analysis remains small enough for a laptop. Treat these peaks as exploratory calls and inspect them together with replicate behaviour, bigWig signal, peak shape, motif enrichment and biological context. Section 11 compares input, target-negative and no-control designs in more detail.
+
+The current MACS3 documentation describes the `--slocal`, `--llocal`, paired-end `BAMPE` behaviour and local-lambda model in detail: <https://macs3-project.github.io/MACS/docs/callpeak.html>.
 
 The command in this practical uses:
 
@@ -466,10 +513,10 @@ The command in this practical uses:
 |---|---|
 | `-t` | Treatment file, here the filtered ChIP-seq BAM |
 | `-f BAMPE` | Paired-end BAM input; MACS3 uses the fragment extents |
-| `-g 1696601` | Assembly length in bases for the single `NZ_AP026446.1` chromosome; used here as the teaching effective genome size |
+| `-g 1696601` | Assembly length in bases for the single `NZ_AP026446.1` chromosome; used here as the effective genome size |
 | `-n` | Output name prefix |
 | `--outdir` | Output folder |
-| `--keep-dup all` | Keep duplicate-position reads for this teaching run |
+| `--keep-dup all` | Keep duplicate-position reads for this run |
 
 Create `scripts/day3_chipseq/04_call_peaks_macs3_no_input.sh`:
 
@@ -532,7 +579,7 @@ head results/day3_chipseq/peaks/no_input/*_peaks.narrowPeak
 ls -lh results/logs/day3/*.macs3.log
 ```
 
-### 7.1 What is in a narrowPeak file?
+### 7.2 What is in a narrowPeak file?
 
 `narrowPeak` is a BED-like interval format. The first three columns are the genomic interval:
 
@@ -553,7 +600,7 @@ The peak interval is a statistical call, not a direct observation. Always compar
 
 ## 8. Make a consensus peak set and count table
 
-Day 4 needs one stable peak file to integrate with RNA-seq and annotation. Instead of choosing one replicate, we create a simple peak set by merging overlapping MACS3 peaks across the samples. Here, “consensus” means a **permissive union**: every region called in at least one sample enters the merged set, and no replicate-support threshold is applied. This transparent teaching handoff is not the publication's `csaw`/`edgeR` region set.
+Day 4 needs one stable peak file to integrate with RNA-seq and annotation. Instead of choosing one replicate, we create a simple peak set by merging overlapping MACS3 peaks across the samples. Here, “consensus” means a **permissive union**: every region called in at least one sample enters the merged set, and no replicate-support threshold is applied. This transparent workshop handoff is not the publication's `csaw`/`edgeR` region set.
 
 This step writes:
 
@@ -565,7 +612,7 @@ results/day3_chipseq/counts/consensus_peak_counts.tsv
 
 `day4_consensus_peaks.bed` is the explicit ChIP-seq peak input for Day 4.
 
-The count table is a simple teaching matrix from `bedtools multicov`. It counts filtered BAM alignments overlapping each consensus peak. For a formal differential-binding analysis with paired-end fragments, use a fragment-aware counter such as `featureCounts` on a consensus peak annotation or `summarizeOverlaps` in Bioconductor. Here, the count table is mainly a transparent QC and handoff file.
+The count table is a simple workshop matrix from `bedtools multicov`. It counts filtered BAM alignments overlapping each consensus peak. For a formal differential-binding analysis with paired-end fragments, use a fragment-aware counter such as `featureCounts` on a consensus peak annotation or `summarizeOverlaps` in Bioconductor. Here, the count table is mainly a transparent QC and handoff file.
 
 Create `scripts/day3_chipseq/06_make_consensus_peak_counts.sh`:
 
@@ -682,9 +729,349 @@ head results/day3_chipseq/counts/consensus_peak_counts.tsv
 cat results/logs/day3/consensus_peak_counts.log
 ```
 
+### 8.1 Build a CPM signal matrix around consensus peak centres in R
+
+The ChIP-seq bigWig files from Section 6 are already normalized as **CPM**. We can now ask a different question:
+
+> What does the average ChIP-seq signal look like around the centres of the consensus peaks?
+
+`genomation::ScoreMatrix()` converts each bigWig track into a matrix:
+
+```text
+rows    = consensus peaks
+columns = positions around the peak centre
+values  = CPM signal from the bigWig
+```
+
+Averaging each column across all peaks gives a metaplot. This is useful for checking whether the peak set is accompanied by the expected centred enrichment and whether the global signal shape is similar across samples.
+
+Create `scripts/day3_chipseq/06_metaplot_bigwigs.R`:
+
+```r
+#!/usr/bin/env Rscript
+
+library(genomation)
+library(GenomicRanges)
+library(rtracklayer)
+
+bigwig_dir <- "results/day3_chipseq/bigwig"
+peak_file <- "results/day3_chipseq/peaks/consensus/day4_consensus_peaks.bed"
+out_dir <- "results/day3_chipseq/metaplot"
+
+dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+
+# Import consensus peaks and make equal 1001-bp windows around their centres
+peaks <- rtracklayer::import(peak_file, format = "BED")
+peak_centres <- GenomicRanges::resize(peaks, width = 1, fix = "center")
+windows <- GenomicRanges::resize(peak_centres, width = 1001, fix = "center")
+
+# Remove windows that would fall outside the 1,696,601-bp chromosome
+genome_size <- 1696601
+windows <- windows[start(windows) >= 1 & end(windows) <= genome_size]
+
+# Import the already CPM-normalized bigWigs
+bigwigs <- list.files(bigwig_dir, pattern = "\\.cpm\\.bw$", full.names = TRUE)
+if (length(bigwigs) == 0) stop("ERROR: no CPM bigWig files found")
+
+sample_names <- sub("\\.cpm\\.bw$", "", basename(bigwigs))
+
+score_matrices <- lapply(bigwigs, function(bw) {
+  genomation::ScoreMatrix(
+    target = bw,
+    windows = windows,
+    type = "bigWig",
+    strand.aware = FALSE,
+    rpm = FALSE
+  )
+})
+
+names(score_matrices) <- sample_names
+score_list <- genomation::ScoreMatrixList(score_matrices)
+
+saveRDS(score_list, file.path(out_dir, "consensus_peak_score_matrices.rds"))
+
+pdf(file.path(out_dir, "consensus_peak_metaplot.pdf"), width = 7, height = 5)
+genomation::plotMeta(
+  score_list,
+  profile.names = sample_names,
+  xcoords = -500:500,
+  xlab = "Distance from consensus peak centre (bp)",
+  ylab = "Mean ChIP-seq signal (CPM)"
+)
+dev.off()
+```
+
+Run it in the same R/Bioconductor container used for DESeq2:
+
+```bash
+docker run --rm \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-r-bioc \
+  Rscript scripts/day3_chipseq/06_metaplot_bigwigs.R
+```
+
+Check:
+
+```bash
+ls -lh results/day3_chipseq/metaplot/
+```
+
+`rpm = FALSE` is intentional. `ScoreMatrix()` is reading values from bigWig files that were already normalized to CPM by `bamCoverage`; applying another reads-per-million normalization would normalize the signal twice.
+
+The `ScoreMatrix` keeps the peak-level information, while `plotMeta()` summarizes the matrix across peaks. A clean centred profile supports the idea that the called intervals capture reproducible local enrichment, but it does not replace replicate-level QC or peak statistics.
+
 ## 9. Differential peak analysis
 
-The consensus count matrix provides raw counts for a simplified condition comparison. Run DESeq2 with the same `condition_A` reference and `condition_B` comparison used for RNA-seq:
+The consensus peak table contains **raw alignment counts** for the same genomic regions in every ChIP-seq sample. We can therefore use the same DESeq2 logic used for RNA-seq, but here each row is a **peak** rather than a gene.
+
+The main sequence is:
+
+```text
+raw counts in consensus peaks
+  -> build sample design
+  -> estimate DESeq2 size factors
+  -> inspect normalized counts with PCA
+  -> inspect variance explained with a scree plot
+  -> fit the DESeq2 model
+  -> inspect dispersions
+  -> extract stressed versus control
+  -> inspect mean peak signal versus log2 fold change
+```
+
+::: {.callout-important}
+DESeq2 must receive the **raw peak counts** from `consensus_peak_counts.tsv`. Do not use the CPM-normalized bigWig values as input to DESeq2. The normalized counts generated below are for QC and visualization; the statistical model starts from the raw counts.
+:::
+
+Create `scripts/day3_chipseq/09_differential_peak_analysis.R`:
+
+```bash
+nano scripts/day3_chipseq/09_differential_peak_analysis.R
+```
+
+Use one continuous script, as in Day 2. We will inspect the objects and plots together while keeping the complete analysis in one reproducible file.
+
+```r
+#!/usr/bin/env Rscript
+
+library(DESeq2)
+library(ggplot2)
+library(ggrepel)
+
+count_file <- "results/day3_chipseq/counts/consensus_peak_counts.tsv"
+meta_data <- "raw_data/metadata/Chipseq_metadata.txt"
+out_dir <- "results/day3_chipseq/differential_peaks"
+
+dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+
+# -------------------------------------------------------------------------
+# Import the consensus peak-count table
+# -------------------------------------------------------------------------
+
+peak_table <- read.delim(count_file, sep = "\t", check.names = FALSE)
+
+coordinate_columns <- c("chrom", "start", "end", "peak_id", "peak_record_count")
+peakCounts <- peak_table[, !colnames(peak_table) %in% coordinate_columns, drop = FALSE]
+rownames(peakCounts) <- peak_table$peak_id
+
+# -------------------------------------------------------------------------
+# Import metadata and build the sample design
+# -------------------------------------------------------------------------
+
+meta_chipseq <- read.delim(meta_data, sep = "\t", comment.char = "#", check.names = FALSE)
+
+design_dt <- meta_chipseq[, c(
+  "Source Name",
+  "Comment[replicate]",
+  "Characteristics[stimulus]"
+)]
+
+design_dt <- unique(design_dt)
+colnames(design_dt) <- c("samples", "replicates", "conditions")
+rownames(design_dt) <- design_dt$samples
+
+if (!all(colnames(peakCounts) %in% rownames(design_dt))) {
+  stop("ERROR: not all peak-count samples are present in the design table")
+}
+
+design_dt$conditions[design_dt$conditions == "none"] <- "control"
+design_dt$conditions[design_dt$conditions == "21 percent oxygen"] <- "stressed"
+
+design_dt$conditions <- factor(design_dt$conditions, levels = c("control", "stressed"))
+design_dt$replicates <- factor(design_dt$replicates)
+
+# Put the design rows in exactly the same order as the count columns
+design_dt <- design_dt[colnames(peakCounts), , drop = FALSE]
+peakCounts <- peakCounts[, rownames(design_dt), drop = FALSE]
+
+# Remove peaks with almost no count information
+peakCounts <- peakCounts[rowSums(peakCounts) >= 10, , drop = FALSE]
+
+# -------------------------------------------------------------------------
+# Create the DESeq2 dataset
+# -------------------------------------------------------------------------
+
+dds <- DESeq2::DESeqDataSetFromMatrix(
+  countData = as.matrix(peakCounts),
+  colData = design_dt,
+  design = ~ replicates + conditions
+)
+
+# -------------------------------------------------------------------------
+# Estimate size factors and inspect normalized counts BEFORE model fitting
+# -------------------------------------------------------------------------
+
+dds <- DESeq2::estimateSizeFactors(dds)
+normalized_counts <- DESeq2::counts(dds, normalized = TRUE)
+
+normalized_out <- data.frame(peak_id = rownames(normalized_counts), normalized_counts, check.names = FALSE)
+write.table(normalized_out, file.path(out_dir, "normalized_peak_counts.tsv"),
+            sep = "\t", quote = FALSE, row.names = FALSE)
+
+# PCA: inspect sample relationships and possible outliers
+pca_input <- log2(normalized_counts + 1)
+pca <- prcomp(t(pca_input))
+
+variance_explained <- 100 * (pca$sdev^2 / sum(pca$sdev^2))
+
+pca_dt <- data.frame(
+  sample = rownames(pca$x),
+  PC1 = pca$x[, 1],
+  PC2 = pca$x[, 2],
+  conditions = design_dt[rownames(pca$x), "conditions"],
+  replicates = design_dt[rownames(pca$x), "replicates"]
+)
+
+pca_plot <- ggplot(pca_dt, aes(PC1, PC2, color = conditions, shape = replicates, label = sample)) +
+  geom_point(size = 3) +
+  ggrepel::geom_text_repel(show.legend = FALSE) +
+  theme_bw() +
+  labs(
+    x = sprintf("PC1 (%.1f%%)", variance_explained[1]),
+    y = sprintf("PC2 (%.1f%%)", variance_explained[2])
+  )
+
+ggsave(file.path(out_dir, "pca.pdf"), pca_plot, width = 6, height = 5)
+
+# Scree plot: how much variation is explained by each principal component?
+scree_dt <- data.frame(
+  PC = seq_along(variance_explained),
+  variance = variance_explained
+)
+
+scree_plot <- ggplot(scree_dt, aes(PC, variance)) +
+  geom_col() +
+  scale_x_continuous(breaks = scree_dt$PC) +
+  theme_bw() +
+  labs(x = "Principal component", y = "Variance explained (%)")
+
+ggsave(file.path(out_dir, "pca_scree.pdf"), scree_plot, width = 6, height = 4)
+
+# -------------------------------------------------------------------------
+# Fit the DESeq2 model and extract stressed versus control
+# -------------------------------------------------------------------------
+
+dds <- DESeq2::DESeq(dds, fitType = "parametric")
+
+print(DESeq2::resultsNames(dds))
+
+res <- DESeq2::results(
+  dds,
+  contrast = c("conditions", "stressed", "control")
+)
+
+print(summary(res))
+
+res_dt <- as.data.frame(res)
+res_dt$peak_id <- rownames(res_dt)
+res_dt <- res_dt[, c("peak_id", setdiff(colnames(res_dt), "peak_id"))]
+
+# Add genomic coordinates back to the DESeq2 result table
+coordinates <- peak_table[match(res_dt$peak_id, peak_table$peak_id), coordinate_columns]
+result_out <- cbind(coordinates, res_dt[, setdiff(colnames(res_dt), "peak_id"), drop = FALSE])
+
+write.table(result_out, file.path(out_dir, "differential_peak_results.tsv"),
+            sep = "\t", quote = FALSE, row.names = FALSE)
+
+write.table(design_dt, file.path(out_dir, "sample_design.tsv"),
+            sep = "\t", quote = FALSE, row.names = FALSE)
+
+# -------------------------------------------------------------------------
+# QC: inspect the fitted dispersion trend
+# -------------------------------------------------------------------------
+
+pdf(file.path(out_dir, "dispersion_plot.pdf"))
+DESeq2::plotDispEsts(dds)
+dev.off()
+
+# -------------------------------------------------------------------------
+# Custom MA-like plot: mean peak count versus log2 fold change
+# -------------------------------------------------------------------------
+
+# significant decreases -> blue
+# non-significant peaks  -> white
+# significant increases -> red
+res_dt$signed_significance <- 0
+is_sig <- !is.na(res_dt$padj) & res_dt$padj < 0.05
+res_dt$signed_significance[is_sig] <-
+  sign(res_dt$log2FoldChange[is_sig]) * -log10(pmax(res_dt$padj[is_sig], .Machine$double.xmin))
+
+sig_dt <- res_dt[is_sig, , drop = FALSE]
+
+top_up <- sig_dt[sig_dt$log2FoldChange > 0, , drop = FALSE]
+top_up <- head(top_up[order(top_up$padj, -top_up$log2FoldChange), , drop = FALSE], 5)
+
+top_down <- sig_dt[sig_dt$log2FoldChange < 0, , drop = FALSE]
+top_down <- head(top_down[order(top_down$padj, top_down$log2FoldChange), , drop = FALSE], 5)
+
+label_dt <- rbind(top_up, top_down)
+
+ma_plot <- ggplot(res_dt, aes(baseMean + 1, log2FoldChange, color = signed_significance)) +
+  geom_point(alpha = 0.7, size = 1.5, na.rm = TRUE) +
+  geom_hline(yintercept = 0, linetype = 2) +
+  scale_x_log10() +
+  scale_color_gradient2(
+    low = "blue",
+    mid = "white",
+    high = "red",
+    midpoint = 0,
+    name = "signed\n-log10(padj)"
+  ) +
+  ggrepel::geom_text_repel(
+    data = label_dt,
+    aes(label = peak_id),
+    size = 3,
+    max.overlaps = Inf,
+    show.legend = FALSE
+  ) +
+  theme_bw() +
+  labs(
+    x = "Mean normalized peak count (baseMean + 1, log10 scale)",
+    y = "log2 fold change (stressed / control)"
+  )
+
+ggsave(file.path(out_dir, "ma_plot.pdf"), ma_plot, width = 7, height = 5)
+
+# -------------------------------------------------------------------------
+# Volcano plot
+# -------------------------------------------------------------------------
+
+res_dt$minus_log10_padj <- -log10(pmax(res_dt$padj, .Machine$double.xmin))
+
+volcano <- ggplot(res_dt, aes(log2FoldChange, minus_log10_padj)) +
+  geom_point(alpha = 0.6, size = 1, na.rm = TRUE) +
+  theme_bw() +
+  labs(
+    x = "log2 fold change (stressed / control)",
+    y = "-log10 adjusted p-value"
+  )
+
+ggsave(file.path(out_dir, "volcano.pdf"), volcano, width = 6, height = 5)
+
+writeLines(capture.output(sessionInfo()), file.path(out_dir, "sessionInfo.txt"))
+```
+
+Run the analysis:
 
 ```bash
 docker run --rm \
@@ -692,15 +1079,34 @@ docker run --rm \
   -w /work \
   docker.io/fgualdr/ngs-r-bioc \
   Rscript scripts/day3_chipseq/09_differential_peak_analysis.R \
-  results/day3_chipseq/counts/consensus_peak_counts.tsv \
-  raw_data/metadata/Chipseq_metadata.txt \
-  results/day3_chipseq/differential_peaks \
   2>&1 | tee results/logs/day3/differential_peak_analysis.log
 ```
 
-The R script selects the R1 rows from `Chipseq_metadata.txt` so that each biological sample appears once. It obtains sample names and replicate numbers from the SDRF, recodes `none` as `condition_A` and `21 percent oxygen` as `condition_B`, and matches those sample names to the peak-count columns before fitting DESeq2.
+Check the outputs:
 
-This is a simplified teaching analysis. The `bedtools multicov` matrix counts overlapping alignments; a publication-grade paired-end analysis should use fragment-aware counting and should model the complete experimental design. This DESeq2 result is a condition comparison within the workshop union peak set, not the paper's `csaw`/`edgeR` sliding-window analysis. Keep raw counts—not CPM-normalized bigWig signal—as the DESeq2 input.
+```bash
+ls -lh results/day3_chipseq/differential_peaks/
+head results/day3_chipseq/differential_peaks/differential_peak_results.tsv
+```
+
+Before interpreting individual differential peaks, inspect the QC plots in this order:
+
+1. **PCA** — do the biological replicates behave coherently, and is any sample an obvious outlier?
+2. **Scree plot** — how much of the total peak-count variation is captured by the first principal components?
+3. **Dispersion plot** — does the fitted mean-dispersion trend describe the peak-count variability reasonably?
+4. **MA-like plot** — are the largest apparent fold changes concentrated among very low-count peaks, and which peaks remain significant after multiple-testing correction?
+
+The DESeq2 design is:
+
+```r
+design = ~ replicates + conditions
+```
+
+This uses replicate as a blocking term and tests the condition effect after accounting for replicate-to-replicate differences, matching the logic used for RNA-seq on Day 2.
+
+::: {.callout-note}
+This remains a simplified workshop differential-binding analysis. `bedtools multicov` counts overlapping **alignments**, not paired-end fragments, and the permissive union peak set was derived from the same data being tested. A publication-grade workflow should use fragment-aware counting and a carefully defined differential-binding strategy. DESeq2 normalization also assumes that most counted regions do not undergo a strong systematic shift in the same direction; large global occupancy changes require additional thought about normalization.
+:::
 
 Expected handoff to Day 4:
 
@@ -708,13 +1114,13 @@ Expected handoff to Day 4:
 results/day3_chipseq/differential_peaks/differential_peak_results.tsv
 ```
 
-## 10. Optional QC: replicate peak consistency with IDR
+## 10. QC: replicate peak consistency with IDR
 
-This section is useful as an instructor demonstration or optional replicate QC if there is enough time.
+After calling peaks for each replicate, we now evaluate whether the ranked MACS3 peak lists are reproducible between biological replicates.
 
 IDR means **irreproducible discovery rate**. It compares two ranked peak lists and asks which peaks are reproducible between replicates rather than strong in only one sample.
 
-For this teaching workflow, IDR is a diagnostic plot and reproducibility check after MACS3. It does not prove that a peak is biologically direct, and it does not replace the Day 4 integration step.
+For this workshop workflow, IDR is a diagnostic plot and reproducibility check after MACS3. It does not prove that a peak is biologically direct, and it does not replace the Day 4 integration step.
 
 Create `scripts/day3_chipseq/05_idr_replicate_qc.sh`:
 
@@ -826,9 +1232,9 @@ Without `-c`, MACS3 estimates the background track from the treatment data itsel
 |---|---|---|---|
 | Matched input | Fragmentation, mappability, copy-number, and library background before IP | Independent background measurement when well matched and adequately sequenced | Extra library and sequencing cost; shallow input may add little fine-scale information |
 | Mock or target-negative IP | Background that also passes through immunoprecipitation | Can expose antibody/bead nonspecific recovery; the paper used ΔHP1021 for MACS3 confirmation | Must be biologically and technically matched; genotype or antibody controls can introduce their own differences |
-| No external control | Background inferred from the ChIP/treatment library | Feasible for this teaching exercise and some exploratory or pilot analyses | Cannot independently identify systematic ChIP-library background |
+| No external control | Background inferred from the ChIP/treatment library | Feasible for this practical and some exploratory or pilot analyses | Cannot independently identify systematic ChIP-library background |
 
-For this workshop, no-control MACS3 is acceptable as an **explicitly labeled exploratory teaching route**. We compensate in interpretation—not statistically—by checking replicate concordance, coverage tracks, peak shape and score, motif plausibility, and selected loci. A research study should choose controls during experimental design and validate key binding claims orthogonally.
+For this workshop, no-control MACS3 is acceptable as an **explicitly labeled exploratory route**. We compensate in interpretation—not statistically—by checking replicate concordance, coverage tracks, peak shape and score, motif plausibility, and selected loci. A research study should choose controls during experimental design and validate key binding claims orthogonally.
 
 ## 12. Extract peak sequences
 
@@ -907,11 +1313,43 @@ cat results/logs/day3/extract_peak_sequences.log
 
 ## 13. Motif discovery with STREME
 
-A transcription factor often recognizes a family of related DNA words rather than one exact sequence. A motif summarizes base preferences at each position. Motif discovery asks whether some short DNA patterns occur more often in the peak sequences than expected by chance or relative to a background model.
+A transcription factor often recognizes a family of related DNA words rather than one exact sequence. A motif summarizes base preferences at each position. **De novo** motif discovery does not start from a list of known transcription-factor motifs; it asks which sequence patterns are enriched in the sequences we provide.
 
-In this workshop we use STREME for de novo motif discovery. It searches the extracted consensus peak sequences for enriched short patterns. For a less well-annotated bacterial system, de novo discovery is often more useful than testing only a large eukaryote-focused motif database.
+### 13.1 What STREME is testing
 
-Motif discovery is a plausibility check, not proof of direct regulation. A convincing interpretation combines motif results with peak quality, replicate consistency, gene proximity, RNA-seq changes, and biological context.
+STREME uses two conceptual sequence sets:
+
+```text
+primary sequences
+    = sequences in which we want to discover motifs
+
+control sequences
+    = sequences representing the expected background composition
+```
+
+In this practical, the primary sequences are the DNA sequences under the consensus peaks. We do not provide a separate control FASTA, so STREME creates control sequences by shuffling the primary sequences. For DNA, the default shuffle preserves 3-mer frequencies. This is important because a motif should be enriched beyond the general nucleotide and short-k-mer composition of the input sequences.
+
+STREME then:
+
+1. searches efficiently for enriched seed words;
+2. refines promising seeds into position-specific motifs;
+3. scores how well each motif discriminates primary from control sequences;
+4. uses held-out sequences when possible to estimate motif significance;
+5. reports motif p-values and, when available, E-values that account for the set of motifs reported.
+
+The question is therefore not simply:
+
+> Is this DNA word present in my peaks?
+
+but rather:
+
+> Is a sequence pattern more frequent or better represented in the peak sequences than expected from the background sequence model?
+
+For ChIP-seq, the choice of background matters. Shuffled peak sequences are convenient and preserve sequence composition, but a stronger study design may use matched genomic control regions with similar length, GC content and mappability. Fixed-width sequences centred on peak summits are also often useful because they make the positional relationship between the motif and the peak centre easier to interpret.
+
+Here we use the complete consensus-peak sequences and STREME's shuffled controls to keep the practical transparent. Treat motif enrichment as a plausibility check, not proof of direct regulation. Combine it with peak quality, replicate consistency, signal shape, gene proximity, RNA-seq changes and biological context.
+
+The STREME tutorial describes the search, shuffled controls and hold-out significance calculation in more detail: <https://meme-suite.org/meme/doc/streme-tutorial.html>.
 
 Create `scripts/day3_chipseq/08_run_streme.sh`:
 
@@ -979,7 +1417,7 @@ When reading STREME output, focus on:
 
 ## 14. Checkpoint route
 
-If mapping, BAM processing, MACS3 peak calling, consensus-peak construction, or STREME is not feasible locally, continue from instructor-provided checkpoint files.
+If mapping, BAM processing, MACS3 peak calling, consensus-peak construction, or STREME is not feasible locally, continue from the provided checkpoint files.
 
 Accept only checkpoints generated against `GCF_025998455.1` with chromosome `NZ_AP026446.1`.
 
@@ -1012,7 +1450,7 @@ git add results/logs/day3
 git commit -m "Add ChIP-seq peak calling consensus peaks and motifs"
 ```
 
-Avoid committing BAM and bigWig files unless the instructor explicitly provides tiny example files for demonstration. These files are usually too large for a normal Git repository.
+Avoid committing BAM and bigWig files unless tiny example files are explicitly provided for demonstration. These files are usually too large for a normal Git repository.
 
 If you are using GitHub:
 
@@ -1033,6 +1471,7 @@ results/day3_chipseq/peaks/no_input/*_peaks.narrowPeak
 results/day3_chipseq/peaks/no_input/*_summits.bed
 results/day3_chipseq/peaks/consensus/day4_consensus_peaks.bed
 results/day3_chipseq/counts/consensus_peak_counts.tsv
+results/day3_chipseq/metaplot/consensus_peak_metaplot.pdf
 results/day3_chipseq/differential_peaks/differential_peak_results.tsv
 results/day3_chipseq/idr/
 results/day3_chipseq/motifs/day4_consensus_peak_sequences.fa
@@ -1042,7 +1481,7 @@ results/logs/day3/*.flagstat.txt
 results/logs/day3/consensus_peak_counts.log
 ```
 
-Large BAM and bigWig files are working files, not normal Git files. Small peak tables, logs, motif outputs, and notes are appropriate to commit unless the instructor says otherwise.
+Large BAM and bigWig files are working files, not normal Git files. Small peak tables, logs, motif outputs, and notes are appropriate to commit unless noted otherwise.
 
 ## 17. Common problems
 

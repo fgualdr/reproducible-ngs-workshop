@@ -65,7 +65,7 @@ The main study is the HP1021 *Helicobacter pylori* multi-omics study:
 The RNA-seq dataset is **rRNA-depleted, directional prokaryotic RNA-seq**, sequenced as **150-bp paired-end reads (PE150; 2 × 150 bp)**. The [publication's library-preparation methods](https://www.nature.com/articles/s41467-023-42364-6) describe rRNA removal and dUTP/USER-based strand-selective library construction. This information affects how we interpret residual rRNA and, on Day 2, which strandedness setting we use for gene counting.
 :::
 
-The full publication analysis is more complex than this teaching workflow. Our small subset captures the main logic of the published analysis, but it is simplified for laptop-scale execution.
+The full publication analysis is more complex than this workshop workflow. Our small subset captures the main logic of the published analysis, but it is simplified for laptop-scale execution.
 
 ## 3. Reproducibility in bioinformatics
 
@@ -118,7 +118,7 @@ In this workshop, Git/GitHub are used for:
 
 Git should not be used as storage for large sequencing data. FASTQ, BAM, BAI, bigWig, SRA files, large archives, and generated indices should be ignored.
 
-During this lesson, we will browse to each student's GitHub account and create an empty personal repository for the workshop.
+During this lesson, you will use your GitHub account to create an empty personal repository for the workshop.
 
 #### 4.1 Create and initialize Git locally
 
@@ -735,7 +735,7 @@ The same biological run can often be reached through more than one archive. The 
 | Route | What we usually get | Practical point |
 |---|---|---|
 | GEO metadata/processed layer + SRA raw-data layer | GEO series and sample records linked to SRA experiments and runs such as `SRR...` | GEO brokers raw HTS files to SRA; SRA downloads often use `fasterq-dump` and can be slow on laptops |
-| ENA | direct FASTQ URLs | easier for teaching: one URL downloads one FASTQ file |
+| ENA | direct FASTQ URLs | direct route: one URL downloads one FASTQ file |
 | ArrayExpress collection in BioStudies + ENA | study metadata and SDRF files in BioStudies; linked raw reads in ENA | useful for sample names, conditions, run accessions, and direct FASTQ links |
 
 For the main workshop, we use the **ArrayExpress collection in BioStudies + ENA** route because it is easier to explain and easier to script.
@@ -1478,8 +1478,8 @@ WT_1_R1.fastq.gz                         WT_1_R1.fastq.gz
 WT_1_R2.fastq.gz                         WT_1_R2.fastq.gz
 ```
 
-::: {.callout-note title="Why teach both routes?"}
-The biological data are the same, but the retrieval logic is different. The ArrayExpress/ENA route teaches students how to work from metadata containing direct FASTQ URLs. The SRA route teaches them how to work from **run accessions**, where `fasterq-dump` performs the sequence download and FASTQ conversion. In both cases, good practice is the same: inspect metadata first, select the required samples explicitly, retain the original archive identifiers, and rename files to meaningful local names.
+::: {.callout-note title="Why use both routes?"}
+The biological data are the same, but the retrieval logic is different. With ArrayExpress/ENA, you work from metadata containing direct FASTQ URLs. With SRA, you work from **run accessions**, where `fasterq-dump` performs the sequence download and FASTQ conversion. In both cases, good practice is the same: inspect metadata first, select the required samples explicitly, retain the original archive identifiers, and rename files to meaningful local names.
 :::
 
 ::: {.callout-warning title="Storage"}
@@ -1731,3 +1731,167 @@ nothing to commit, working tree clean
 3. What do the four lines of a FASTQ record represent?
 4. Why should fastp metrics be compared across sections and replicates rather than treated as an automatic pass/fail result?
 5. Which Day 1 files should remain outside Git, and which small files should be committed?
+
+## 13. Practical notes about container images, paths, and code editing
+
+The following details become important as soon as the same project is used on different laptops, operating systems, or computing environments.
+
+### Images and containers are not the same thing
+
+A **container image** is the packaged software environment. It is a template stored locally or in a registry such as Docker Hub. A **container** is a running instance created from that image.
+
+For example:
+
+```bash
+docker run --rm \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-fastp \
+  bash scripts/day1/03_trim_fastq.sh
+```
+
+starts a new container from the `ngs-fastp` image, runs the script, and removes the container when the command finishes. The image itself remains available locally for future runs.
+
+The option `--rm` removes the **container**, not the image and not the files written into the bind-mounted project directory.
+
+### Running containers and mounted folders
+
+The option:
+
+```bash
+-v "$PWD:/work"
+```
+
+bind-mounts the current project directory into the container. While that container is running, it is actively using that directory.
+
+If a project folder cannot be moved, renamed, unmounted, or its permissions behave unexpectedly, first check whether a container is still running:
+
+```bash
+docker ps
+```
+
+Leave an interactive container with `exit`, or stop it with:
+
+```bash
+docker stop CONTAINER_ID
+```
+
+The **image** does not lock the folder; a **running container using a bind mount** is the relevant object. On Linux/WSL2, also remember that some images may create files with a different user or group ownership than the host user.
+
+### The same Docker image can also be used with Apptainer/Singularity
+
+Docker is common on personal laptops, whereas HPC systems often use **Apptainer** (formerly Singularity). Apptainer can pull and run images directly from Docker-compatible registries, so the same software environment can often be reused without rebuilding the analysis from scratch.
+
+The Docker command used above:
+
+```bash
+docker run --rm \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-fastp \
+  bash scripts/day1/03_trim_fastq.sh
+```
+
+has a close Apptainer equivalent:
+
+```bash
+apptainer exec \
+  --bind "$PWD:/work" \
+  --pwd /work \
+  docker://fgualdr/ngs-fastp \
+  bash scripts/day1/03_trim_fastq.sh
+```
+
+On systems still using the `singularity` command, the equivalent is:
+
+```bash
+singularity exec \
+  --bind "$PWD:/work" \
+  --pwd /work \
+  docker://fgualdr/ngs-fastp \
+  bash scripts/day1/03_trim_fastq.sh
+```
+
+The same idea applies to an interactive session. With Docker:
+
+```bash
+docker run --rm -it \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-fastp \
+  bash
+```
+
+and with Apptainer:
+
+```bash
+apptainer shell \
+  --bind "$PWD:/work" \
+  --pwd /work \
+  docker://fgualdr/ngs-fastp
+```
+
+The syntax differs, but the reproducibility principle is the same: **the analysis code stays in the project, while the software environment comes from a defined container image**.
+
+### Use project-relative paths, not personal absolute paths
+
+Code committed to GitHub should not depend on where one person happened to clone the repository.
+
+Avoid paths such as:
+
+```text
+/Users/name/Documents/my_project/raw_data/file.fastq.gz
+/home/name/workshop/raw_data/file.fastq.gz
+C:\Users\name\Desktop\workshop\raw_data\file.fastq.gz
+```
+
+Instead, when the command is run from the project root, use paths relative to the repository:
+
+```text
+raw_data/fastq/rnaseq/WT_2_R1.fastq.gz
+results/day1_qc/trimmed_fastq/rnaseq/
+scripts/day1/03_trim_fastq.sh
+```
+
+This is one reason that all workshop Docker commands mount the repository as `/work` and set:
+
+```bash
+-w /work
+```
+
+The same script can then run after the repository is cloned into a different location on another computer.
+
+### VS Code helps you read code, but it does not validate it
+
+VS Code uses **syntax highlighting** to distinguish commands, variables, strings, comments, options, brackets, and other language elements. This makes many mistakes easier to see, but coloured code is not necessarily correct code.
+
+Pay particular attention to:
+
+- matching single and double quotes;
+- opening and closing brackets;
+- indentation of loops and conditional blocks;
+- spaces between commands and arguments;
+- the exact spelling of options;
+- line-continuation backslashes (`\`): the backslash must be the last character on the line, with no trailing spaces after it;
+- plain ASCII quotes and hyphens when copying commands from slides, PDFs, Word, or websites;
+- line endings on Windows/WSL2. Bash scripts should normally use **LF**, not **CRLF**. VS Code shows the current line-ending mode in the status bar.
+
+Before running a Bash script, its syntax can be checked without executing it:
+
+```bash
+bash -n scripts/day1/03_trim_fastq.sh
+```
+
+No output means that Bash did not detect a syntax error. This does not guarantee that paths, filenames, or program options are correct, but it catches many structural mistakes quickly.
+
+### A few useful habits
+
+- Run `pwd` before a workflow step when you are unsure whether the terminal is at the repository root.
+- Use `git status` frequently. It is one of the safest ways to understand what Git currently sees.
+- Use `docker ps` when you are unsure whether a container is still running.
+- Keep input data, code, logs, and derived results in predictable project folders rather than scattering files across the laptop.
+- Container tags such as `latest` are convenient during a workshop, but a long-term reproducible analysis should record the exact image tag, software version, or image digest that was used.
+- A bind mount is what makes outputs survive the container. Files written only inside an unmounted container filesystem disappear when a `--rm` container exits.
+
+The general rule is simple: **keep paths portable, keep code readable, keep software environments explicit, and keep the project directory as the common reference point.**
+

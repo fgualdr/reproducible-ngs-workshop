@@ -91,13 +91,13 @@ Useful links:
 
 ## 2. Software installation
 
-Install or verify the software below before the workshop. These are the applications and command-line tools that students will actually use during the course.
+Install or verify the software below before the workshop. These are the applications and command-line tools you will actually use during the course.
 
 | Software | What it is used for | Practical note for this workshop |
 |---|---|---|
 | Visual Studio Code | Editing scripts, notes, configuration files, and Markdown/Quarto files. | Main editor for the workshop. Windows users should open the project through the WSL extension. |
 | Docker | Running container images that contain the bioinformatics software. | Docker is the supported route for the practical scripts. |
-| Git | Tracking project changes and synchronizing the repository with GitHub. | Required for the student analysis repository created on Day 1. |
+| Git | Tracking project changes and synchronizing the repository with GitHub. | Required for the analysis repository you will create on Day 1. |
 | IGV | Visual inspection of aligned reads, coverage tracks, and genomic regions. | Required for genome-browser inspection exercises. |
 
 ### Supported installation routes
@@ -640,7 +640,7 @@ The supported Linux route is:
 Linux -> VS Code -> Git/basic tools -> Docker Engine -> IGV
 ```
 
-Linux students should use the normal Linux terminal or the VS Code terminal opened from the workshop project folder.
+On Linux, use the normal Linux terminal or the VS Code terminal opened from the workshop project folder.
 
 Homebrew is not required on Linux for this workshop. Use the normal package manager for your Linux distribution.
 

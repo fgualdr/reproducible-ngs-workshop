@@ -259,6 +259,15 @@ window.Quarto = {
   <li><a href="#final-commit-of-day-1" id="toc-final-commit-of-day-1" class="nav-link" data-scroll-target="#final-commit-of-day-1">10. Final Commit of Day 1</a></li>
   <li><a href="#common-problems" id="toc-common-problems" class="nav-link" data-scroll-target="#common-problems">11. Common problems</a></li>
   <li><a href="#self-check-questions" id="toc-self-check-questions" class="nav-link" data-scroll-target="#self-check-questions">12. Self-check questions</a></li>
+  <li><a href="#practical-notes-about-container-images-paths-and-code-editing" id="toc-practical-notes-about-container-images-paths-and-code-editing" class="nav-link" data-scroll-target="#practical-notes-about-container-images-paths-and-code-editing">13. Practical notes about container images, paths, and code editing</a>
+  <ul class="collapse">
+  <li><a href="#images-and-containers-are-not-the-same-thing" id="toc-images-and-containers-are-not-the-same-thing" class="nav-link" data-scroll-target="#images-and-containers-are-not-the-same-thing">Images and containers are not the same thing</a></li>
+  <li><a href="#running-containers-and-mounted-folders" id="toc-running-containers-and-mounted-folders" class="nav-link" data-scroll-target="#running-containers-and-mounted-folders">Running containers and mounted folders</a></li>
+  <li><a href="#the-same-docker-image-can-also-be-used-with-apptainersingularity" id="toc-the-same-docker-image-can-also-be-used-with-apptainersingularity" class="nav-link" data-scroll-target="#the-same-docker-image-can-also-be-used-with-apptainersingularity">The same Docker image can also be used with Apptainer/Singularity</a></li>
+  <li><a href="#use-project-relative-paths-not-personal-absolute-paths" id="toc-use-project-relative-paths-not-personal-absolute-paths" class="nav-link" data-scroll-target="#use-project-relative-paths-not-personal-absolute-paths">Use project-relative paths, not personal absolute paths</a></li>
+  <li><a href="#vs-code-helps-you-read-code-but-it-does-not-validate-it" id="toc-vs-code-helps-you-read-code-but-it-does-not-validate-it" class="nav-link" data-scroll-target="#vs-code-helps-you-read-code-but-it-does-not-validate-it">VS Code helps you read code, but it does not validate it</a></li>
+  <li><a href="#a-few-useful-habits" id="toc-a-few-useful-habits" class="nav-link" data-scroll-target="#a-few-useful-habits">A few useful habits</a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
@@ -342,7 +351,7 @@ window.Quarto = {
 <p>The RNA-seq dataset is <strong>rRNA-depleted, directional prokaryotic RNA-seq</strong>, sequenced as <strong>150-bp paired-end reads (PE150; 2 × 150 bp)</strong>. The <a href="https://www.nature.com/articles/s41467-023-42364-6">publication’s library-preparation methods</a> describe rRNA removal and dUTP/USER-based strand-selective library construction. This information affects how we interpret residual rRNA and, on Day 2, which strandedness setting we use for gene counting.</p>
 </div>
 </div>
-<p>The full publication analysis is more complex than this teaching workflow. Our small subset captures the main logic of the published analysis, but it is simplified for laptop-scale execution.</p>
+<p>The full publication analysis is more complex than this workshop workflow. Our small subset captures the main logic of the published analysis, but it is simplified for laptop-scale execution.</p>
 </section>
 <section id="reproducibility-in-bioinformatics" class="level2">
 <h2 class="anchored" data-anchor-id="reproducibility-in-bioinformatics">3. Reproducibility in bioinformatics</h2>
@@ -436,7 +445,7 @@ window.Quarto = {
 <li>submitting or sharing the final repository.</li>
 </ul>
 <p>Git should not be used as storage for large sequencing data. FASTQ, BAM, BAI, bigWig, SRA files, large archives, and generated indices should be ignored.</p>
-<p>During this lesson, we will browse to each student’s GitHub account and create an empty personal repository for the workshop.</p>
+<p>During this lesson, you will use your GitHub account to create an empty personal repository for the workshop.</p>
 <section id="create-and-initialize-git-locally" class="level4">
 <h4 class="anchored" data-anchor-id="create-and-initialize-git-locally">4.1 Create and initialize Git locally</h4>
 <p>From the terminal, make sure you are in your local workshop folder:</p>
@@ -1100,7 +1109,7 @@ Q = -10 \log_{10}(p)
 <tr class="even">
 <td>ENA</td>
 <td>direct FASTQ URLs</td>
-<td>easier for teaching: one URL downloads one FASTQ file</td>
+<td>direct route: one URL downloads one FASTQ file</td>
 </tr>
 <tr class="odd">
 <td>ArrayExpress collection in BioStudies + ENA</td>
@@ -2055,17 +2064,17 @@ raw_data/fastq/rnaseq/                   raw_data_sra/fastq/rnaseq/
 raw_data/fastq/chipseq/                  raw_data_sra/fastq/chipseq/
 WT_1_R1.fastq.gz                         WT_1_R1.fastq.gz
 WT_1_R2.fastq.gz                         WT_1_R2.fastq.gz</code></pre>
-<div class="callout callout-style-default callout-note callout-titled" title="Why teach both routes?">
+<div class="callout callout-style-default callout-note callout-titled" title="Why use both routes?">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Note</span>Why teach both routes?
+<span class="screen-reader-only">Note</span>Why use both routes?
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The biological data are the same, but the retrieval logic is different. The ArrayExpress/ENA route teaches students how to work from metadata containing direct FASTQ URLs. The SRA route teaches them how to work from <strong>run accessions</strong>, where <code>fasterq-dump</code> performs the sequence download and FASTQ conversion. In both cases, good practice is the same: inspect metadata first, select the required samples explicitly, retain the original archive identifiers, and rename files to meaningful local names.</p>
+<p>The biological data are the same, but the retrieval logic is different. With ArrayExpress/ENA, you work from metadata containing direct FASTQ URLs. With SRA, you work from <strong>run accessions</strong>, where <code>fasterq-dump</code> performs the sequence download and FASTQ conversion. In both cases, good practice is the same: inspect metadata first, select the required samples explicitly, retain the original archive identifiers, and rename files to meaningful local names.</p>
 </div>
 </div>
 <div class="callout callout-style-default callout-warning callout-titled" title="Storage">
@@ -2337,8 +2346,114 @@ results/logs/day1/fastp/</code></pre>
 <li>Why should fastp metrics be compared across sections and replicates rather than treated as an automatic pass/fail result?</li>
 <li>Which Day 1 files should remain outside Git, and which small files should be committed?</li>
 </ol>
+</section>
+<section id="practical-notes-about-container-images-paths-and-code-editing" class="level2">
+<h2 class="anchored" data-anchor-id="practical-notes-about-container-images-paths-and-code-editing">13. Practical notes about container images, paths, and code editing</h2>
+<p>The following details become important as soon as the same project is used on different laptops, operating systems, or computing environments.</p>
+<section id="images-and-containers-are-not-the-same-thing" class="level3">
+<h3 class="anchored" data-anchor-id="images-and-containers-are-not-the-same-thing">Images and containers are not the same thing</h3>
+<p>A <strong>container image</strong> is the packaged software environment. It is a template stored locally or in a registry such as Docker Hub. A <strong>container</strong> is a running instance created from that image.</p>
+<p>For example:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb80"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
+<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
+<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
+<span id="cb80-4"><a href="#cb80-4" aria-hidden="true" tabindex="-1"></a>  docker.io/fgualdr/ngs-fastp <span class="dt">\</span></span>
+<span id="cb80-5"><a href="#cb80-5" aria-hidden="true" tabindex="-1"></a>  bash scripts/day1/03_trim_fastq.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>starts a new container from the <code>ngs-fastp</code> image, runs the script, and removes the container when the command finishes. The image itself remains available locally for future runs.</p>
+<p>The option <code>--rm</code> removes the <strong>container</strong>, not the image and not the files written into the bind-mounted project directory.</p>
+</section>
+<section id="running-containers-and-mounted-folders" class="level3">
+<h3 class="anchored" data-anchor-id="running-containers-and-mounted-folders">Running containers and mounted folders</h3>
+<p>The option:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb81"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a><span class="ex">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>bind-mounts the current project directory into the container. While that container is running, it is actively using that directory.</p>
+<p>If a project folder cannot be moved, renamed, unmounted, or its permissions behave unexpectedly, first check whether a container is still running:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb82"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> ps</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Leave an interactive container with <code>exit</code>, or stop it with:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb83"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> stop CONTAINER_ID</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The <strong>image</strong> does not lock the folder; a <strong>running container using a bind mount</strong> is the relevant object. On Linux/WSL2, also remember that some images may create files with a different user or group ownership than the host user.</p>
+</section>
+<section id="the-same-docker-image-can-also-be-used-with-apptainersingularity" class="level3">
+<h3 class="anchored" data-anchor-id="the-same-docker-image-can-also-be-used-with-apptainersingularity">The same Docker image can also be used with Apptainer/Singularity</h3>
+<p>Docker is common on personal laptops, whereas HPC systems often use <strong>Apptainer</strong> (formerly Singularity). Apptainer can pull and run images directly from Docker-compatible registries, so the same software environment can often be reused without rebuilding the analysis from scratch.</p>
+<p>The Docker command used above:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb84"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
+<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
+<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
+<span id="cb84-4"><a href="#cb84-4" aria-hidden="true" tabindex="-1"></a>  docker.io/fgualdr/ngs-fastp <span class="dt">\</span></span>
+<span id="cb84-5"><a href="#cb84-5" aria-hidden="true" tabindex="-1"></a>  bash scripts/day1/03_trim_fastq.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>has a close Apptainer equivalent:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb85"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a><span class="ex">apptainer</span> exec <span class="dt">\</span></span>
+<span id="cb85-2"><a href="#cb85-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--bind</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
+<span id="cb85-3"><a href="#cb85-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--pwd</span> /work <span class="dt">\</span></span>
+<span id="cb85-4"><a href="#cb85-4" aria-hidden="true" tabindex="-1"></a>  docker://fgualdr/ngs-fastp <span class="dt">\</span></span>
+<span id="cb85-5"><a href="#cb85-5" aria-hidden="true" tabindex="-1"></a>  bash scripts/day1/03_trim_fastq.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>On systems still using the <code>singularity</code> command, the equivalent is:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb86"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a><span class="ex">singularity</span> exec <span class="dt">\</span></span>
+<span id="cb86-2"><a href="#cb86-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--bind</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
+<span id="cb86-3"><a href="#cb86-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--pwd</span> /work <span class="dt">\</span></span>
+<span id="cb86-4"><a href="#cb86-4" aria-hidden="true" tabindex="-1"></a>  docker://fgualdr/ngs-fastp <span class="dt">\</span></span>
+<span id="cb86-5"><a href="#cb86-5" aria-hidden="true" tabindex="-1"></a>  bash scripts/day1/03_trim_fastq.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The same idea applies to an interactive session. With Docker:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb87"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="at">-it</span> <span class="dt">\</span></span>
+<span id="cb87-2"><a href="#cb87-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
+<span id="cb87-3"><a href="#cb87-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
+<span id="cb87-4"><a href="#cb87-4" aria-hidden="true" tabindex="-1"></a>  docker.io/fgualdr/ngs-fastp <span class="dt">\</span></span>
+<span id="cb87-5"><a href="#cb87-5" aria-hidden="true" tabindex="-1"></a>  bash</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>and with Apptainer:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb88"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a><span class="ex">apptainer</span> shell <span class="dt">\</span></span>
+<span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--bind</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
+<span id="cb88-3"><a href="#cb88-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--pwd</span> /work <span class="dt">\</span></span>
+<span id="cb88-4"><a href="#cb88-4" aria-hidden="true" tabindex="-1"></a>  docker://fgualdr/ngs-fastp</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The syntax differs, but the reproducibility principle is the same: <strong>the analysis code stays in the project, while the software environment comes from a defined container image</strong>.</p>
+</section>
+<section id="use-project-relative-paths-not-personal-absolute-paths" class="level3">
+<h3 class="anchored" data-anchor-id="use-project-relative-paths-not-personal-absolute-paths">Use project-relative paths, not personal absolute paths</h3>
+<p>Code committed to GitHub should not depend on where one person happened to clone the repository.</p>
+<p>Avoid paths such as:</p>
+<pre class="text"><code>/Users/name/Documents/my_project/raw_data/file.fastq.gz
+/home/name/workshop/raw_data/file.fastq.gz
+C:\Users\name\Desktop\workshop\raw_data\file.fastq.gz</code></pre>
+<p>Instead, when the command is run from the project root, use paths relative to the repository:</p>
+<pre class="text"><code>raw_data/fastq/rnaseq/WT_2_R1.fastq.gz
+results/day1_qc/trimmed_fastq/rnaseq/
+scripts/day1/03_trim_fastq.sh</code></pre>
+<p>This is one reason that all workshop Docker commands mount the repository as <code>/work</code> and set:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb91"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb91-1"><a href="#cb91-1" aria-hidden="true" tabindex="-1"></a><span class="ex">-w</span> /work</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The same script can then run after the repository is cloned into a different location on another computer.</p>
+</section>
+<section id="vs-code-helps-you-read-code-but-it-does-not-validate-it" class="level3">
+<h3 class="anchored" data-anchor-id="vs-code-helps-you-read-code-but-it-does-not-validate-it">VS Code helps you read code, but it does not validate it</h3>
+<p>VS Code uses <strong>syntax highlighting</strong> to distinguish commands, variables, strings, comments, options, brackets, and other language elements. This makes many mistakes easier to see, but coloured code is not necessarily correct code.</p>
+<p>Pay particular attention to:</p>
+<ul>
+<li>matching single and double quotes;</li>
+<li>opening and closing brackets;</li>
+<li>indentation of loops and conditional blocks;</li>
+<li>spaces between commands and arguments;</li>
+<li>the exact spelling of options;</li>
+<li>line-continuation backslashes (<code>\</code>): the backslash must be the last character on the line, with no trailing spaces after it;</li>
+<li>plain ASCII quotes and hyphens when copying commands from slides, PDFs, Word, or websites;</li>
+<li>line endings on Windows/WSL2. Bash scripts should normally use <strong>LF</strong>, not <strong>CRLF</strong>. VS Code shows the current line-ending mode in the status bar.</li>
+</ul>
+<p>Before running a Bash script, its syntax can be checked without executing it:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb92"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb92-1"><a href="#cb92-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bash</span> <span class="at">-n</span> scripts/day1/03_trim_fastq.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>No output means that Bash did not detect a syntax error. This does not guarantee that paths, filenames, or program options are correct, but it catches many structural mistakes quickly.</p>
+</section>
+<section id="a-few-useful-habits" class="level3">
+<h3 class="anchored" data-anchor-id="a-few-useful-habits">A few useful habits</h3>
+<ul>
+<li>Run <code>pwd</code> before a workflow step when you are unsure whether the terminal is at the repository root.</li>
+<li>Use <code>git status</code> frequently. It is one of the safest ways to understand what Git currently sees.</li>
+<li>Use <code>docker ps</code> when you are unsure whether a container is still running.</li>
+<li>Keep input data, code, logs, and derived results in predictable project folders rather than scattering files across the laptop.</li>
+<li>Container tags such as <code>latest</code> are convenient during a workshop, but a long-term reproducible analysis should record the exact image tag, software version, or image digest that was used.</li>
+<li>A bind mount is what makes outputs survive the container. Files written only inside an unmounted container filesystem disappear when a <code>--rm</code> container exits.</li>
+</ul>
+<p>The general rule is simple: <strong>keep paths portable, keep code readable, keep software environments explicit, and keep the project directory as the common reference point.</strong></p>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->
