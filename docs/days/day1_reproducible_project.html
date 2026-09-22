@@ -619,20 +619,37 @@ Figure&nbsp;1: Container concept
 <h4 class="anchored" data-anchor-id="test-docker">5.1 Test Docker</h4>
 <p>Mount the whole repository into the container and write a test file back into the repository:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  docker.io/library/alpine <span class="dt">\</span></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  sh <span class="at">-c</span> <span class="st">'echo "Hello from Docker" &gt; test_hello.txt'</span></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> test_hello.txt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--user</span> <span class="st">"</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-u</span><span class="va">)</span><span class="st">:</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-g</span><span class="va">)</span><span class="st">"</span> <span class="dt">\</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  docker.io/library/alpine <span class="dt">\</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  sh <span class="at">-c</span> <span class="st">'echo "Hello from Docker" &gt; test_hello.txt'</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> test_hello.txt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>This means:</p>
 <ul>
+<li><code>--user "$(id -u):$(id -g)"</code> runs the container process with the numeric UID/GID of your current terminal user, preventing files written into the mounted repository from becoming owned by <code>root</code> or by an unrelated container user;</li>
 <li><code>-v "$PWD:/work"</code> mounts your current repository folder inside the container as <code>/work</code>;</li>
 <li><code>-w /work</code> tells the container to run from that mounted folder;</li>
 <li><code>sh -c 'echo "Hello from Docker" &gt; test_hello.txt'</code> creates a small test file from inside the container;</li>
 <li>the container is removed after the command finishes;</li>
 <li><code>cat test_hello.txt</code> confirms that the file is visible in your repository on your computer.</li>
 </ul>
+<div class="callout callout-style-default callout-note callout-titled" title="Why use --user for mounted workshop files? ... Something I ignored completely..">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Why use –user for mounted workshop files? … Something I ignored completely..
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A container has its own user identity. When it writes into <code>/work</code>, however, <code>/work</code> is your real workshop folder on the host. On Linux and Ubuntu/WSL2, the numeric UID/GID used by the container therefore determines the ownership and write permissions of those files. Running as <code>root</code> may appear to work but can leave root-owned outputs; running as a different non-root UID can instead fail with <code>Permission denied</code>.</p>
+<p>On macOS this problem is often less visible because Docker Desktop mediates filesystem access through its Linux VM. Do not assume that a command that writes cleanly on macOS will have identical ownership behaviour on Linux/WSL2.</p>
+<p>Also be careful with older or third-party <strong>Mamba/Micromamba-based images</strong>: many intentionally run as a dedicated non-root user such as <code>mambauser</code>. That user may not have the same numeric UID/GID as the person running the workshop. The explicit <code>--user "$(id -u):$(id -g)"</code> option makes the ownership policy independent of how the image was built.</p>
+</div>
+</div>
 </section>
 </section>
 <section id="reference-based-ngs-analysis" class="level2">
@@ -928,10 +945,11 @@ NZ_AP026446.1  1499  2400  gene-example  0  -  1499  2400  0  1  901  0</code></
 <p>The <code>nameserver</code> shown inside the container is normally a Docker Desktop internal address. It does <strong>not</strong> need to match the DNS address shown by macOS or WSL2.</p>
 <p>If the test succeeds, run the reference download:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  docker.io/fgualdr/ngs-curl <span class="dt">\</span></span>
-<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>  bash scripts/day1/01_reference_genome_annotation.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--user</span> <span class="st">"</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-u</span><span class="va">)</span><span class="st">:</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-g</span><span class="va">)</span><span class="st">"</span> <span class="dt">\</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>  docker.io/fgualdr/ngs-curl <span class="dt">\</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>  bash scripts/day1/01_reference_genome_annotation.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="callout callout-style-default callout-warning callout-titled" title="If a download fails with 'Could not resolve host'">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -1595,10 +1613,11 @@ result   = WT_1_R1.fastq.gz</code></pre>
 <span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>  bash <span class="at">-lc</span> <span class="st">'echo "DNS inside the container:"; cat /etc/resolv.conf; echo; curl -I https://www.ebi.ac.uk'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>If the test succeeds, run the complete metadata + FASTQ download:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
-<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
-<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
-<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>  docker.io/fgualdr/ngs-curl <span class="dt">\</span></span>
-<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>  bash scripts/day1/02_download_ena_fastq.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--user</span> <span class="st">"</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-u</span><span class="va">)</span><span class="st">:</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-g</span><span class="va">)</span><span class="st">"</span> <span class="dt">\</span></span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>  docker.io/fgualdr/ngs-curl <span class="dt">\</span></span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>  bash scripts/day1/02_download_ena_fastq.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Here Docker selects the correct image architecture automatically. <code>-v "$PWD:/work"</code> mounts the current workshop repository as <code>/work</code> inside the container, and <code>-w /work</code> makes that mounted directory the working directory. The files written by the script therefore appear directly in your local <code>raw_data/</code> folder.</p>
 <p>Inspect the final URL and filename columns, downloaded files, provenance note, and log:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rev</span> raw_data/metadata/RNAseq_metadata.txt <span class="kw">|</span> <span class="fu">cut</span> <span class="at">-d</span> <span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="at">-f1,2</span> <span class="kw">|</span> <span class="fu">rev</span> <span class="kw">|</span> <span class="fu">head</span></span>
@@ -2000,10 +2019,11 @@ fasterq-dump       -&gt; retrieve each sequencing run and convert it to FASTQ</c
 <span id="cb56-16"><a href="#cb56-16" aria-hidden="true" tabindex="-1"></a><span class="st">  '</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>If these tests succeed, run the complete SRA route:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb57"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
-<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
-<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
-<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a>  docker.io/fgualdr/ngs-sra-tools:latest <span class="dt">\</span></span>
-<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a>  bash scripts/day1/04_download_sra_fastq.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--user</span> <span class="st">"</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-u</span><span class="va">)</span><span class="st">:</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-g</span><span class="va">)</span><span class="st">"</span> <span class="dt">\</span></span>
+<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
+<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
+<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a>  docker.io/fgualdr/ngs-sra-tools:latest <span class="dt">\</span></span>
+<span id="cb57-6"><a href="#cb57-6" aria-hidden="true" tabindex="-1"></a>  bash scripts/day1/04_download_sra_fastq.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>One execution retrieves the metadata and downloads the selected <strong>RNA-seq and ChIP-seq</strong> runs. <code>fasterq-dump</code> performs the SRA sequence retrieval and FASTQ conversion; the script then renames and compresses the files according to the workshop naming scheme.</p>
 <div class="callout callout-style-default callout-note callout-titled" title="Same Docker command on macOS and Windows/WSL2">
 <div class="callout-header d-flex align-content-center">
@@ -2019,7 +2039,7 @@ fasterq-dump       -&gt; retrieve each sequencing run and convert it to FASTQ</c
 <pre class="text"><code>macOS                  -&gt; VS Code terminal / Terminal
 Windows + Docker       -&gt; Ubuntu WSL2 terminal</code></pre>
 <p>In both cases:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb59"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="ex">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="at">-w</span> /work</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb59"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="ex">--user</span> <span class="st">"</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-u</span><span class="va">)</span><span class="st">:</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-g</span><span class="va">)</span><span class="st">"</span> <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="at">-w</span> /work</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>means “mount my current workshop directory inside the container as <code>/work</code>, then run from <code>/work</code>.” This is why the scripts and downloaded files are visible both inside the container and on the laptop.</p>
 </div>
 </div>
@@ -2165,10 +2185,11 @@ WT_1_R2.fastq.gz                         WT_1_R2.fastq.gz</code></pre>
 <h4 class="anchored" data-anchor-id="run-the-script-in-docker">8.2 Run the script in Docker</h4>
 <p>From the project root, run the script inside the fastp image:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb67"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
-<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
-<span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
-<span id="cb67-4"><a href="#cb67-4" aria-hidden="true" tabindex="-1"></a>  docker.io/fgualdr/ngs-fastp <span class="dt">\</span></span>
-<span id="cb67-5"><a href="#cb67-5" aria-hidden="true" tabindex="-1"></a>  bash scripts/day1/03_trim_fastq.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--user</span> <span class="st">"</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-u</span><span class="va">)</span><span class="st">:</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-g</span><span class="va">)</span><span class="st">"</span> <span class="dt">\</span></span>
+<span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
+<span id="cb67-4"><a href="#cb67-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
+<span id="cb67-5"><a href="#cb67-5" aria-hidden="true" tabindex="-1"></a>  docker.io/fgualdr/ngs-fastp <span class="dt">\</span></span>
+<span id="cb67-6"><a href="#cb67-6" aria-hidden="true" tabindex="-1"></a>  bash scripts/day1/03_trim_fastq.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Expected outputs:</p>
 <pre class="text"><code>results/day1_qc/trimmed_fastq/rnaseq/*.trimmed.fastq.gz
 results/day1_qc/trimmed_fastq/chipseq/*.trimmed.fastq.gz
@@ -2355,10 +2376,11 @@ results/logs/day1/fastp/</code></pre>
 <p>A <strong>container image</strong> is the packaged software environment. It is a template stored locally or in a registry such as Docker Hub. A <strong>container</strong> is a running instance created from that image.</p>
 <p>For example:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb80"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
-<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
-<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
-<span id="cb80-4"><a href="#cb80-4" aria-hidden="true" tabindex="-1"></a>  docker.io/fgualdr/ngs-fastp <span class="dt">\</span></span>
-<span id="cb80-5"><a href="#cb80-5" aria-hidden="true" tabindex="-1"></a>  bash scripts/day1/03_trim_fastq.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--user</span> <span class="st">"</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-u</span><span class="va">)</span><span class="st">:</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-g</span><span class="va">)</span><span class="st">"</span> <span class="dt">\</span></span>
+<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
+<span id="cb80-4"><a href="#cb80-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
+<span id="cb80-5"><a href="#cb80-5" aria-hidden="true" tabindex="-1"></a>  docker.io/fgualdr/ngs-fastp <span class="dt">\</span></span>
+<span id="cb80-6"><a href="#cb80-6" aria-hidden="true" tabindex="-1"></a>  bash scripts/day1/03_trim_fastq.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>starts a new container from the <code>ngs-fastp</code> image, runs the script, and removes the container when the command finishes. The image itself remains available locally for future runs.</p>
 <p>The option <code>--rm</code> removes the <strong>container</strong>, not the image and not the files written into the bind-mounted project directory.</p>
 </section>
@@ -2378,10 +2400,11 @@ results/logs/day1/fastp/</code></pre>
 <p>Docker is common on personal laptops, whereas HPC systems often use <strong>Apptainer</strong> (formerly Singularity). Apptainer can pull and run images directly from Docker-compatible registries, so the same software environment can often be reused without rebuilding the analysis from scratch.</p>
 <p>The Docker command used above:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb84"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
-<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
-<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
-<span id="cb84-4"><a href="#cb84-4" aria-hidden="true" tabindex="-1"></a>  docker.io/fgualdr/ngs-fastp <span class="dt">\</span></span>
-<span id="cb84-5"><a href="#cb84-5" aria-hidden="true" tabindex="-1"></a>  bash scripts/day1/03_trim_fastq.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--user</span> <span class="st">"</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-u</span><span class="va">)</span><span class="st">:</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-g</span><span class="va">)</span><span class="st">"</span> <span class="dt">\</span></span>
+<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
+<span id="cb84-4"><a href="#cb84-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
+<span id="cb84-5"><a href="#cb84-5" aria-hidden="true" tabindex="-1"></a>  docker.io/fgualdr/ngs-fastp <span class="dt">\</span></span>
+<span id="cb84-6"><a href="#cb84-6" aria-hidden="true" tabindex="-1"></a>  bash scripts/day1/03_trim_fastq.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>has a close Apptainer equivalent:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb85"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb85-1"><a href="#cb85-1" aria-hidden="true" tabindex="-1"></a><span class="ex">apptainer</span> exec <span class="dt">\</span></span>
 <span id="cb85-2"><a href="#cb85-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--bind</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
@@ -2396,10 +2419,11 @@ results/logs/day1/fastp/</code></pre>
 <span id="cb86-5"><a href="#cb86-5" aria-hidden="true" tabindex="-1"></a>  bash scripts/day1/03_trim_fastq.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The same idea applies to an interactive session. With Docker:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb87"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb87-1"><a href="#cb87-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="at">-it</span> <span class="dt">\</span></span>
-<span id="cb87-2"><a href="#cb87-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
-<span id="cb87-3"><a href="#cb87-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
-<span id="cb87-4"><a href="#cb87-4" aria-hidden="true" tabindex="-1"></a>  docker.io/fgualdr/ngs-fastp <span class="dt">\</span></span>
-<span id="cb87-5"><a href="#cb87-5" aria-hidden="true" tabindex="-1"></a>  bash</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb87-2"><a href="#cb87-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--user</span> <span class="st">"</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-u</span><span class="va">)</span><span class="st">:</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-g</span><span class="va">)</span><span class="st">"</span> <span class="dt">\</span></span>
+<span id="cb87-3"><a href="#cb87-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
+<span id="cb87-4"><a href="#cb87-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
+<span id="cb87-5"><a href="#cb87-5" aria-hidden="true" tabindex="-1"></a>  docker.io/fgualdr/ngs-fastp <span class="dt">\</span></span>
+<span id="cb87-6"><a href="#cb87-6" aria-hidden="true" tabindex="-1"></a>  bash</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>and with Apptainer:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb88"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a><span class="ex">apptainer</span> shell <span class="dt">\</span></span>
 <span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--bind</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>

@@ -1,7 +1,22 @@
-FROM docker.io/mambaorg/micromamba:1.5.10
+FROM docker.io/library/debian:bookworm-slim AS builder
 
-RUN micromamba install -y -n base -c conda-forge -c bioconda \
-      fastp=0.23.4 \
-    && micromamba clean -a -y
+ARG FASTP_VERSION=0.23.4
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl build-essential libisal-dev libdeflate-dev zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL "https://github.com/OpenGene/fastp/archive/refs/tags/v${FASTP_VERSION}.tar.gz" -o /tmp/fastp.tar.gz \
+    && tar -xzf /tmp/fastp.tar.gz -C /tmp \
+    && make -C "/tmp/fastp-${FASTP_VERSION}" -j"$(nproc)" \
+    && install -m 0755 "/tmp/fastp-${FASTP_VERSION}/fastp" /usr/local/bin/fastp
+
+FROM docker.io/library/debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash ca-certificates libisal2 libdeflate0 zlib1g \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /usr/local/bin/fastp /usr/local/bin/fastp
 WORKDIR /work
+CMD ["/bin/bash"]

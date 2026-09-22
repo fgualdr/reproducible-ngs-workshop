@@ -1,7 +1,24 @@
-FROM docker.io/mambaorg/micromamba:1.5.10
+FROM docker.io/library/debian:bookworm-slim AS builder
 
-RUN micromamba install -y -n base -c conda-forge -c bioconda \
-      meme=5.5.9 \
-    && micromamba clean -a -y
+ARG MEME_VERSION=5.5.9
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl build-essential perl python3 zlib1g-dev libexpat1-dev \
+    libxml2-dev libxslt1-dev ghostscript \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL "https://meme-suite.org/meme/meme-software/${MEME_VERSION}/meme-${MEME_VERSION}.tar.gz" -o /tmp/meme.tar.gz \
+    && tar -xzf /tmp/meme.tar.gz -C /tmp \
+    && cd "/tmp/meme-${MEME_VERSION}" \
+    && ./configure --prefix=/opt/meme --enable-build-libxml2 --enable-build-libxslt \
+    && make -j"$(nproc)" \
+    && make install
+
+FROM docker.io/library/debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash perl python3 zlib1g libexpat1 libxml2 libxslt1.1 ghostscript \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /opt/meme /opt/meme
+ENV PATH="/opt/meme/bin:/opt/meme/libexec/meme-5.5.9:${PATH}"
 WORKDIR /work
+CMD ["/bin/bash"]

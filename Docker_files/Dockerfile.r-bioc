@@ -1,21 +1,18 @@
-FROM docker.io/mambaorg/micromamba:1.5.10
+FROM docker.io/rocker/r-ver:4.3.3
 
-RUN micromamba install -y -n base -c conda-forge -c bioconda \
-      r-base=4.3 \
-      r-dplyr \
-      r-ggplot2 \
-      r-readr \
-      r-tibble \
-      r-tidyverse \
-      r-pheatmap \
-      bioconductor-deseq2 \
-      bioconductor-complexheatmap \
-      bioconductor-genomicranges \
-      bioconductor-iranges \
-      bioconductor-rtracklayer \
-      bioconductor-genomation \
-      bioconductor-rsamtools \
-      bioconductor-genomicalignments \
-    && micromamba clean -a -y
+ARG BIOC_VERSION=3.18
+ENV BIOC_VERSION=${BIOC_VERSION}
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash ca-certificates libcurl4-openssl-dev libssl-dev libxml2-dev \
+    libbz2-dev liblzma-dev zlib1g-dev libgit2-dev libharfbuzz-dev libfribidi-dev \
+    libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN R -q -e 'install.packages("BiocManager", repos="https://cloud.r-project.org")' \
+    && R -q -e 'BiocManager::install(version=Sys.getenv("BIOC_VERSION"), ask=FALSE, update=FALSE)' \
+    && R -q -e 'BiocManager::install(c("DESeq2","ComplexHeatmap","GenomicRanges","IRanges","rtracklayer","genomation","Rsamtools","GenomicAlignments"), ask=FALSE, update=FALSE)' \
+    && R -q -e 'install.packages(c("dplyr","ggplot2","readr","tibble","tidyverse","pheatmap"), repos="https://cloud.r-project.org")'
 
 WORKDIR /work
+CMD ["/bin/bash"]

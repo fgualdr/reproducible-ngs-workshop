@@ -313,6 +313,7 @@ Mount the whole repository into the container and write a test file back into th
 
 ```bash
 docker run --rm \
+  --user "$(id -u):$(id -g)" \
   -v "$PWD:/work" \
   -w /work \
   docker.io/library/alpine \
@@ -323,11 +324,21 @@ cat test_hello.txt
 
 This means:
 
+- `--user "$(id -u):$(id -g)"` runs the container process with the numeric UID/GID of your current terminal user, preventing files written into the mounted repository from becoming owned by `root` or by an unrelated container user;
 - `-v "$PWD:/work"` mounts your current repository folder inside the container as `/work`;
 - `-w /work` tells the container to run from that mounted folder;
 - `sh -c 'echo "Hello from Docker" > test_hello.txt'` creates a small test file from inside the container;
 - the container is removed after the command finishes;
 - `cat test_hello.txt` confirms that the file is visible in your repository on your computer.
+
+
+::: {.callout-note title="Why use --user for mounted workshop files? ... Something I ignored completely.."}
+A container has its own user identity. When it writes into `/work`, however, `/work` is your real workshop folder on the host. On Linux and Ubuntu/WSL2, the numeric UID/GID used by the container therefore determines the ownership and write permissions of those files. Running as `root` may appear to work but can leave root-owned outputs; running as a different non-root UID can instead fail with `Permission denied`.
+
+On macOS this problem is often less visible because Docker Desktop mediates filesystem access through its Linux VM. Do not assume that a command that writes cleanly on macOS will have identical ownership behaviour on Linux/WSL2.
+
+Also be careful with older or third-party **Mamba/Micromamba-based images**: many intentionally run as a dedicated non-root user such as `mambauser`. That user may not have the same numeric UID/GID as the person running the workshop. The explicit `--user "$(id -u):$(id -g)"` option makes the ownership policy independent of how the image was built.
+:::
 
 ## 6. Reference-based NGS analysis
 
@@ -595,6 +606,7 @@ If the test succeeds, run the reference download:
 
 ```bash
 docker run --rm \
+  --user "$(id -u):$(id -g)" \
   -v "$PWD:/work" \
   -w /work \
   docker.io/fgualdr/ngs-curl \
@@ -1085,6 +1097,7 @@ If the test succeeds, run the complete metadata + FASTQ download:
 
 ```bash
 docker run --rm \
+  --user "$(id -u):$(id -g)" \
   -v "$PWD:/work" \
   -w /work \
   docker.io/fgualdr/ngs-curl \
@@ -1408,6 +1421,7 @@ If these tests succeed, run the complete SRA route:
 
 ```bash
 docker run --rm \
+  --user "$(id -u):$(id -g)" \
   -v "$PWD:/work" \
   -w /work \
   docker.io/fgualdr/ngs-sra-tools:latest \
@@ -1427,7 +1441,7 @@ Windows + Docker       -> Ubuntu WSL2 terminal
 In both cases:
 
 ```bash
--v "$PWD:/work" -w /work
+--user "$(id -u):$(id -g)" -v "$PWD:/work" -w /work
 ```
 
 means “mount my current workshop directory inside the container as `/work`, then run from `/work`.” This is why the scripts and downloaded files are visible both inside the container and on the laptop.
@@ -1572,6 +1586,7 @@ From the project root, run the script inside the fastp image:
 
 ```bash
 docker run --rm \
+  --user "$(id -u):$(id -g)" \
   -v "$PWD:/work" \
   -w /work \
   docker.io/fgualdr/ngs-fastp \
@@ -1744,6 +1759,7 @@ For example:
 
 ```bash
 docker run --rm \
+  --user "$(id -u):$(id -g)" \
   -v "$PWD:/work" \
   -w /work \
   docker.io/fgualdr/ngs-fastp \
@@ -1786,6 +1802,7 @@ The Docker command used above:
 
 ```bash
 docker run --rm \
+  --user "$(id -u):$(id -g)" \
   -v "$PWD:/work" \
   -w /work \
   docker.io/fgualdr/ngs-fastp \
@@ -1816,6 +1833,7 @@ The same idea applies to an interactive session. With Docker:
 
 ```bash
 docker run --rm -it \
+  --user "$(id -u):$(id -g)" \
   -v "$PWD:/work" \
   -w /work \
   docker.io/fgualdr/ngs-fastp \

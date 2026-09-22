@@ -1,7 +1,12 @@
-FROM docker.io/mambaorg/micromamba:1.5.10
+FROM docker.io/library/python:3.11-slim-bookworm
 
-RUN micromamba install -y -n base -c conda-forge -c bioconda \
-      deeptools=3.5.5 \
-    && micromamba clean -a -y
+ARG DEEPTOOLS_VERSION=3.5.5
 
+RUN apt-get update && apt-get install -y --no-install-recommends bash libgomp1 \
+    && rm -rf /var/lib/apt/lists/* \
+    && python -m venv /opt/deeptools \
+    && /opt/deeptools/bin/pip install --no-cache-dir --upgrade pip \
+    && /opt/deeptools/bin/pip install --no-cache-dir "numpy<2" "deepTools==${DEEPTOOLS_VERSION}"
+ENV PATH="/opt/deeptools/bin:${PATH}"
 WORKDIR /work
+CMD ["/bin/bash"]

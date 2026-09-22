@@ -126,6 +126,21 @@ If you are using your own laptop, Docker Desktop is the recommended route. If yo
 
 Useful reference: [Docker Desktop subscription terms](https://docs.docker.com/subscription/desktop-license/)
 
+
+::: {.callout-note title="Docker users and files written into the workshop folder... something I did not know!"}
+When a container writes into a folder mounted from your laptop, the files are created using the **numeric user and group IDs of the process running inside the container**. Workshop commands that mount the project therefore use:
+
+```bash
+--user "$(id -u):$(id -g)"
+```
+
+`id -u` and `id -g` return the numeric UID and GID of your current macOS, Linux, or Ubuntu/WSL2 user. Passing them to Docker makes files written into the mounted project belong to the same user instead of to `root` or to a different user defined inside the image.
+
+The problem is not always obvious on every computer. On **native Linux and Ubuntu/WSL2**, bind-mounted files follow Linux ownership rules directly: a container running as `root` may write successfully but leave root-owned files, whereas a container running as another non-root UID may receive `Permission denied`. On **macOS**, Docker Desktop runs Linux containers inside a VM and mediates access to the macOS filesystem, so UID/GID differences are often translated or less visible.
+
+This is especially worth remembering for images built from **Conda/Mamba/Micromamba base images**. Such images may deliberately run as a dedicated non-root user (for example `mambauser`) whose UID/GID is unrelated to the user on the laptop. `--user "$(id -u):$(id -g)"` explicitly overrides that runtime identity for workshop commands that write into the mounted project.
+:::
+
 ### 2.1 Windows 10/11 {#windows-setup}
 
 The supported Windows route is:
@@ -431,24 +446,28 @@ Then run:
 
 ```bash
 docker run --rm \
+  --user "$(id -u):$(id -g)" \
   -v "$PWD:/work" \
   -w /work \
   alpine:latest \
-  cat test_mount/message.txt
+  sh -c 'cat test_mount/message.txt && echo "Docker can write this file" > test_mount/docker_write_test.txt'
+
+cat test_mount/docker_write_test.txt
 ```
 
 Expected output:
 
 ```text
 Docker can read this file
+Docker can write this file
 ```
 
-This confirms that Docker can mount the Ubuntu WSL project directory into a Linux container using the same `linux/amd64` platform and `/work` location used later in the workshop.
+This confirms that Docker can both read from and write to the Ubuntu WSL project directory using the same `/work` bind mount used later in the workshop, while writing as your current Ubuntu user.
 
 Remove the temporary mount-test files:
 
 ```bash
-rm test_mount/message.txt
+rm test_mount/message.txt test_mount/docker_write_test.txt
 rmdir test_mount
 ```
 
@@ -597,25 +616,29 @@ Then run:
 
 ```bash
 docker run --rm \
+  --user "$(id -u):$(id -g)" \
   --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
   alpine:latest \
-  cat test_mount/message.txt
+  sh -c 'cat test_mount/message.txt && echo "Docker can write this file" > test_mount/docker_write_test.txt'
+
+cat test_mount/docker_write_test.txt
 ```
 
 Expected output:
 
 ```text
 Docker can read this file
+Docker can write this file
 ```
 
-This confirms that Docker can mount the local project folder into a Linux container using the same `linux/amd64` platform and `/work` location used later in the workshop. On an Apple-silicon Mac, this also checks that Docker can run the workshop's Intel/AMD-compatible container images.
+This confirms that Docker can both read from and write to the local project folder through the `/work` bind mount while using your current macOS UID/GID. On an Apple-silicon Mac, this also checks that Docker can run the workshop's Intel/AMD-compatible container images.
 
 Remove the temporary mount-test files:
 
 ```bash
-rm test_mount/message.txt
+rm test_mount/message.txt test_mount/docker_write_test.txt
 rmdir test_mount
 ```
 
@@ -773,25 +796,29 @@ Then run:
 
 ```bash
 docker run --rm \
+  --user "$(id -u):$(id -g)" \
   --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
   alpine:latest \
-  cat test_mount/message.txt
+  sh -c 'cat test_mount/message.txt && echo "Docker can write this file" > test_mount/docker_write_test.txt'
+
+cat test_mount/docker_write_test.txt
 ```
 
 Expected output:
 
 ```text
 Docker can read this file
+Docker can write this file
 ```
 
-This confirms that Docker can mount the local project folder into a Linux container using the same `linux/amd64` platform and `/work` location used later in the workshop.
+This confirms that Docker can both read from and write to the local project folder through the `/work` bind mount while writing as your current Linux user.
 
 Remove the temporary mount-test files:
 
 ```bash
-rm test_mount/message.txt
+rm test_mount/message.txt test_mount/docker_write_test.txt
 rmdir test_mount
 ```
 
@@ -814,7 +841,7 @@ Day 0 produces a working local environment, not NGS analysis files or biological
 - `gawk --version`, `curl --version`, and `wget --version` run successfully.
 - `docker --version` prints a Docker version.
 - `docker run --rm hello-world` completes successfully.
-- The `linux/amd64` Docker mount test prints `Docker can read this file`.
+- The Docker mount test can both read from and write to the workshop folder as your current user.
 - IGV opens correctly.
 
 ## 4. Git checkpoint

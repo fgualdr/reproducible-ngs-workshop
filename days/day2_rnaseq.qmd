@@ -252,6 +252,7 @@ Run it:
 
 ```bash
 docker run --rm \
+  --user "$(id -u):$(id -g)" \
   -v "$PWD:/work" \
   -w /work \
   docker.io/fgualdr/ngs-bowtie2-samtools \
@@ -405,6 +406,7 @@ The filtered BAM is also indexed and summarized with `samtools flagstat`. Compar
 
 ```bash
 docker run --rm \
+  --user "$(id -u):$(id -g)" \
   -v "$PWD:/work" \
   -w /work \
   docker.io/fgualdr/ngs-bowtie2-samtools \
@@ -482,6 +484,7 @@ The workshop uses a digest-pinned BioContainers image containing [RSeQC 5.0.4](h
 
 ```bash
 docker run --rm \
+  --user "$(id -u):$(id -g)" \
   -v "$PWD:/work" \
   -w /work \
   docker.io/getwilds/rseqc \
@@ -605,6 +608,7 @@ Run it:
 
 ```bash
 docker run --rm \
+  --user "$(id -u):$(id -g)" \
   -v "$PWD:/work" \
   -w /work \
   docker.io/fgualdr/ngs-featurecounts \
@@ -1437,6 +1441,7 @@ From the root of `workshop_ngs`, launch R inside the Bioconductor image:
 
 ```bash
 docker run --rm -it \
+  --user "$(id -u):$(id -g)" \
   -v "$PWD:/work" \
   -w /work \
   docker.io/fgualdr/ngs-r-bioc \
@@ -1707,7 +1712,17 @@ ggsave(file.path(out_dir, "volcano.pdf"), volcano, width = 6, height = 5)
 writeLines(capture.output(sessionInfo()), file.path(out_dir, "sessionInfo.txt"))
 ```
 
-The script deliberately separates **normalization for sample inspection** from **model fitting**. `estimateSizeFactors()` is run first so that normalized counts are available before the full DESeq2 fit. The PCA is then calculated from `log2(normalized_counts + 1)`. Use the PCA to look for unexpected samples, condition separation, and replicate structure; use the scree plot to see how much of the total variation is captured by each principal component.
+#### What happens before the statistical test?
+
+The first part of the script prepares the count matrix and the sample design, then estimates one **size factor** for each sample. The size factor captures differences in sequencing depth and overall library size.
+
+DESeq2 normalizes a count by dividing the raw count by the sample size factor:
+
+```text
+normalized count = raw count / size factor
+```
+
+These normalized counts are useful for comparing samples and for exploratory plots. The differential-expression model itself still starts from the **raw integer counts**.
 
 The file:
 
@@ -1715,7 +1730,7 @@ The file:
 results/day2_rnaseq/deseq2/deseq2_size_factors.tsv
 ```
 
-contains both the DESeq2 size factor and its inverse. This distinction matters later:
+contains both the DESeq2 size factor and its inverse. We save the inverse because it will later be used with `bamCoverage`:
 
 ```text
 DESeq2 normalized count = raw count / size factor
@@ -1727,9 +1742,121 @@ therefore:
 bamCoverage scaleFactor = 1 / DESeq2 size factor
 ```
 
-The custom MA-like plot uses `baseMean` on the x-axis and the fitted log2 fold change on the y-axis. The colour is a **signed significance score**: significant down-regulated genes move toward blue, non-significant genes are centred at white, and significant up-regulated genes move toward red. The five strongest significant genes in each direction are labelled with `ggrepel`.
+#### PCA: reducing many genes to a few sample-level components
 
-Do not treat the PCA or MA plot as a replacement for the statistical model. They are diagnostic and interpretive views of the same analysis.
+For PCA, think of each RNA-seq sample as a **vector of gene-expression values**. If we have 20,000 genes, each sample is one point in a 20,000-dimensional space. In the script we therefore transpose the matrix so that PCA sees **samples as observations** and **genes as variables**:
+
+```r
+pca <- prcomp(t(log2(normalized_counts + 1)))
+```
+
+PCA replaces the original gene axes with a new set of **orthogonal axes**, called principal components. PC1 is the direction through the samples that captures the largest possible amount of variation. PC2 captures the largest remaining variation while being orthogonal to PC1, then PC3, and so on.
+
+A PCA plot is therefore a **projection** of the original high-dimensional sample vectors onto a lower-dimensional plane. When we plot PC1 against PC2, each point is the projection of one RNA-seq sample onto the plane defined by those two components.
+
+```text
+genes define the original high-dimensional space
+                    |
+                    v
+             PCA / SVD
+                    |
+            orthogonal PCs
+                    |
+                    v
+       projection onto PC1-PC2
+                    |
+                    v
+             one point/sample
+```
+
+Computationally, PCA is obtained from the **singular value decomposition (SVD)** of the centred data matrix. SVD identifies the orthogonal directions, how much variation is associated with each direction, and the coordinates of each sample along those directions. The sample coordinates are what we display in the PCA plot.
+
+The number of informative components is limited by the **rank of the centred matrix**:
+
+```text
+maximum non-zero PCs <= min(number of samples - 1, number of genes)
+```
+
+The `-1` appears because PCA centres the samples before decomposition. In RNA-seq, the number of genes is normally much larger than the number of samples, so the number of informative PCs is usually limited by the **number of samples**. For example, with 6 samples and 20,000 genes there can be at most 5 components with non-zero variance.
+
+The **scree plot** shows how the total sample-to-sample variation is distributed across these components. PC1 explains the largest fraction, PC2 the next largest, and so forth. If PC1 and PC2 explain most of the variation, the two-dimensional PCA plot captures much of the main structure; if substantial variance remains in later PCs, the PC1-PC2 view is only part of the picture.
+
+For QC, we use PCA to ask whether biological replicates remain close, whether conditions separate, and whether one sample behaves very differently from the others. PCA itself is **unsupervised**: it does not know which samples are control, stressed, or replicates. We add those labels afterwards to interpret the structure that PCA finds.
+
+::: {.callout-note}
+Here we use `log2(normalized_counts + 1)` to make the transformation explicit. In larger RNA-seq analyses, DESeq2 `vst()` or `rlog()` are commonly used because they stabilize the mean-variance relationship more directly.
+:::
+
+#### Fitting the DESeq2 model
+
+After the exploratory sample checks, the full model is fitted with:
+
+```r
+design = ~ replicates + conditions
+```
+
+This asks DESeq2 to estimate the effect of the experimental condition while accounting for the replicate term included in the design.
+
+The contrast:
+
+```r
+contrast = c("conditions", "stressed", "control")
+```
+
+defines the comparison as:
+
+```text
+stressed / control
+```
+
+Therefore:
+
+- positive `log2FoldChange` = higher expression in stressed samples;
+- negative `log2FoldChange` = lower expression in stressed samples.
+
+#### The dispersion plot
+
+RNA-seq count variability is generally larger than expected from a simple Poisson model. DESeq2 models this extra variability with the **negative binomial dispersion** parameter.
+
+The dispersion plot lets us inspect the relationship between mean expression and estimated variability across genes. DESeq2 learns a general mean-dispersion trend and shrinks noisy gene-specific estimates toward this trend.
+
+This borrowing of information across genes is particularly important when the number of biological replicates is small.
+
+#### Reading the custom MA-like plot
+
+The custom MA-like plot uses:
+
+```text
+x-axis = mean normalized expression (baseMean)
+y-axis = log2 fold change
+```
+
+Genes near zero on the y-axis change little between conditions. Genes above zero are increased in stressed samples, while genes below zero are decreased.
+
+The colour adds statistical evidence:
+
+```text
+blue   -> significant decrease
+white  -> not significant
+red    -> significant increase
+```
+
+The most significant genes in each direction are labelled with `ggrepel`.
+
+The plot is useful because it shows an important feature of RNA-seq data: very large fold changes at extremely low expression are often much less precisely estimated than comparable changes in well-counted genes.
+
+#### Reading the volcano plot
+
+The volcano plot shows a different projection of the same DESeq2 results:
+
+```text
+x-axis = log2 fold change
+y-axis = -log10 adjusted p-value
+```
+
+Genes farther left or right have larger estimated changes. Genes higher on the plot have stronger statistical evidence after multiple-testing correction.
+
+The PCA, dispersion plot, MA-like plot, and volcano plot answer different questions. None replaces the DESeq2 statistical model; together they help us check the data and interpret the fitted results.
 
 When the interactive inspection is finished, leave R with:
 
@@ -1793,6 +1920,7 @@ Run it:
 
 ```bash
 docker run --rm \
+  --user "$(id -u):$(id -g)" \
   -v "$PWD:/work" \
   -w /work \
   docker.io/fgualdr/ngs-deeptools \
@@ -1851,6 +1979,7 @@ Run it:
 
 ```bash
 docker run --rm \
+  --user "$(id -u):$(id -g)" \
   -v "$PWD:/work" \
   -w /work \
   docker.io/multiqc/multiqc \

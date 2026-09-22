@@ -1,7 +1,31 @@
-FROM docker.io/mambaorg/micromamba:1.5.10
+FROM debian:bookworm-slim AS builder
 
-RUN micromamba install -y -n base -c conda-forge -c bioconda \
-      subread=2.0.6 \
-    && micromamba clean -a -y
+ARG SUBREAD_VERSION=2.1.1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    build-essential \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL \
+    "https://downloads.sourceforge.net/project/subread/subread-${SUBREAD_VERSION}/subread-${SUBREAD_VERSION}-source.tar.gz" \
+    -o /tmp/subread.tar.gz \
+    && tar -xzf /tmp/subread.tar.gz -C /tmp \
+    && cd "/tmp/subread-${SUBREAD_VERSION}-source/src" \
+    && sed -i 's/-mtune=core2//g' Makefile.Linux \
+    && make -f Makefile.Linux -j"$(nproc)" \
+    && install -m 0755 ../bin/featureCounts /usr/local/bin/featureCounts
+
+
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash \
+    zlib1g \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /usr/local/bin/featureCounts /usr/local/bin/featureCounts
 
 WORKDIR /work
