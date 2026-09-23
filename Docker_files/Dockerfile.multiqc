@@ -1,10 +1,7 @@
-FROM docker.io/library/python:3.11-slim-bookworm
+FROM docker.io/mambaorg/micromamba:1.5.10
 
-ARG MULTIQC_VERSION=1.22.3
+RUN micromamba install -y -n base -c conda-forge -c bioconda \
+      multiqc=1.22.3 \
+    && micromamba clean -a -y
 
-RUN python -m venv /opt/multiqc \
-    && /opt/multiqc/bin/pip install --no-cache-dir --upgrade pip \
-    && /opt/multiqc/bin/pip install --no-cache-dir "multiqc==${MULTIQC_VERSION}"
-ENV PATH="/opt/multiqc/bin:${PATH}"
 WORKDIR /work
-CMD ["/bin/bash"]

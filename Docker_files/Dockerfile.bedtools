@@ -1,18 +1,7 @@
-FROM docker.io/library/debian:bookworm-slim AS builder
+FROM docker.io/mambaorg/micromamba:1.5.10
 
-ARG BEDTOOLS_VERSION=2.31.1
+RUN micromamba install -y -n base -c conda-forge -c bioconda \
+      bedtools=2.31.1 \
+    && micromamba clean -a -y
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates curl build-essential zlib1g-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN curl -fsSL "https://github.com/arq5x/bedtools2/releases/download/v${BEDTOOLS_VERSION}/bedtools-${BEDTOOLS_VERSION}.tar.gz" -o /tmp/bedtools.tar.gz \
-    && tar -xzf /tmp/bedtools.tar.gz -C /tmp \
-    && make -C "/tmp/bedtools2" -j"$(nproc)" \
-    && install -m 0755 /tmp/bedtools2/bin/bedtools /usr/local/bin/bedtools
-
-FROM docker.io/library/debian:bookworm-slim
-RUN apt-get update && apt-get install -y --no-install-recommends bash zlib1g && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /usr/local/bin/bedtools /usr/local/bin/bedtools
 WORKDIR /work
-CMD ["/bin/bash"]

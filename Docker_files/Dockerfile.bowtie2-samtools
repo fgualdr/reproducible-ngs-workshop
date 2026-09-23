@@ -1,59 +1,8 @@
-FROM debian:bookworm-slim AS builder
+FROM docker.io/mambaorg/micromamba:1.5.10
 
-ARG BOWTIE2_VERSION=2.5.4
-ARG SAMTOOLS_VERSION=1.21
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    curl \
-    git \
-    build-essential \
-    autoconf \
-    automake \
-    libtool \
-    pkg-config \
-    zlib1g-dev \
-    libbz2-dev \
-    liblzma-dev \
-    libcurl4-openssl-dev \
-    libssl-dev \
-    libncurses-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Bowtie2: clone recursively so SIMDe and other submodules are present.
-RUN git clone \
-      --branch "v${BOWTIE2_VERSION}" \
-      --depth 1 \
-      --recurse-submodules \
-      --shallow-submodules \
-      https://github.com/BenLangmead/bowtie2.git \
-      /tmp/bowtie2 \
-    && make -C /tmp/bowtie2 -j"$(nproc)" \
-    && make -C /tmp/bowtie2 install PREFIX=/usr/local
-
-# samtools
-RUN curl -fsSL \
-      "https://github.com/samtools/samtools/releases/download/${SAMTOOLS_VERSION}/samtools-${SAMTOOLS_VERSION}.tar.bz2" \
-      -o /tmp/samtools.tar.bz2 \
-    && tar -xjf /tmp/samtools.tar.bz2 -C /tmp \
-    && cd "/tmp/samtools-${SAMTOOLS_VERSION}" \
-    && ./configure --prefix=/usr/local \
-    && make -j"$(nproc)" \
-    && make install
-
-FROM debian:bookworm-slim
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    bash \
-    python3 \
-    zlib1g \
-    libbz2-1.0 \
-    liblzma5 \
-    libcurl4 \
-    libgomp1 \
-    libncurses6 \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY --from=builder /usr/local /usr/local
+RUN micromamba install -y -n base -c conda-forge -c bioconda \
+      bowtie2=2.5.4 \
+      samtools=1.20 \
+    && micromamba clean -a -y
 
 WORKDIR /work

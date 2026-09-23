@@ -1684,11 +1684,20 @@ SRA / ENA run metadata
         +--&gt; run accession: SRR... / ERR... / DRR...
                               |
                               v
-                        fasterq-dump
+                           prefetch
+                              |
+                              v
+                         local SRA run
+                              |
+                              v
+                         vdb-validate
+                              |
+                              v
+                          fastq-dump
                               |
                               v
                             FASTQ</code></pre>
-<p>The SRA file itself contains the sequence data, not the biological sample metadata. We therefore first download a small run-metadata table, select the samples that we want, and define the filenames that we want locally. We then use each run accession with <code>fasterq-dump</code>.</p>
+<p>The SRA file itself contains the sequence data, not the biological sample metadata. We therefore first download a small run-metadata table, select the samples that we want, and define the filenames that we want locally. For each selected run, <code>prefetch</code> downloads the archive object into a local SRA directory, <code>vdb-validate</code> checks that object, and the local run is then converted to FASTQ.</p>
 <p>For simplicity, this example uses the ENA Portal API to obtain a small tab-separated run table from the shared INSDC records. The sequence data are then retrieved with the NCBI SRA Toolkit. The same run accessions describe the same public runs across SRA/ENA/DRA.</p>
 <p>We will retrieve <strong>both workshop datasets</strong> in one script:</p>
 <ul>
@@ -1702,6 +1711,8 @@ SRA / ENA run metadata
 │   ├── RNAseq_metadata.txt
 │   ├── Chipseq_metadata_all.tsv
 │   └── Chipseq_metadata.txt
+├── sra/
+│   └── ERR.../
 └── fastq/
     ├── rnaseq/
     └── chipseq/</code></pre>
@@ -1718,112 +1729,141 @@ SRA / ENA run metadata
 <span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> <span class="dt">\</span></span>
 <span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"</span><span class="va">${root}</span><span class="st">/metadata"</span> <span class="dt">\</span></span>
-<span id="cb53-8"><a href="#cb53-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/rnaseq"</span> <span class="dt">\</span></span>
-<span id="cb53-9"><a href="#cb53-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/chipseq"</span></span>
-<span id="cb53-10"><a href="#cb53-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-11"><a href="#cb53-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Metadata come from EMBL-EBI; sequencing runs are retrieved through SRA.</span></span>
-<span id="cb53-12"><a href="#cb53-12" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"Checking network access to EMBL-EBI and NCBI..."</span></span>
-<span id="cb53-13"><a href="#cb53-13" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> url <span class="kw">in</span> https://www.ebi.ac.uk/ https://www.ncbi.nlm.nih.gov/<span class="kw">;</span> <span class="cf">do</span></span>
-<span id="cb53-14"><a href="#cb53-14" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="ot">! </span><span class="ex">curl</span> <span class="at">-fsS</span> <span class="at">--connect-timeout</span> 10 <span class="at">-o</span> /dev/null <span class="st">"</span><span class="va">${url}</span><span class="st">"</span><span class="kw">;</span> <span class="cf">then</span></span>
-<span id="cb53-15"><a href="#cb53-15" aria-hidden="true" tabindex="-1"></a>    <span class="bu">echo</span> <span class="st">"ERROR: </span><span class="va">${url}</span><span class="st"> cannot be reached. If curl reports error 6, DNS resolution is failing."</span> <span class="op">&gt;&amp;</span><span class="dv">2</span></span>
-<span id="cb53-16"><a href="#cb53-16" aria-hidden="true" tabindex="-1"></a>    <span class="bu">echo</span> <span class="st">"Current resolver configuration:"</span> <span class="op">&gt;&amp;</span><span class="dv">2</span></span>
-<span id="cb53-17"><a href="#cb53-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span> /etc/resolv.conf <span class="dv">2</span><span class="op">&gt;</span>/dev/null <span class="kw">||</span> <span class="fu">true</span></span>
-<span id="cb53-18"><a href="#cb53-18" aria-hidden="true" tabindex="-1"></a>    <span class="bu">exit</span> 1</span>
-<span id="cb53-19"><a href="#cb53-19" aria-hidden="true" tabindex="-1"></a>  <span class="cf">fi</span></span>
-<span id="cb53-20"><a href="#cb53-20" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
-<span id="cb53-21"><a href="#cb53-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-8"><a href="#cb53-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"</span><span class="va">${root}</span><span class="st">/sra"</span> <span class="dt">\</span></span>
+<span id="cb53-9"><a href="#cb53-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/rnaseq"</span> <span class="dt">\</span></span>
+<span id="cb53-10"><a href="#cb53-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/chipseq"</span></span>
+<span id="cb53-11"><a href="#cb53-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-12"><a href="#cb53-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Metadata come from EMBL-EBI; sequencing runs are retrieved through SRA.</span></span>
+<span id="cb53-13"><a href="#cb53-13" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"Checking network access to EMBL-EBI and NCBI..."</span></span>
+<span id="cb53-14"><a href="#cb53-14" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> url <span class="kw">in</span> https://www.ebi.ac.uk/ https://www.ncbi.nlm.nih.gov/<span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb53-15"><a href="#cb53-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="ot">! </span><span class="ex">curl</span> <span class="at">-fsS</span> <span class="at">--connect-timeout</span> 10 <span class="at">-o</span> /dev/null <span class="st">"</span><span class="va">${url}</span><span class="st">"</span><span class="kw">;</span> <span class="cf">then</span></span>
+<span id="cb53-16"><a href="#cb53-16" aria-hidden="true" tabindex="-1"></a>    <span class="bu">echo</span> <span class="st">"ERROR: </span><span class="va">${url}</span><span class="st"> cannot be reached. If curl reports error 6, DNS resolution is failing."</span> <span class="op">&gt;&amp;</span><span class="dv">2</span></span>
+<span id="cb53-17"><a href="#cb53-17" aria-hidden="true" tabindex="-1"></a>    <span class="bu">echo</span> <span class="st">"Current resolver configuration:"</span> <span class="op">&gt;&amp;</span><span class="dv">2</span></span>
+<span id="cb53-18"><a href="#cb53-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">cat</span> /etc/resolv.conf <span class="dv">2</span><span class="op">&gt;</span>/dev/null <span class="kw">||</span> <span class="fu">true</span></span>
+<span id="cb53-19"><a href="#cb53-19" aria-hidden="true" tabindex="-1"></a>    <span class="bu">exit</span> 1</span>
+<span id="cb53-20"><a href="#cb53-20" aria-hidden="true" tabindex="-1"></a>  <span class="cf">fi</span></span>
+<span id="cb53-21"><a href="#cb53-21" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
 <span id="cb53-22"><a href="#cb53-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-23"><a href="#cb53-23" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
-<span id="cb53-24"><a href="#cb53-24" aria-hidden="true" tabindex="-1"></a><span class="co"># RNA-seq metadata</span></span>
-<span id="cb53-25"><a href="#cb53-25" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
-<span id="cb53-26"><a href="#cb53-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-27"><a href="#cb53-27" aria-hidden="true" tabindex="-1"></a><span class="va">rnaseq_study</span><span class="op">=</span><span class="st">"ERP147707"</span></span>
-<span id="cb53-28"><a href="#cb53-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-29"><a href="#cb53-29" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-fL</span> <span class="dt">\</span></span>
-<span id="cb53-30"><a href="#cb53-30" aria-hidden="true" tabindex="-1"></a>  <span class="st">"https://www.ebi.ac.uk/ena/portal/api/filereport?accession=</span><span class="va">${rnaseq_study}</span><span class="st">&amp;result=read_run&amp;fields=run_accession,sample_title,library_layout&amp;format=tsv"</span> <span class="dt">\</span></span>
-<span id="cb53-31"><a href="#cb53-31" aria-hidden="true" tabindex="-1"></a>  <span class="at">-o</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/metadata/RNAseq_metadata_all.tsv"</span></span>
-<span id="cb53-32"><a href="#cb53-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-33"><a href="#cb53-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep WT_1-3 and WTS_1-3 and add the local FASTQ prefix</span></span>
-<span id="cb53-34"><a href="#cb53-34" aria-hidden="true" tabindex="-1"></a><span class="fu">awk</span> <span class="at">-F</span> <span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="st">'BEGIN {OFS="\t"}</span></span>
-<span id="cb53-35"><a href="#cb53-35" aria-hidden="true" tabindex="-1"></a><span class="st">NR==1 {print $1,$2,$3,"FASTQ_PREFIX"; next}</span></span>
-<span id="cb53-36"><a href="#cb53-36" aria-hidden="true" tabindex="-1"></a><span class="st">$2 ~ /^(WT|WTS)_[123]$/ {print $1,$2,$3,$2}</span></span>
-<span id="cb53-37"><a href="#cb53-37" aria-hidden="true" tabindex="-1"></a><span class="st">'</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/metadata/RNAseq_metadata_all.tsv"</span> <span class="dt">\</span></span>
-<span id="cb53-38"><a href="#cb53-38" aria-hidden="true" tabindex="-1"></a>  <span class="op">&gt;</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/metadata/RNAseq_metadata.txt"</span></span>
-<span id="cb53-39"><a href="#cb53-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-23"><a href="#cb53-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-24"><a href="#cb53-24" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
+<span id="cb53-25"><a href="#cb53-25" aria-hidden="true" tabindex="-1"></a><span class="co"># RNA-seq metadata</span></span>
+<span id="cb53-26"><a href="#cb53-26" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
+<span id="cb53-27"><a href="#cb53-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-28"><a href="#cb53-28" aria-hidden="true" tabindex="-1"></a><span class="va">rnaseq_study</span><span class="op">=</span><span class="st">"ERP147707"</span></span>
+<span id="cb53-29"><a href="#cb53-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-30"><a href="#cb53-30" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-fL</span> <span class="dt">\</span></span>
+<span id="cb53-31"><a href="#cb53-31" aria-hidden="true" tabindex="-1"></a>  <span class="st">"https://www.ebi.ac.uk/ena/portal/api/filereport?accession=</span><span class="va">${rnaseq_study}</span><span class="st">&amp;result=read_run&amp;fields=run_accession,sample_title,library_layout&amp;format=tsv"</span> <span class="dt">\</span></span>
+<span id="cb53-32"><a href="#cb53-32" aria-hidden="true" tabindex="-1"></a>  <span class="at">-o</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/metadata/RNAseq_metadata_all.tsv"</span></span>
+<span id="cb53-33"><a href="#cb53-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-34"><a href="#cb53-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep WT_1-3 and WTS_1-3 and add the local FASTQ prefix</span></span>
+<span id="cb53-35"><a href="#cb53-35" aria-hidden="true" tabindex="-1"></a><span class="fu">awk</span> <span class="at">-F</span> <span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="st">'BEGIN {OFS="\t"}</span></span>
+<span id="cb53-36"><a href="#cb53-36" aria-hidden="true" tabindex="-1"></a><span class="st">NR==1 {print $1,$2,$3,"FASTQ_PREFIX"; next}</span></span>
+<span id="cb53-37"><a href="#cb53-37" aria-hidden="true" tabindex="-1"></a><span class="st">$2 ~ /^(WT|WTS)_[123]$/ {print $1,$2,$3,$2}</span></span>
+<span id="cb53-38"><a href="#cb53-38" aria-hidden="true" tabindex="-1"></a><span class="st">'</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/metadata/RNAseq_metadata_all.tsv"</span> <span class="dt">\</span></span>
+<span id="cb53-39"><a href="#cb53-39" aria-hidden="true" tabindex="-1"></a>  <span class="op">&gt;</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/metadata/RNAseq_metadata.txt"</span></span>
 <span id="cb53-40"><a href="#cb53-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-41"><a href="#cb53-41" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
-<span id="cb53-42"><a href="#cb53-42" aria-hidden="true" tabindex="-1"></a><span class="co"># ChIP-seq metadata</span></span>
-<span id="cb53-43"><a href="#cb53-43" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
-<span id="cb53-44"><a href="#cb53-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-45"><a href="#cb53-45" aria-hidden="true" tabindex="-1"></a><span class="va">chipseq_study</span><span class="op">=</span><span class="st">"ERP147583"</span></span>
-<span id="cb53-46"><a href="#cb53-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-47"><a href="#cb53-47" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-fL</span> <span class="dt">\</span></span>
-<span id="cb53-48"><a href="#cb53-48" aria-hidden="true" tabindex="-1"></a>  <span class="st">"https://www.ebi.ac.uk/ena/portal/api/filereport?accession=</span><span class="va">${chipseq_study}</span><span class="st">&amp;result=read_run&amp;fields=run_accession,sample_title,library_layout&amp;format=tsv"</span> <span class="dt">\</span></span>
-<span id="cb53-49"><a href="#cb53-49" aria-hidden="true" tabindex="-1"></a>  <span class="at">-o</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/metadata/Chipseq_metadata_all.tsv"</span></span>
-<span id="cb53-50"><a href="#cb53-50" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-51"><a href="#cb53-51" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep WT_1-3 and WTS_1-3 and add the local FASTQ prefix</span></span>
-<span id="cb53-52"><a href="#cb53-52" aria-hidden="true" tabindex="-1"></a><span class="fu">awk</span> <span class="at">-F</span> <span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="st">'BEGIN {OFS="\t"}</span></span>
-<span id="cb53-53"><a href="#cb53-53" aria-hidden="true" tabindex="-1"></a><span class="st">NR==1 {print $1,$2,$3,"FASTQ_PREFIX"; next}</span></span>
-<span id="cb53-54"><a href="#cb53-54" aria-hidden="true" tabindex="-1"></a><span class="st">$2 ~ /^(WT|WTS)_[123]$/ {print $1,$2,$3,$2}</span></span>
-<span id="cb53-55"><a href="#cb53-55" aria-hidden="true" tabindex="-1"></a><span class="st">'</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/metadata/Chipseq_metadata_all.tsv"</span> <span class="dt">\</span></span>
-<span id="cb53-56"><a href="#cb53-56" aria-hidden="true" tabindex="-1"></a>  <span class="op">&gt;</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/metadata/Chipseq_metadata.txt"</span></span>
-<span id="cb53-57"><a href="#cb53-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-41"><a href="#cb53-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-42"><a href="#cb53-42" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
+<span id="cb53-43"><a href="#cb53-43" aria-hidden="true" tabindex="-1"></a><span class="co"># ChIP-seq metadata</span></span>
+<span id="cb53-44"><a href="#cb53-44" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
+<span id="cb53-45"><a href="#cb53-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-46"><a href="#cb53-46" aria-hidden="true" tabindex="-1"></a><span class="va">chipseq_study</span><span class="op">=</span><span class="st">"ERP147583"</span></span>
+<span id="cb53-47"><a href="#cb53-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-48"><a href="#cb53-48" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-fL</span> <span class="dt">\</span></span>
+<span id="cb53-49"><a href="#cb53-49" aria-hidden="true" tabindex="-1"></a>  <span class="st">"https://www.ebi.ac.uk/ena/portal/api/filereport?accession=</span><span class="va">${chipseq_study}</span><span class="st">&amp;result=read_run&amp;fields=run_accession,sample_title,library_layout&amp;format=tsv"</span> <span class="dt">\</span></span>
+<span id="cb53-50"><a href="#cb53-50" aria-hidden="true" tabindex="-1"></a>  <span class="at">-o</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/metadata/Chipseq_metadata_all.tsv"</span></span>
+<span id="cb53-51"><a href="#cb53-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-52"><a href="#cb53-52" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep WT_1-3 and WTS_1-3 and add the local FASTQ prefix</span></span>
+<span id="cb53-53"><a href="#cb53-53" aria-hidden="true" tabindex="-1"></a><span class="fu">awk</span> <span class="at">-F</span> <span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="st">'BEGIN {OFS="\t"}</span></span>
+<span id="cb53-54"><a href="#cb53-54" aria-hidden="true" tabindex="-1"></a><span class="st">NR==1 {print $1,$2,$3,"FASTQ_PREFIX"; next}</span></span>
+<span id="cb53-55"><a href="#cb53-55" aria-hidden="true" tabindex="-1"></a><span class="st">$2 ~ /^(WT|WTS)_[123]$/ {print $1,$2,$3,$2}</span></span>
+<span id="cb53-56"><a href="#cb53-56" aria-hidden="true" tabindex="-1"></a><span class="st">'</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/metadata/Chipseq_metadata_all.tsv"</span> <span class="dt">\</span></span>
+<span id="cb53-57"><a href="#cb53-57" aria-hidden="true" tabindex="-1"></a>  <span class="op">&gt;</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/metadata/Chipseq_metadata.txt"</span></span>
 <span id="cb53-58"><a href="#cb53-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-59"><a href="#cb53-59" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
-<span id="cb53-60"><a href="#cb53-60" aria-hidden="true" tabindex="-1"></a><span class="co"># Download RNA-seq FASTQ files</span></span>
-<span id="cb53-61"><a href="#cb53-61" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
-<span id="cb53-62"><a href="#cb53-62" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-63"><a href="#cb53-63" aria-hidden="true" tabindex="-1"></a><span class="fu">tail</span> <span class="at">-n</span> +2 <span class="st">"</span><span class="va">${root}</span><span class="st">/metadata/RNAseq_metadata.txt"</span> <span class="kw">|</span></span>
-<span id="cb53-64"><a href="#cb53-64" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="va">IFS</span><span class="op">=</span><span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">run</span> <span class="va">sample</span> <span class="va">layout</span> <span class="va">prefix</span><span class="kw">;</span> <span class="cf">do</span></span>
-<span id="cb53-65"><a href="#cb53-65" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-66"><a href="#cb53-66" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">"Downloading RNA-seq </span><span class="va">${sample}</span><span class="st"> (</span><span class="va">${run}</span><span class="st">); layout=</span><span class="va">${layout}</span><span class="st">; threads=4"</span></span>
-<span id="cb53-67"><a href="#cb53-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-68"><a href="#cb53-68" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="kw">[[</span> <span class="st">"</span><span class="va">${layout}</span><span class="st">"</span> <span class="ot">==</span> <span class="st">"PAIRED"</span> <span class="kw">]];</span> <span class="cf">then</span></span>
-<span id="cb53-69"><a href="#cb53-69" aria-hidden="true" tabindex="-1"></a>    <span class="ex">fasterq-dump</span> <span class="st">"</span><span class="va">${run}</span><span class="st">"</span> <span class="at">--split-files</span> <span class="at">--threads</span> 4 <span class="at">--progress</span> <span class="at">--details</span> <span class="at">--outdir</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/rnaseq"</span></span>
-<span id="cb53-70"><a href="#cb53-70" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-71"><a href="#cb53-71" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mv</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/rnaseq/</span><span class="va">${run}</span><span class="st">_1.fastq"</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/rnaseq/</span><span class="va">${prefix}</span><span class="st">_R1.fastq"</span></span>
-<span id="cb53-72"><a href="#cb53-72" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mv</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/rnaseq/</span><span class="va">${run}</span><span class="st">_2.fastq"</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/rnaseq/</span><span class="va">${prefix}</span><span class="st">_R2.fastq"</span></span>
-<span id="cb53-73"><a href="#cb53-73" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-74"><a href="#cb53-74" aria-hidden="true" tabindex="-1"></a>    <span class="fu">gzip</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/rnaseq/</span><span class="va">${prefix}</span><span class="st">_R1.fastq"</span></span>
-<span id="cb53-75"><a href="#cb53-75" aria-hidden="true" tabindex="-1"></a>    <span class="fu">gzip</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/rnaseq/</span><span class="va">${prefix}</span><span class="st">_R2.fastq"</span></span>
-<span id="cb53-76"><a href="#cb53-76" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-77"><a href="#cb53-77" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span></span>
-<span id="cb53-78"><a href="#cb53-78" aria-hidden="true" tabindex="-1"></a>    <span class="ex">fasterq-dump</span> <span class="st">"</span><span class="va">${run}</span><span class="st">"</span> <span class="at">--threads</span> 4 <span class="at">--progress</span> <span class="at">--details</span> <span class="at">--outdir</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/rnaseq"</span></span>
-<span id="cb53-79"><a href="#cb53-79" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-80"><a href="#cb53-80" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mv</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/rnaseq/</span><span class="va">${run}</span><span class="st">.fastq"</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/rnaseq/</span><span class="va">${prefix}</span><span class="st">_R1.fastq"</span></span>
-<span id="cb53-81"><a href="#cb53-81" aria-hidden="true" tabindex="-1"></a>    <span class="fu">gzip</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/rnaseq/</span><span class="va">${prefix}</span><span class="st">_R1.fastq"</span></span>
-<span id="cb53-82"><a href="#cb53-82" aria-hidden="true" tabindex="-1"></a>  <span class="cf">fi</span></span>
-<span id="cb53-83"><a href="#cb53-83" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-84"><a href="#cb53-84" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
+<span id="cb53-59"><a href="#cb53-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-60"><a href="#cb53-60" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
+<span id="cb53-61"><a href="#cb53-61" aria-hidden="true" tabindex="-1"></a><span class="co"># Download RNA-seq FASTQ files</span></span>
+<span id="cb53-62"><a href="#cb53-62" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
+<span id="cb53-63"><a href="#cb53-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-64"><a href="#cb53-64" aria-hidden="true" tabindex="-1"></a><span class="fu">tail</span> <span class="at">-n</span> +2 <span class="st">"</span><span class="va">${root}</span><span class="st">/metadata/RNAseq_metadata.txt"</span> <span class="kw">|</span></span>
+<span id="cb53-65"><a href="#cb53-65" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="va">IFS</span><span class="op">=</span><span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">run</span> <span class="va">sample</span> <span class="va">layout</span> <span class="va">prefix</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb53-66"><a href="#cb53-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-67"><a href="#cb53-67" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">"Downloading RNA-seq </span><span class="va">${sample}</span><span class="st"> (</span><span class="va">${run}</span><span class="st">); layout=</span><span class="va">${layout}</span><span class="st">"</span></span>
+<span id="cb53-68"><a href="#cb53-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-69"><a href="#cb53-69" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Download the SRA run first. If the transfer is interrupted,</span></span>
+<span id="cb53-70"><a href="#cb53-70" aria-hidden="true" tabindex="-1"></a>  <span class="co"># rerunning prefetch can resume the existing download.</span></span>
+<span id="cb53-71"><a href="#cb53-71" aria-hidden="true" tabindex="-1"></a>  <span class="ex">prefetch</span> <span class="at">--max-size</span> u <span class="at">-O</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/sra"</span> <span class="st">"</span><span class="va">${run}</span><span class="st">"</span></span>
+<span id="cb53-72"><a href="#cb53-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-73"><a href="#cb53-73" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Validate the local archive object before converting it to FASTQ.</span></span>
+<span id="cb53-74"><a href="#cb53-74" aria-hidden="true" tabindex="-1"></a>  <span class="ex">vdb-validate</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/sra/</span><span class="va">${run}</span><span class="st">"</span></span>
+<span id="cb53-75"><a href="#cb53-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-76"><a href="#cb53-76" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="kw">[[</span> <span class="st">"</span><span class="va">${layout}</span><span class="st">"</span> <span class="ot">==</span> <span class="st">"PAIRED"</span> <span class="kw">]];</span> <span class="cf">then</span></span>
+<span id="cb53-77"><a href="#cb53-77" aria-hidden="true" tabindex="-1"></a>    <span class="ex">fastq-dump</span> <span class="dt">\</span></span>
+<span id="cb53-78"><a href="#cb53-78" aria-hidden="true" tabindex="-1"></a>      <span class="at">--split-files</span> <span class="dt">\</span></span>
+<span id="cb53-79"><a href="#cb53-79" aria-hidden="true" tabindex="-1"></a>      <span class="at">--skip-technical</span> <span class="dt">\</span></span>
+<span id="cb53-80"><a href="#cb53-80" aria-hidden="true" tabindex="-1"></a>      <span class="at">--outdir</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/rnaseq"</span> <span class="dt">\</span></span>
+<span id="cb53-81"><a href="#cb53-81" aria-hidden="true" tabindex="-1"></a>      <span class="st">"</span><span class="va">${root}</span><span class="st">/sra/</span><span class="va">${run}</span><span class="st">"</span></span>
+<span id="cb53-82"><a href="#cb53-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-83"><a href="#cb53-83" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mv</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/rnaseq/</span><span class="va">${run}</span><span class="st">_1.fastq"</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/rnaseq/</span><span class="va">${prefix}</span><span class="st">_R1.fastq"</span></span>
+<span id="cb53-84"><a href="#cb53-84" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mv</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/rnaseq/</span><span class="va">${run}</span><span class="st">_2.fastq"</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/rnaseq/</span><span class="va">${prefix}</span><span class="st">_R2.fastq"</span></span>
 <span id="cb53-85"><a href="#cb53-85" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-86"><a href="#cb53-86" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-87"><a href="#cb53-87" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
-<span id="cb53-88"><a href="#cb53-88" aria-hidden="true" tabindex="-1"></a><span class="co"># Download ChIP-seq FASTQ files</span></span>
-<span id="cb53-89"><a href="#cb53-89" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
-<span id="cb53-90"><a href="#cb53-90" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-91"><a href="#cb53-91" aria-hidden="true" tabindex="-1"></a><span class="fu">tail</span> <span class="at">-n</span> +2 <span class="st">"</span><span class="va">${root}</span><span class="st">/metadata/Chipseq_metadata.txt"</span> <span class="kw">|</span></span>
-<span id="cb53-92"><a href="#cb53-92" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="va">IFS</span><span class="op">=</span><span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">run</span> <span class="va">sample</span> <span class="va">layout</span> <span class="va">prefix</span><span class="kw">;</span> <span class="cf">do</span></span>
-<span id="cb53-93"><a href="#cb53-93" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-94"><a href="#cb53-94" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">"Downloading ChIP-seq </span><span class="va">${sample}</span><span class="st"> (</span><span class="va">${run}</span><span class="st">); layout=</span><span class="va">${layout}</span><span class="st">; threads=4"</span></span>
-<span id="cb53-95"><a href="#cb53-95" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-96"><a href="#cb53-96" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="kw">[[</span> <span class="st">"</span><span class="va">${layout}</span><span class="st">"</span> <span class="ot">==</span> <span class="st">"PAIRED"</span> <span class="kw">]];</span> <span class="cf">then</span></span>
-<span id="cb53-97"><a href="#cb53-97" aria-hidden="true" tabindex="-1"></a>    <span class="ex">fasterq-dump</span> <span class="st">"</span><span class="va">${run}</span><span class="st">"</span> <span class="at">--split-files</span> <span class="at">--threads</span> 4 <span class="at">--progress</span> <span class="at">--details</span> <span class="at">--outdir</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/chipseq"</span></span>
+<span id="cb53-86"><a href="#cb53-86" aria-hidden="true" tabindex="-1"></a>    <span class="fu">gzip</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/rnaseq/</span><span class="va">${prefix}</span><span class="st">_R1.fastq"</span></span>
+<span id="cb53-87"><a href="#cb53-87" aria-hidden="true" tabindex="-1"></a>    <span class="fu">gzip</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/rnaseq/</span><span class="va">${prefix}</span><span class="st">_R2.fastq"</span></span>
+<span id="cb53-88"><a href="#cb53-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-89"><a href="#cb53-89" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span></span>
+<span id="cb53-90"><a href="#cb53-90" aria-hidden="true" tabindex="-1"></a>    <span class="ex">fastq-dump</span> <span class="dt">\</span></span>
+<span id="cb53-91"><a href="#cb53-91" aria-hidden="true" tabindex="-1"></a>      <span class="at">--skip-technical</span> <span class="dt">\</span></span>
+<span id="cb53-92"><a href="#cb53-92" aria-hidden="true" tabindex="-1"></a>      <span class="at">--outdir</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/rnaseq"</span> <span class="dt">\</span></span>
+<span id="cb53-93"><a href="#cb53-93" aria-hidden="true" tabindex="-1"></a>      <span class="st">"</span><span class="va">${root}</span><span class="st">/sra/</span><span class="va">${run}</span><span class="st">"</span></span>
+<span id="cb53-94"><a href="#cb53-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-95"><a href="#cb53-95" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mv</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/rnaseq/</span><span class="va">${run}</span><span class="st">.fastq"</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/rnaseq/</span><span class="va">${prefix}</span><span class="st">_R1.fastq"</span></span>
+<span id="cb53-96"><a href="#cb53-96" aria-hidden="true" tabindex="-1"></a>    <span class="fu">gzip</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/rnaseq/</span><span class="va">${prefix}</span><span class="st">_R1.fastq"</span></span>
+<span id="cb53-97"><a href="#cb53-97" aria-hidden="true" tabindex="-1"></a>  <span class="cf">fi</span></span>
 <span id="cb53-98"><a href="#cb53-98" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-99"><a href="#cb53-99" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mv</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/chipseq/</span><span class="va">${run}</span><span class="st">_1.fastq"</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/chipseq/</span><span class="va">${prefix}</span><span class="st">_R1.fastq"</span></span>
-<span id="cb53-100"><a href="#cb53-100" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mv</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/chipseq/</span><span class="va">${run}</span><span class="st">_2.fastq"</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/chipseq/</span><span class="va">${prefix}</span><span class="st">_R2.fastq"</span></span>
+<span id="cb53-99"><a href="#cb53-99" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
+<span id="cb53-100"><a href="#cb53-100" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb53-101"><a href="#cb53-101" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-102"><a href="#cb53-102" aria-hidden="true" tabindex="-1"></a>    <span class="fu">gzip</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/chipseq/</span><span class="va">${prefix}</span><span class="st">_R1.fastq"</span></span>
-<span id="cb53-103"><a href="#cb53-103" aria-hidden="true" tabindex="-1"></a>    <span class="fu">gzip</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/chipseq/</span><span class="va">${prefix}</span><span class="st">_R2.fastq"</span></span>
-<span id="cb53-104"><a href="#cb53-104" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-105"><a href="#cb53-105" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span></span>
-<span id="cb53-106"><a href="#cb53-106" aria-hidden="true" tabindex="-1"></a>    <span class="ex">fasterq-dump</span> <span class="st">"</span><span class="va">${run}</span><span class="st">"</span> <span class="at">--threads</span> 4 <span class="at">--progress</span> <span class="at">--details</span> <span class="at">--outdir</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/chipseq"</span></span>
-<span id="cb53-107"><a href="#cb53-107" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-108"><a href="#cb53-108" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mv</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/chipseq/</span><span class="va">${run}</span><span class="st">.fastq"</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/chipseq/</span><span class="va">${prefix}</span><span class="st">_R1.fastq"</span></span>
-<span id="cb53-109"><a href="#cb53-109" aria-hidden="true" tabindex="-1"></a>    <span class="fu">gzip</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/chipseq/</span><span class="va">${prefix}</span><span class="st">_R1.fastq"</span></span>
-<span id="cb53-110"><a href="#cb53-110" aria-hidden="true" tabindex="-1"></a>  <span class="cf">fi</span></span>
-<span id="cb53-111"><a href="#cb53-111" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-112"><a href="#cb53-112" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The script deliberately repeats the RNA-seq and ChIP-seq blocks. This is slightly longer than writing a Bash function, but it makes the workflow easier to read when learning Bash: <strong>metadata -&gt; sample selection -&gt; FASTQ download -&gt; renaming</strong> is visible independently for each experiment.</p>
+<span id="cb53-102"><a href="#cb53-102" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
+<span id="cb53-103"><a href="#cb53-103" aria-hidden="true" tabindex="-1"></a><span class="co"># Download ChIP-seq FASTQ files</span></span>
+<span id="cb53-104"><a href="#cb53-104" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
+<span id="cb53-105"><a href="#cb53-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-106"><a href="#cb53-106" aria-hidden="true" tabindex="-1"></a><span class="fu">tail</span> <span class="at">-n</span> +2 <span class="st">"</span><span class="va">${root}</span><span class="st">/metadata/Chipseq_metadata.txt"</span> <span class="kw">|</span></span>
+<span id="cb53-107"><a href="#cb53-107" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="va">IFS</span><span class="op">=</span><span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">run</span> <span class="va">sample</span> <span class="va">layout</span> <span class="va">prefix</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb53-108"><a href="#cb53-108" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-109"><a href="#cb53-109" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">"Downloading ChIP-seq </span><span class="va">${sample}</span><span class="st"> (</span><span class="va">${run}</span><span class="st">); layout=</span><span class="va">${layout}</span><span class="st">"</span></span>
+<span id="cb53-110"><a href="#cb53-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-111"><a href="#cb53-111" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Download the SRA run first. If the transfer is interrupted,</span></span>
+<span id="cb53-112"><a href="#cb53-112" aria-hidden="true" tabindex="-1"></a>  <span class="co"># rerunning prefetch can resume the existing download.</span></span>
+<span id="cb53-113"><a href="#cb53-113" aria-hidden="true" tabindex="-1"></a>  <span class="ex">prefetch</span> <span class="at">--max-size</span> u <span class="at">-O</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/sra"</span> <span class="st">"</span><span class="va">${run}</span><span class="st">"</span></span>
+<span id="cb53-114"><a href="#cb53-114" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-115"><a href="#cb53-115" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Validate the local archive object before converting it to FASTQ.</span></span>
+<span id="cb53-116"><a href="#cb53-116" aria-hidden="true" tabindex="-1"></a>  <span class="ex">vdb-validate</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/sra/</span><span class="va">${run}</span><span class="st">"</span></span>
+<span id="cb53-117"><a href="#cb53-117" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-118"><a href="#cb53-118" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="kw">[[</span> <span class="st">"</span><span class="va">${layout}</span><span class="st">"</span> <span class="ot">==</span> <span class="st">"PAIRED"</span> <span class="kw">]];</span> <span class="cf">then</span></span>
+<span id="cb53-119"><a href="#cb53-119" aria-hidden="true" tabindex="-1"></a>    <span class="ex">fastq-dump</span> <span class="dt">\</span></span>
+<span id="cb53-120"><a href="#cb53-120" aria-hidden="true" tabindex="-1"></a>      <span class="at">--split-files</span> <span class="dt">\</span></span>
+<span id="cb53-121"><a href="#cb53-121" aria-hidden="true" tabindex="-1"></a>      <span class="at">--skip-technical</span> <span class="dt">\</span></span>
+<span id="cb53-122"><a href="#cb53-122" aria-hidden="true" tabindex="-1"></a>      <span class="at">--outdir</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/chipseq"</span> <span class="dt">\</span></span>
+<span id="cb53-123"><a href="#cb53-123" aria-hidden="true" tabindex="-1"></a>      <span class="st">"</span><span class="va">${root}</span><span class="st">/sra/</span><span class="va">${run}</span><span class="st">"</span></span>
+<span id="cb53-124"><a href="#cb53-124" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-125"><a href="#cb53-125" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mv</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/chipseq/</span><span class="va">${run}</span><span class="st">_1.fastq"</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/chipseq/</span><span class="va">${prefix}</span><span class="st">_R1.fastq"</span></span>
+<span id="cb53-126"><a href="#cb53-126" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mv</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/chipseq/</span><span class="va">${run}</span><span class="st">_2.fastq"</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/chipseq/</span><span class="va">${prefix}</span><span class="st">_R2.fastq"</span></span>
+<span id="cb53-127"><a href="#cb53-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-128"><a href="#cb53-128" aria-hidden="true" tabindex="-1"></a>    <span class="fu">gzip</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/chipseq/</span><span class="va">${prefix}</span><span class="st">_R1.fastq"</span></span>
+<span id="cb53-129"><a href="#cb53-129" aria-hidden="true" tabindex="-1"></a>    <span class="fu">gzip</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/chipseq/</span><span class="va">${prefix}</span><span class="st">_R2.fastq"</span></span>
+<span id="cb53-130"><a href="#cb53-130" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-131"><a href="#cb53-131" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span></span>
+<span id="cb53-132"><a href="#cb53-132" aria-hidden="true" tabindex="-1"></a>    <span class="ex">fastq-dump</span> <span class="dt">\</span></span>
+<span id="cb53-133"><a href="#cb53-133" aria-hidden="true" tabindex="-1"></a>      <span class="at">--skip-technical</span> <span class="dt">\</span></span>
+<span id="cb53-134"><a href="#cb53-134" aria-hidden="true" tabindex="-1"></a>      <span class="at">--outdir</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/chipseq"</span> <span class="dt">\</span></span>
+<span id="cb53-135"><a href="#cb53-135" aria-hidden="true" tabindex="-1"></a>      <span class="st">"</span><span class="va">${root}</span><span class="st">/sra/</span><span class="va">${run}</span><span class="st">"</span></span>
+<span id="cb53-136"><a href="#cb53-136" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-137"><a href="#cb53-137" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mv</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/chipseq/</span><span class="va">${run}</span><span class="st">.fastq"</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/chipseq/</span><span class="va">${prefix}</span><span class="st">_R1.fastq"</span></span>
+<span id="cb53-138"><a href="#cb53-138" aria-hidden="true" tabindex="-1"></a>    <span class="fu">gzip</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/fastq/chipseq/</span><span class="va">${prefix}</span><span class="st">_R1.fastq"</span></span>
+<span id="cb53-139"><a href="#cb53-139" aria-hidden="true" tabindex="-1"></a>  <span class="cf">fi</span></span>
+<span id="cb53-140"><a href="#cb53-140" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-141"><a href="#cb53-141" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The script deliberately repeats the RNA-seq and ChIP-seq blocks. This is slightly longer than writing a Bash function, but it makes the workflow easier to read when learning Bash: <strong>metadata -&gt; sample selection -&gt; SRA prefetch -&gt; validation -&gt; FASTQ conversion -&gt; renaming</strong> is visible independently for each experiment.</p>
 <div class="callout callout-style-default callout-note callout-titled" title="Bash walkthrough: downloading and selecting the metadata">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -1853,7 +1893,7 @@ SRA / ENA run metadata
 </tr>
 <tr class="even">
 <td><code>mkdir -p ...</code></td>
-<td>Create the metadata, RNA-seq FASTQ, and ChIP-seq FASTQ directories. <code>-p</code> also creates missing parent directories and does not fail if they already exist.</td>
+<td>Create the metadata, local SRA, RNA-seq FASTQ, and ChIP-seq FASTQ directories. <code>-p</code> also creates missing parent directories and does not fail if they already exist.</td>
 </tr>
 <tr class="odd">
 <td><code>rnaseq_study="ERP147707"</code></td>
@@ -1949,12 +1989,20 @@ ERR...           WT_2            PAIRED             WT_2
 <td>Print which biological sample and archive run are currently being processed.</td>
 </tr>
 <tr class="odd">
+<td><code>prefetch --max-size u -O "${root}/sra" "${run}"</code></td>
+<td>Download the run into <code>${root}/sra/${run}</code>. <code>--max-size u</code> removes the default maximum-size limit. If the transfer is interrupted, rerunning the same command can resume it.</td>
+</tr>
+<tr class="even">
+<td><code>vdb-validate "${root}/sra/${run}"</code></td>
+<td>Validate the locally prefetched SRA object before FASTQ conversion.</td>
+</tr>
+<tr class="odd">
 <td><code>if [[ "${layout}" == "PAIRED" ]]; then</code></td>
 <td>Use the paired-end branch when the metadata say that the library layout is <code>PAIRED</code>.</td>
 </tr>
 <tr class="even">
-<td><code>fasterq-dump "${run}" --split-files --threads 4 --progress --details --outdir ...</code></td>
-<td>Retrieve the run and convert it to FASTQ. <code>--split-files</code> writes read 1 and read 2 separately; <code>--threads 4</code> makes the amount of parallel work explicit; <code>--progress</code> prints progress bars for the conversion stages; <code>--details</code> prints additional status information so a long download/conversion does not look frozen.</td>
+<td><code>fastq-dump ... --split-files --skip-technical ...</code></td>
+<td>Convert the already downloaded local SRA run to FASTQ. <code>--split-files</code> writes read 1 and read 2 separately; <code>--skip-technical</code> excludes technical reads.</td>
 </tr>
 <tr class="odd">
 <td><code>${run}_1.fastq</code>, <code>${run}_2.fastq</code></td>
@@ -1990,17 +2038,33 @@ ERR...           WT_2            PAIRED             WT_2
 </tr>
 </tbody>
 </table>
-<p>For a workshop laptop we use <strong>4 threads explicitly</strong> rather than relying on the program default. More threads are not necessarily faster because <code>fasterq-dump</code> can become limited by network or disk I/O. The <code>--progress</code> and <code>--details</code> options are pedagogically useful here: SRA retrieval and FASTQ conversion can take several minutes, and visible stage/progress messages make it clear that the command is still working.</p>
+<p>The important conceptual change is that <strong>download and conversion are separate operations</strong>. <code>prefetch</code> handles network transfer and can resume an interrupted download; <code>vdb-validate</code> checks the local archive object; only then is that local object converted to FASTQ.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Why use fastq-dump for this workshop dataset?">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Why use fastq-dump for this workshop dataset?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The current workshop image uses SRA Toolkit 3.4.1. With these ERR runs, <code>fasterq-dump</code> can fail on a locally prefetched object with <code>the input data is missing the QUALITY-column</code> even when <code>vdb-validate</code> reports that the archive is consistent. NCBI still supports the older <code>fastq-dump</code> because it handles some archive corner cases that <code>fasterq-dump</code> does not. For this dataset we therefore use <code>prefetch</code> for robust, resumable network transfer and <code>fastq-dump</code> only for the local FASTQ conversion.</p>
+<p>See the <a href="https://github.com/ncbi/sra-tools/wiki/Home">SRA Toolkit documentation</a> and an example of the <a href="https://github.com/ncbi/sra-tools/issues/851"><code>QUALITY-column</code> issue</a>.</p>
+</div>
+</div>
 </div>
 </div>
 </section>
 <section id="check-ebincbi-and-run-the-complete-sra-route" class="level5">
 <h5 class="anchored" data-anchor-id="check-ebincbi-and-run-the-complete-sra-route">Check EBI/NCBI and run the complete SRA route</h5>
-<p>This route uses one image for two network operations:</p>
+<p>This route separates retrieval from conversion:</p>
 <pre class="text"><code>curl              -&gt; retrieve the small run-metadata tables
-fasterq-dump       -&gt; retrieve each sequencing run and convert it to FASTQ</code></pre>
+prefetch          -&gt; download each selected run into raw_data_sra/sra/
+vdb-validate      -&gt; check the local SRA object
+fastq-dump        -&gt; convert the local run to FASTQ</code></pre>
 <p>The same command is used on macOS and Windows/WSL2. Because <code>ngs-sra-tools</code> is a multi-platform image, do <strong>not</strong> force <code>--platform linux/amd64</code>; Docker chooses <code>linux/arm64</code> on Apple Silicon and <code>linux/amd64</code> on Intel/AMD systems automatically.</p>
-<p>Before downloading the data, test both repositories and verify that <code>fasterq-dump</code> is available:</p>
+<p>Before downloading the data, test both repositories and verify that the required SRA Toolkit commands are available:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb56"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
 <span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>  docker.io/fgualdr/ngs-sra-tools:latest <span class="dt">\</span></span>
 <span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>  bash <span class="at">-c</span> <span class="st">'</span></span>
@@ -2014,9 +2078,12 @@ fasterq-dump       -&gt; retrieve each sequencing run and convert it to FASTQ</c
 <span id="cb56-11"><a href="#cb56-11" aria-hidden="true" tabindex="-1"></a><span class="st">    curl -I https://www.ncbi.nlm.nih.gov</span></span>
 <span id="cb56-12"><a href="#cb56-12" aria-hidden="true" tabindex="-1"></a><span class="st">    echo</span></span>
 <span id="cb56-13"><a href="#cb56-13" aria-hidden="true" tabindex="-1"></a><span class="st">    echo "SRA Toolkit:"</span></span>
-<span id="cb56-14"><a href="#cb56-14" aria-hidden="true" tabindex="-1"></a><span class="st">    command -v fasterq-dump</span></span>
-<span id="cb56-15"><a href="#cb56-15" aria-hidden="true" tabindex="-1"></a><span class="st">    fasterq-dump --version</span></span>
-<span id="cb56-16"><a href="#cb56-16" aria-hidden="true" tabindex="-1"></a><span class="st">  '</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb56-14"><a href="#cb56-14" aria-hidden="true" tabindex="-1"></a><span class="st">    command -v prefetch</span></span>
+<span id="cb56-15"><a href="#cb56-15" aria-hidden="true" tabindex="-1"></a><span class="st">    command -v vdb-validate</span></span>
+<span id="cb56-16"><a href="#cb56-16" aria-hidden="true" tabindex="-1"></a><span class="st">    command -v fastq-dump</span></span>
+<span id="cb56-17"><a href="#cb56-17" aria-hidden="true" tabindex="-1"></a><span class="st">    prefetch --version</span></span>
+<span id="cb56-18"><a href="#cb56-18" aria-hidden="true" tabindex="-1"></a><span class="st">    fastq-dump --version</span></span>
+<span id="cb56-19"><a href="#cb56-19" aria-hidden="true" tabindex="-1"></a><span class="st">  '</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>If these tests succeed, run the complete SRA route:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb57"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
 <span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--user</span> <span class="st">"</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-u</span><span class="va">)</span><span class="st">:</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-g</span><span class="va">)</span><span class="st">"</span> <span class="dt">\</span></span>
@@ -2024,7 +2091,7 @@ fasterq-dump       -&gt; retrieve each sequencing run and convert it to FASTQ</c
 <span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
 <span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a>  docker.io/fgualdr/ngs-sra-tools:latest <span class="dt">\</span></span>
 <span id="cb57-6"><a href="#cb57-6" aria-hidden="true" tabindex="-1"></a>  bash scripts/day1/04_download_sra_fastq.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>One execution retrieves the metadata and downloads the selected <strong>RNA-seq and ChIP-seq</strong> runs. <code>fasterq-dump</code> performs the SRA sequence retrieval and FASTQ conversion; the script then renames and compresses the files according to the workshop naming scheme.</p>
+<p>One execution retrieves the metadata and processes the selected <strong>RNA-seq and ChIP-seq</strong> runs. Each run is first stored below <code>raw_data_sra/sra/</code>, validated, converted locally to FASTQ, then renamed and compressed according to the workshop naming scheme.</p>
 <div class="callout callout-style-default callout-note callout-titled" title="Same Docker command on macOS and Windows/WSL2">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -2094,7 +2161,7 @@ WT_1_R2.fastq.gz                         WT_1_R2.fastq.gz</code></pre>
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The biological data are the same, but the retrieval logic is different. With ArrayExpress/ENA, you work from metadata containing direct FASTQ URLs. With SRA, you work from <strong>run accessions</strong>, where <code>fasterq-dump</code> performs the sequence download and FASTQ conversion. In both cases, good practice is the same: inspect metadata first, select the required samples explicitly, retain the original archive identifiers, and rename files to meaningful local names.</p>
+<p>The biological data are the same, but the retrieval logic is different. With ArrayExpress/ENA, you work from metadata containing direct FASTQ URLs. With SRA, you work from <strong>run accessions</strong>: <code>prefetch</code> retrieves the archive object first, and a separate local conversion step produces FASTQ files. In both cases, good practice is the same: inspect metadata first, select the required samples explicitly, retain the original archive identifiers, and rename files to meaningful local names.</p>
 </div>
 </div>
 <div class="callout callout-style-default callout-warning callout-titled" title="Storage">
@@ -2107,7 +2174,7 @@ WT_1_R2.fastq.gz                         WT_1_R2.fastq.gz</code></pre>
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p><code>fasterq-dump</code> writes uncompressed FASTQ files before <code>gzip</code> compresses them and can also require temporary working space. Public sequencing runs can therefore require substantially more free disk space during retrieval than the final <code>.fastq.gz</code> files occupy.</p>
+<p>The SRA route temporarily stores both the prefetched archive object under <code>raw_data_sra/sra/</code> and the uncompressed FASTQ files before <code>gzip</code> compresses them. Public sequencing runs can therefore require substantially more free disk space during retrieval than the final <code>.fastq.gz</code> files occupy. Keep the local SRA objects until conversion is complete; they can be removed later if disk space is needed.</p>
 </div>
 </div>
 </section>

@@ -1,17 +1,8 @@
-FROM docker.io/library/debian:bookworm-slim
+FROM docker.io/mambaorg/micromamba:1.5.10
 
-ARG TARGETARCH
-
-RUN apt-get update && apt-get install -y --no-install-recommends bash ca-certificates curl unzip \
-    && rm -rf /var/lib/apt/lists/* \
-    && case "${TARGETARCH}" in \
-         amd64) NCBI_ARCH="linux-amd64" ;; \
-         arm64) NCBI_ARCH="linux-arm64" ;; \
-         *) echo "Unsupported architecture: ${TARGETARCH}" >&2; exit 1 ;; \
-       esac \
-    && curl -fsSL "https://ftp.ncbi.nlm.nih.gov/pub/datasets/command-line/v2/${NCBI_ARCH}/datasets" -o /usr/local/bin/datasets \
-    && curl -fsSL "https://ftp.ncbi.nlm.nih.gov/pub/datasets/command-line/v2/${NCBI_ARCH}/dataformat" -o /usr/local/bin/dataformat \
-    && chmod 0755 /usr/local/bin/datasets /usr/local/bin/dataformat
+RUN micromamba install -y -n base -c conda-forge \
+      ncbi-datasets-cli=16.22.1 \
+      unzip=6.0 \
+    && micromamba clean -a -y
 
 WORKDIR /work
-CMD ["/bin/bash"]

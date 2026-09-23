@@ -1,12 +1,7 @@
-FROM docker.io/library/python:3.11-slim-bookworm
+FROM docker.io/mambaorg/micromamba:1.5.10
 
-ARG MACS3_VERSION=3.0.4
+RUN micromamba install -y -n base -c conda-forge -c bioconda \
+      macs3=3.0.4 \
+    && micromamba clean -a -y
 
-RUN apt-get update && apt-get install -y --no-install-recommends bash build-essential \
-    && rm -rf /var/lib/apt/lists/* \
-    && python -m venv /opt/macs3 \
-    && /opt/macs3/bin/pip install --no-cache-dir --upgrade pip setuptools wheel \
-    && /opt/macs3/bin/pip install --no-cache-dir "MACS3==${MACS3_VERSION}"
-ENV PATH="/opt/macs3/bin:${PATH}"
 WORKDIR /work
-CMD ["/bin/bash"]

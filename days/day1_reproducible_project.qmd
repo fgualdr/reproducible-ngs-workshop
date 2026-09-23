@@ -1173,13 +1173,22 @@ SRA / ENA run metadata
         +--> run accession: SRR... / ERR... / DRR...
                               |
                               v
-                        fasterq-dump
+                           prefetch
+                              |
+                              v
+                         local SRA run
+                              |
+                              v
+                         vdb-validate
+                              |
+                              v
+                          fastq-dump
                               |
                               v
                             FASTQ
 ```
 
-The SRA file itself contains the sequence data, not the biological sample metadata. We therefore first download a small run-metadata table, select the samples that we want, and define the filenames that we want locally. We then use each run accession with `fasterq-dump`.
+The SRA file itself contains the sequence data, not the biological sample metadata. We therefore first download a small run-metadata table, select the samples that we want, and define the filenames that we want locally. For each selected run, `prefetch` downloads the archive object into a local SRA directory, `vdb-validate` checks that object, and the local run is then converted to FASTQ.
 
 For simplicity, this example uses the ENA Portal API to obtain a small tab-separated run table from the shared INSDC records. The sequence data are then retrieved with the NCBI SRA Toolkit. The same run accessions describe the same public runs across SRA/ENA/DRA.
 
@@ -1197,6 +1206,8 @@ raw_data_sra/
 │   ├── RNAseq_metadata.txt
 │   ├── Chipseq_metadata_all.tsv
 │   └── Chipseq_metadata.txt
+├── sra/
+│   └── ERR.../
 └── fastq/
     ├── rnaseq/
     └── chipseq/
@@ -1222,6 +1233,7 @@ root="raw_data_sra"
 
 mkdir -p \
   "${root}/metadata" \
+  "${root}/sra" \
   "${root}/fastq/rnaseq" \
   "${root}/fastq/chipseq"
 
@@ -1280,10 +1292,21 @@ $2 ~ /^(WT|WTS)_[123]$/ {print $1,$2,$3,$2}
 tail -n +2 "${root}/metadata/RNAseq_metadata.txt" |
 while IFS=$'\t' read -r run sample layout prefix; do
 
-  echo "Downloading RNA-seq ${sample} (${run}); layout=${layout}; threads=4"
+  echo "Downloading RNA-seq ${sample} (${run}); layout=${layout}"
+
+  # Download the SRA run first. If the transfer is interrupted,
+  # rerunning prefetch can resume the existing download.
+  prefetch --max-size u -O "${root}/sra" "${run}"
+
+  # Validate the local archive object before converting it to FASTQ.
+  vdb-validate "${root}/sra/${run}"
 
   if [[ "${layout}" == "PAIRED" ]]; then
-    fasterq-dump "${run}" --split-files --threads 4 --progress --details --outdir "${root}/fastq/rnaseq"
+    fastq-dump \
+      --split-files \
+      --skip-technical \
+      --outdir "${root}/fastq/rnaseq" \
+      "${root}/sra/${run}"
 
     mv "${root}/fastq/rnaseq/${run}_1.fastq" "${root}/fastq/rnaseq/${prefix}_R1.fastq"
     mv "${root}/fastq/rnaseq/${run}_2.fastq" "${root}/fastq/rnaseq/${prefix}_R2.fastq"
@@ -1292,7 +1315,10 @@ while IFS=$'\t' read -r run sample layout prefix; do
     gzip "${root}/fastq/rnaseq/${prefix}_R2.fastq"
 
   else
-    fasterq-dump "${run}" --threads 4 --progress --details --outdir "${root}/fastq/rnaseq"
+    fastq-dump \
+      --skip-technical \
+      --outdir "${root}/fastq/rnaseq" \
+      "${root}/sra/${run}"
 
     mv "${root}/fastq/rnaseq/${run}.fastq" "${root}/fastq/rnaseq/${prefix}_R1.fastq"
     gzip "${root}/fastq/rnaseq/${prefix}_R1.fastq"
@@ -1308,10 +1334,21 @@ done
 tail -n +2 "${root}/metadata/Chipseq_metadata.txt" |
 while IFS=$'\t' read -r run sample layout prefix; do
 
-  echo "Downloading ChIP-seq ${sample} (${run}); layout=${layout}; threads=4"
+  echo "Downloading ChIP-seq ${sample} (${run}); layout=${layout}"
+
+  # Download the SRA run first. If the transfer is interrupted,
+  # rerunning prefetch can resume the existing download.
+  prefetch --max-size u -O "${root}/sra" "${run}"
+
+  # Validate the local archive object before converting it to FASTQ.
+  vdb-validate "${root}/sra/${run}"
 
   if [[ "${layout}" == "PAIRED" ]]; then
-    fasterq-dump "${run}" --split-files --threads 4 --progress --details --outdir "${root}/fastq/chipseq"
+    fastq-dump \
+      --split-files \
+      --skip-technical \
+      --outdir "${root}/fastq/chipseq" \
+      "${root}/sra/${run}"
 
     mv "${root}/fastq/chipseq/${run}_1.fastq" "${root}/fastq/chipseq/${prefix}_R1.fastq"
     mv "${root}/fastq/chipseq/${run}_2.fastq" "${root}/fastq/chipseq/${prefix}_R2.fastq"
@@ -1320,7 +1357,10 @@ while IFS=$'\t' read -r run sample layout prefix; do
     gzip "${root}/fastq/chipseq/${prefix}_R2.fastq"
 
   else
-    fasterq-dump "${run}" --threads 4 --progress --details --outdir "${root}/fastq/chipseq"
+    fastq-dump \
+      --skip-technical \
+      --outdir "${root}/fastq/chipseq" \
+      "${root}/sra/${run}"
 
     mv "${root}/fastq/chipseq/${run}.fastq" "${root}/fastq/chipseq/${prefix}_R1.fastq"
     gzip "${root}/fastq/chipseq/${prefix}_R1.fastq"
@@ -1329,7 +1369,7 @@ while IFS=$'\t' read -r run sample layout prefix; do
 done
 ```
 
-The script deliberately repeats the RNA-seq and ChIP-seq blocks. This is slightly longer than writing a Bash function, but it makes the workflow easier to read when learning Bash: **metadata -> sample selection -> FASTQ download -> renaming** is visible independently for each experiment.
+The script deliberately repeats the RNA-seq and ChIP-seq blocks. This is slightly longer than writing a Bash function, but it makes the workflow easier to read when learning Bash: **metadata -> sample selection -> SRA prefetch -> validation -> FASTQ conversion -> renaming** is visible independently for each experiment.
 
 ::: {.callout-note title="Bash walkthrough: downloading and selecting the metadata"}
 The first two blocks do the same job for RNA-seq and ChIP-seq.
@@ -1337,7 +1377,7 @@ The first two blocks do the same job for RNA-seq and ChIP-seq.
 | Bash code | What it does |
 |---|---|
 | `root="raw_data_sra"` | Store the root output directory in one variable. All SRA-derived files are written below this directory. |
-| `mkdir -p ...` | Create the metadata, RNA-seq FASTQ, and ChIP-seq FASTQ directories. `-p` also creates missing parent directories and does not fail if they already exist. |
+| `mkdir -p ...` | Create the metadata, local SRA, RNA-seq FASTQ, and ChIP-seq FASTQ directories. `-p` also creates missing parent directories and does not fail if they already exist. |
 | `rnaseq_study="ERP147707"` | Store the RNA-seq study accession in a variable. |
 | `${rnaseq_study}` | Insert the value stored in the variable into the URL. |
 | `curl -fL URL -o file` | Download the metadata table. `-f` makes HTTP errors fail, `-L` follows redirects, and `-o` gives the downloaded file a local name. |
@@ -1371,8 +1411,10 @@ The download loop reads one selected metadata row at a time.
 | `|` | Pipe the rows produced by `tail` into the `while` loop. |
 | `while IFS=$'\t' read -r run sample layout prefix; do` | Read four tab-separated columns into four Bash variables. |
 | `echo "...${sample}...${run}..."` | Print which biological sample and archive run are currently being processed. |
+| `prefetch --max-size u -O "${root}/sra" "${run}"` | Download the run into `${root}/sra/${run}`. `--max-size u` removes the default maximum-size limit. If the transfer is interrupted, rerunning the same command can resume it. |
+| `vdb-validate "${root}/sra/${run}"` | Validate the locally prefetched SRA object before FASTQ conversion. |
 | `if [[ "${layout}" == "PAIRED" ]]; then` | Use the paired-end branch when the metadata say that the library layout is `PAIRED`. |
-| `fasterq-dump "${run}" --split-files --threads 4 --progress --details --outdir ...` | Retrieve the run and convert it to FASTQ. `--split-files` writes read 1 and read 2 separately; `--threads 4` makes the amount of parallel work explicit; `--progress` prints progress bars for the conversion stages; `--details` prints additional status information so a long download/conversion does not look frozen. |
+| `fastq-dump ... --split-files --skip-technical ...` | Convert the already downloaded local SRA run to FASTQ. `--split-files` writes read 1 and read 2 separately; `--skip-technical` excludes technical reads. |
 | `${run}_1.fastq`, `${run}_2.fastq` | Default archive-based FASTQ names produced for a paired-end run. |
 | `mv old new` | Rename an archive-based file to the biological sample name used in the workshop. |
 | `${prefix}_R1.fastq` | Construct a filename such as `WT_1_R1.fastq`. |
@@ -1382,21 +1424,29 @@ The download loop reads one selected metadata row at a time.
 | `fi` | End the `if` statement. |
 | `done` | End the loop after all selected runs have been processed. |
 
-For a workshop laptop we use **4 threads explicitly** rather than relying on the program default. More threads are not necessarily faster because `fasterq-dump` can become limited by network or disk I/O. The `--progress` and `--details` options are pedagogically useful here: SRA retrieval and FASTQ conversion can take several minutes, and visible stage/progress messages make it clear that the command is still working.
+The important conceptual change is that **download and conversion are separate operations**. `prefetch` handles network transfer and can resume an interrupted download; `vdb-validate` checks the local archive object; only then is that local object converted to FASTQ.
+
+::: {.callout-note title="Why use fastq-dump for this workshop dataset?"}
+The current workshop image uses SRA Toolkit 3.4.1. With these ERR runs, `fasterq-dump` can fail on a locally prefetched object with `the input data is missing the QUALITY-column` even when `vdb-validate` reports that the archive is consistent. NCBI still supports the older `fastq-dump` because it handles some archive corner cases that `fasterq-dump` does not. For this dataset we therefore use `prefetch` for robust, resumable network transfer and `fastq-dump` only for the local FASTQ conversion.
+
+See the [SRA Toolkit documentation](https://github.com/ncbi/sra-tools/wiki/Home) and an example of the [`QUALITY-column` issue](https://github.com/ncbi/sra-tools/issues/851).
+:::
 :::
 
 ##### Check EBI/NCBI and run the complete SRA route
 
-This route uses one image for two network operations:
+This route separates retrieval from conversion:
 
 ```text
 curl              -> retrieve the small run-metadata tables
-fasterq-dump       -> retrieve each sequencing run and convert it to FASTQ
+prefetch          -> download each selected run into raw_data_sra/sra/
+vdb-validate      -> check the local SRA object
+fastq-dump        -> convert the local run to FASTQ
 ```
 
 The same command is used on macOS and Windows/WSL2. Because `ngs-sra-tools` is a multi-platform image, do **not** force `--platform linux/amd64`; Docker chooses `linux/arm64` on Apple Silicon and `linux/amd64` on Intel/AMD systems automatically.
 
-Before downloading the data, test both repositories and verify that `fasterq-dump` is available:
+Before downloading the data, test both repositories and verify that the required SRA Toolkit commands are available:
 
 ```bash
 docker run --rm \
@@ -1412,8 +1462,11 @@ docker run --rm \
     curl -I https://www.ncbi.nlm.nih.gov
     echo
     echo "SRA Toolkit:"
-    command -v fasterq-dump
-    fasterq-dump --version
+    command -v prefetch
+    command -v vdb-validate
+    command -v fastq-dump
+    prefetch --version
+    fastq-dump --version
   '
 ```
 
@@ -1428,7 +1481,7 @@ docker run --rm \
   bash scripts/day1/04_download_sra_fastq.sh
 ```
 
-One execution retrieves the metadata and downloads the selected **RNA-seq and ChIP-seq** runs. `fasterq-dump` performs the SRA sequence retrieval and FASTQ conversion; the script then renames and compresses the files according to the workshop naming scheme.
+One execution retrieves the metadata and processes the selected **RNA-seq and ChIP-seq** runs. Each run is first stored below `raw_data_sra/sra/`, validated, converted locally to FASTQ, then renamed and compressed according to the workshop naming scheme.
 
 ::: {.callout-note title="Same Docker command on macOS and Windows/WSL2"}
 Run the command from the repository root in a **Bash** terminal:
@@ -1493,11 +1546,11 @@ WT_1_R2.fastq.gz                         WT_1_R2.fastq.gz
 ```
 
 ::: {.callout-note title="Why use both routes?"}
-The biological data are the same, but the retrieval logic is different. With ArrayExpress/ENA, you work from metadata containing direct FASTQ URLs. With SRA, you work from **run accessions**, where `fasterq-dump` performs the sequence download and FASTQ conversion. In both cases, good practice is the same: inspect metadata first, select the required samples explicitly, retain the original archive identifiers, and rename files to meaningful local names.
+The biological data are the same, but the retrieval logic is different. With ArrayExpress/ENA, you work from metadata containing direct FASTQ URLs. With SRA, you work from **run accessions**: `prefetch` retrieves the archive object first, and a separate local conversion step produces FASTQ files. In both cases, good practice is the same: inspect metadata first, select the required samples explicitly, retain the original archive identifiers, and rename files to meaningful local names.
 :::
 
 ::: {.callout-warning title="Storage"}
-`fasterq-dump` writes uncompressed FASTQ files before `gzip` compresses them and can also require temporary working space. Public sequencing runs can therefore require substantially more free disk space during retrieval than the final `.fastq.gz` files occupy.
+The SRA route temporarily stores both the prefetched archive object under `raw_data_sra/sra/` and the uncompressed FASTQ files before `gzip` compresses them. Public sequencing runs can therefore require substantially more free disk space during retrieval than the final `.fastq.gz` files occupy. Keep the local SRA objects until conversion is complete; they can be removed later if disk space is needed.
 :::
 ## 8. FASTQ preprocessing and quality assessment with fastp
 

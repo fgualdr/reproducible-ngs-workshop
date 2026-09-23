@@ -462,7 +462,7 @@ The `*.sorted.bam` files preserve all alignments for diagnosis. The `*.filtered.
 
 #### 3.6 Determine RNA-seq library strandedness
 
-Genes are transcribed from either the `+` or the `-` genomic strand. RNA-seq library preparation determines whether the orientation of read 1 (R1) preserves information about that transcript strand. `featureCounts` needs this information so that a fragment is assigned only to a gene with the expected orientation.
+Genes are transcribed from either the `+` or the `-` genomic strand. RNA-seq library preparation determines whether the orientation of read 1 (R1) retains information about the strand of the original transcript. `featureCounts` needs this information so that a fragment is assigned only to a gene with the expected orientation.
 
 | Relationship between R1 and the transcript | Library type | `featureCounts` setting |
 |---|---|---|
@@ -470,9 +470,9 @@ Genes are transcribed from either the `+` or the `-` genomic strand. RNA-seq lib
 | R1 has the same orientation as the transcript | Forward/sense stranded | `-s 1` |
 | R1 has the opposite orientation to the transcript | Reverse/antisense stranded | `-s 2` |
 
-Day 1 established that `E-MTAB-13025` is an rRNA-depleted, directional prokaryotic PE150 library made with dUTP/USER-based strand-selective chemistry. For this protocol, R1 has the opposite orientation to the original transcript. We will therefore use `featureCounts -s 2` for the workshop RNA-seq samples.
+The published methods describe `E-MTAB-13025` as an rRNA-depleted **directional** prokaryotic paired-end library, with random-hexamer first-strand synthesis, strand-selective second-strand chemistry, and USER treatment. This tells us that the library is stranded, but **"directional" alone does not establish whether the deposited R1 reads have the same or opposite orientation as the annotated transcript**. We therefore validate the orientation empirically on the actual workshop BAM files before counting.
 
-If the metadata is missing or ambiguous, infer the relationship empirically with [`infer_experiment.py`](https://rseqc.sourceforge.net/#infer-experiment-py) from RSeQC. Use the 12-column BED gene model created by the Day 1 reference script:
+Use [`infer_experiment.py`](https://rseqc.sourceforge.net/#infer-experiment-py) from RSeQC together with the 12-column BED gene model created by the Day 1 reference script:
 
 ```text
 reference_genome/genes.bed
@@ -480,20 +480,20 @@ reference_genome/genes.bed
 
 This BED file must describe the same `GCF_025998455.1` assembly as the BAM files and must use the same sequence name, `NZ_AP026446.1`. A BED file made for the study's original `NC_000915.1` alignment cannot be used with the workshop BAM files.
 
-The workshop uses a digest-pinned BioContainers image containing [RSeQC 5.0.4](https://bioconda.github.io/recipes/rseqc/README.html). Inspect one representative filtered BAM:
+Inspect one representative filtered BAM. The image is pinned by digest so that the same RSeQC environment is used throughout the workshop:
 
 ```bash
 docker run --rm \
   --user "$(id -u):$(id -g)" \
   -v "$PWD:/work" \
   -w /work \
-  docker.io/getwilds/rseqc \
+  docker.io/getwilds/rseqc@sha256:f7021717d929d5a2782bf7d62817500feea4f13611bbd3dd326c2bb48d2cc59d \
   infer_experiment.py \
   -i results/day2_rnaseq/bam/WT_1.filtered.bam \
   -r reference_genome/genes.bed
 ```
 
-For paired-end data, the RSeQC strings encode the read number, the strand on which that read aligns, and the annotated transcript strand. For example, `1++` means that R1 aligns to the `+` strand over a `+` transcript.
+For paired-end data, the RSeQC strings encode the read number, the strand on which that read aligns, and the annotated transcript strand. For example, `1++` means that R1 aligns to the `+` genomic strand over a `+` transcript.
 
 | Dominant RSeQC result | Meaning | Use with `featureCounts` |
 |---|---|---|
@@ -501,9 +501,24 @@ For paired-end data, the RSeQC strings encode the read number, the strand on whi
 | `1++,1--,2+-,2-+` | R1 has the same orientation as the transcript | `-s 1` |
 | `1+-,1-+,2++,2--` | R1 has the opposite orientation to the transcript | `-s 2` |
 
-Do not memorize the strings. Use them to answer one question: is R1 unrelated to, in the same orientation as, or in the opposite orientation to the transcript? If RSeQC reports a large fraction of reads for which orientation cannot be determined, check that the BED and BAM use the same assembly and reconcile the result with the library metadata before counting.
+For the workshop data, `WT_1.filtered.bam` gives:
 
-With `-s 2` established for the workshop dataset, the progression is:
+```text
+This is PairEnd Data
+Fraction of reads failed to determine: 0.0017
+Fraction of reads explained by "1++,1--,2+-,2-+": 0.9722
+Fraction of reads explained by "1+-,1-+,2++,2--": 0.0261
+```
+
+Approximately 97.2% of the sampled reads therefore support the class in which **R1 has the same orientation as the annotated transcript**, whereas only 2.6% support the opposite class. The library is strongly stranded and, for these deposited reads and this annotation, the correct setting is:
+
+```text
+featureCounts -s 1
+```
+
+Do not infer `-s 1` versus `-s 2` from the word *directional* alone. Use the library metadata to establish that strandedness is expected, then use the actual R1/R2 orientation relative to the matched annotation to determine which `featureCounts` convention applies. If RSeQC reports a large undetermined fraction or no dominant orientation class, first check that the BED and BAM use the same assembly and sequence names, then reconcile the result with the library metadata before counting.
+
+With `-s 1` established for the workshop dataset, the progression is:
 
 ```text
 BAM
@@ -517,7 +532,7 @@ BAM
 
 ## 4. Count reads per gene with featureCounts
 
-The strandedness step selected `-s 2` for this dataset. We can now use featureCounts to obtain one raw fragment count per gene and sample:
+The strandedness step selected `-s 1` for this dataset. We can now use featureCounts to obtain one raw fragment count per gene and sample:
 
 ```text
 filtered BAM + reference_genome/annotation.gff3
@@ -570,7 +585,7 @@ featureCounts \
   -C \
   -s 1 \
   -t gene \
-  -g Name \
+  -g ID \
   -a "${annotation}" \
   -o "${featurecounts_out}" \
   "${bam_files[@]}" \
@@ -594,9 +609,9 @@ The script performs these steps:
 | `--countReadPairs` | Count one fragment for each read pair instead of counting the two read ends separately. |
 | `-B` | Count a fragment only when both ends are aligned. |
 | `-C` | Exclude chimeric pairs whose two ends align to different chromosomes. |
-| `-s 1` | Assign fragments when R1 is with same orientation to the annotated gene strand, as determined above. |
+| `-s 1` | Assign fragments when R1 has the same orientation as the annotated gene strand, as determined above. |
 | `-t gene` | Count overlaps with GFF3 records whose feature type is `gene`. |
-| `-g Name` | Use the GFF3 `Name` attribute as the gene identifier or pick one from the GFF3 file. |
+| `-g ID` | Use the GFF3 `ID` attribute as the gene identifier. This keeps the count identifiers consistent with the Day 1 BED12 gene model and the Day 4 annotation-based integration. |
 | `-a "${annotation}"` | Supply the annotation file. |
 | `-o "${featurecounts_out}"` | Write the complete count table to this file. |
 | `"${bam_files[@]}"` | Pass all filtered BAM files to one featureCounts command, producing one count column per sample. |

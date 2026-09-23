@@ -1,20 +1,7 @@
-FROM eclipse-temurin:17-jre-jammy
+FROM docker.io/mambaorg/micromamba:1.5.10
 
-ARG FASTQC_VERSION=0.12.1
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    curl \
-    unzip \
-    perl \
-    fontconfig \
-    && curl -fsSL \
-       "https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v${FASTQC_VERSION}.zip" \
-       -o /tmp/fastqc.zip \
-    && unzip -q /tmp/fastqc.zip -d /opt \
-    && chmod +x /opt/FastQC/fastqc \
-    && ln -s /opt/FastQC/fastqc /usr/local/bin/fastqc \
-    && rm -f /tmp/fastqc.zip \
-    && rm -rf /var/lib/apt/lists/*
+RUN micromamba install -y -n base -c conda-forge -c bioconda \
+      fastqc=0.12.1 \
+    && micromamba clean -a -y
 
 WORKDIR /work
