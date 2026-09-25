@@ -470,7 +470,9 @@ Genes are transcribed from either the `+` or the `-` genomic strand. RNA-seq lib
 | R1 has the same orientation as the transcript | Forward/sense stranded | `-s 1` |
 | R1 has the opposite orientation to the transcript | Reverse/antisense stranded | `-s 2` |
 
-The published methods describe `E-MTAB-13025` as an rRNA-depleted **directional** prokaryotic paired-end library, with random-hexamer first-strand synthesis, strand-selective second-strand chemistry, and USER treatment. This tells us that the library is stranded, but **"directional" alone does not establish whether the deposited R1 reads have the same or opposite orientation as the annotated transcript**. We therefore validate the orientation empirically on the actual workshop BAM files before counting.
+The published methods describe `E-MTAB-13025` as an rRNA-depleted **directional** prokaryotic paired-end library using strand-selective second-strand chemistry and USER treatment. This library-preparation strategy is expected to produce a **reverse-stranded library**, in which R1 is opposite to the annotated transcript. This corresponds to `featureCounts -s 2`.
+
+We nevertheless validate the orientation empirically on the actual workshop BAM files before counting. The RSeQC result agrees with the library-preparation information and supports `-s 2`.
 
 Use [`infer_experiment.py`](https://rseqc.sourceforge.net/#infer-experiment-py) from RSeQC together with the 12-column BED gene model created by the Day 1 reference script:
 
@@ -480,17 +482,30 @@ reference_genome/genes.bed
 
 This BED file must describe the same `GCF_025998455.1` assembly as the BAM files and must use the same sequence name, `NZ_AP026446.1`. A BED file made for the study's original `NC_000915.1` alignment cannot be used with the workshop BAM files.
 
-Inspect one representative filtered BAM. The image is pinned by digest so that the same RSeQC environment is used throughout the workshop:
+Inspect one representative filtered BAM. 
+The image is pinned by digest so that the same RSeQC environment is used throughout the workshop. 
+Because `infer_experiment.py` samples alignments from the BAM, this check is fast enough to run directly from the terminal:
 
 ```bash
-docker run --rm \
-  --user "$(id -u):$(id -g)" \
-  -v "$PWD:/work" \
-  -w /work \
-  docker.io/getwilds/rseqc@sha256:f7021717d929d5a2782bf7d62817500feea4f13611bbd3dd326c2bb48d2cc59d \
-  infer_experiment.py \
-  -i results/day2_rnaseq/bam/WT_1.filtered.bam \
-  -r reference_genome/genes.bed
+mkdir -p results/logs/day2
+
+{
+for f in results/day2_rnaseq/bam/*.filtered.bam; do
+    echo
+    echo "===== $f ====="
+
+    docker run --rm \
+      --user "$(id -u):$(id -g)" \
+      -v "$PWD:/work" \
+      -w /work \
+      docker.io/getwilds/rseqc \
+      infer_experiment.py \
+      -i "$f" \
+      -r reference_genome/genes.bed
+
+done
+} 2>&1 | tee results/logs/day2/rseqc_strandedness.log
+
 ```
 
 For paired-end data, the RSeQC strings encode the read number, the strand on which that read aligns, and the annotated transcript strand. For example, `1++` means that R1 aligns to the `+` genomic strand over a `+` transcript.
@@ -501,38 +516,9 @@ For paired-end data, the RSeQC strings encode the read number, the strand on whi
 | `1++,1--,2+-,2-+` | R1 has the same orientation as the transcript | `-s 1` |
 | `1+-,1-+,2++,2--` | R1 has the opposite orientation to the transcript | `-s 2` |
 
-For the workshop data, `WT_1.filtered.bam` gives:
-
-```text
-This is PairEnd Data
-Fraction of reads failed to determine: 0.0017
-Fraction of reads explained by "1++,1--,2+-,2-+": 0.9722
-Fraction of reads explained by "1+-,1-+,2++,2--": 0.0261
-```
-
-Approximately 97.2% of the sampled reads therefore support the class in which **R1 has the same orientation as the annotated transcript**, whereas only 2.6% support the opposite class. The library is strongly stranded and, for these deposited reads and this annotation, the correct setting is:
-
-```text
-featureCounts -s 1
-```
-
-Do not infer `-s 1` versus `-s 2` from the word *directional* alone. Use the library metadata to establish that strandedness is expected, then use the actual R1/R2 orientation relative to the matched annotation to determine which `featureCounts` convention applies. If RSeQC reports a large undetermined fraction or no dominant orientation class, first check that the BED and BAM use the same assembly and sequence names, then reconcile the result with the library metadata before counting.
-
-With `-s 1` established for the workshop dataset, the progression is:
-
-```text
-BAM
-  -> determine strandedness
-  -> choose -s 0/1/2
-  -> featureCounts
-  -> inspect .summary
-  -> import counts into R
-  -> DESeq2
-```
-
 ## 4. Count reads per gene with featureCounts
 
-The strandedness step selected `-s 1` for this dataset. We can now use featureCounts to obtain one raw fragment count per gene and sample:
+The library preparation and the empirical RSeQC check both support **reverse strandedness**, so we use `-s 2` for this dataset. We can now use featureCounts to obtain one raw fragment count per gene and sample:
 
 ```text
 filtered BAM + reference_genome/annotation.gff3
@@ -583,7 +569,7 @@ featureCounts \
   --countReadPairs \
   -B \
   -C \
-  -s 1 \
+  -s 2 \
   -t gene \
   -g ID \
   -a "${annotation}" \
@@ -609,7 +595,7 @@ The script performs these steps:
 | `--countReadPairs` | Count one fragment for each read pair instead of counting the two read ends separately. |
 | `-B` | Count a fragment only when both ends are aligned. |
 | `-C` | Exclude chimeric pairs whose two ends align to different chromosomes. |
-| `-s 1` | Assign fragments when R1 has the same orientation as the annotated gene strand, as determined above. |
+| `-s 2` | Count the library as reverse stranded: R1 is expected to align opposite to the annotated transcript strand, as supported by the library preparation and RSeQC. |
 | `-t gene` | Count overlaps with GFF3 records whose feature type is `gene`. |
 | `-g ID` | Use the GFF3 `ID` attribute as the gene identifier. This keeps the count identifiers consistent with the Day 1 BED12 gene model and the Day 4 annotation-based integration. |
 | `-a "${annotation}"` | Supply the annotation file. |
@@ -664,785 +650,205 @@ Approximate sanity checks before moving to DESeq2:
 
 These are qualitative checks, not pass/fail statistical tests. A clearly different sample should be investigated before interpreting differential expression.
 
-## 5. Prepare the raw count matrix in R and run DESeq2
+## 5. From a count matrix to differential expression with DESeq2
 
-The complete featureCounts table contains annotation information as well as counts. In R, we will select the gene identifier and sample columns to create a count matrix with genes as rows and samples as columns:
+The featureCounts table gives us one integer count per gene and sample. At this point the main question changes:
 
-```text
-features x samples
-```
+> **Are the differences we observe between conditions larger than we would expect from biological and sampling variability?**
 
-Before modeling, check whether the experiment still makes sense:
+Before answering that question, we first need to understand what DESeq2 is, why it is commonly used, what assumptions it makes, and how the experimental design enters the analysis.
 
-- How many reads were present after trimming?
-- What percentage mapped to the genome?
-- What percentage of mapped reads were assigned to genes?
-- Are any samples strong outliers at the mapping or counting stage?
-- Do sample names in the count matrix match the metadata?
+### 5.1 Why DESeq2?
 
-If many reads disappear between FASTQ, BAM, and gene counts, do not jump directly to p-values. First check reference version, annotation version, strandedness, sample labels, and logs.
+There is no single differential-expression tool for RNA-seq. Widely used alternatives include **edgeR**, **limma-voom**, **DSS**, and others. In this workshop we use **DESeq2** because it has become one of the de facto reference frameworks for bulk RNA-seq differential expression: it is widely used, well documented, supports simple and complex experimental designs, and links normalization, dispersion estimation, generalized linear models, statistical testing, diagnostics, and result extraction in one coherent workflow.
 
-#### 5.1 Statistical idea: what is DESeq2 trying to estimate?
+DESeq2 is an **R/Bioconductor package**. In everyday speech, R packages are often called libraries, although technically a package is the bundled collection of functions, classes, documentation, and supporting data, while `library(DESeq2)` loads that package into the current R session. DESeq2 is therefore not one single test: it is a set of interlinked functions operating on the same `DESeqDataSet` object and together implementing a complete statistical workflow.
 
-For each gene, we want to answer a simple question:
+The main DESeq2 reference is:
 
-> Is expression different between the two conditions, and is that difference large enough relative to the variability among biological replicates?
+> Love MI, Huber W, Anders S. **Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2.** *Genome Biology* 15, 550 (2014). [doi:10.1186/s13059-014-0550-8](https://doi.org/10.1186/s13059-014-0550-8)
 
-For gene $i$, RNA-seq gives one observed integer count in each sample $j$:
+#### A little historical context
 
-$$
-K_{ij}
-$$
+RNA-seq counts are not well described by a simple Gaussian model, and biological replicates usually vary more than expected from a Poisson process. This became particularly important in early RNA-seq experiments, where only a few biological replicates per condition were common.
 
-Suppose we have two conditions with three biological replicates each, as in the workshop data:
+A major step was therefore to model RNA-seq as **overdispersed count data** and to borrow information across thousands of genes instead of estimating the variance of every gene completely independently.
 
-```text
-condition_A: A1  A2  A3
-condition_B: B1  B2  B3
-```
+| Period / framework | Main idea | Why it mattered |
+|---|---|---|
+| Early simple approaches | Poisson models, transformed expression values, or tests not designed specifically for overdispersed sequencing counts | Often underestimated biological variability or handled the mean-variance relationship poorly |
+| **edgeR / DESeq (DESeq1)** | Negative-binomial models and sharing information across genes to estimate variability with few replicates | Made biological replication and overdispersion central to RNA-seq inference |
+| **DESeq2** | Negative-binomial GLMs, moderated gene-wise dispersion estimates, model-based coefficient SEs, Wald/LRT inference, flexible design formulas, independent filtering and outlier diagnostics | Generalized the approach into a more flexible regression framework suitable for both simple and multi-factor experiments |
 
-For one gene we might observe:
+The original DESeq method already modeled counts with a negative-binomial distribution and estimated the relationship between mean expression and variability across genes using a smooth trend [Anders & Huber, 2010](https://doi.org/10.1186/gb-2010-11-10-r106). DESeq2 retained the same broad principle but moved the analysis into a unified negative-binomial **generalized linear model (GLM)** framework and introduced improved shrinkage/moderation of dispersion and, historically, fold-change estimates. Current DESeq2 separates log2-fold-change shrinkage into `lfcShrink()` rather than applying it automatically during the main Wald test.
 
-```text
-           A1    A2    A3    B1    B2    B3
-counts    100   120   110   200   220   210
-```
+::: {.callout-note}
+**Take-home:** DESeq2 did not invent RNA-seq differential expression, and it is not the only valid method. We use it because it is a mature, widely adopted implementation of the general principle: **model count data, estimate biological variability using information shared across genes, fit the experimental design, and test the effect of interest.**
+:::
 
-Intuitively, DESeq2 needs to learn two things:
+### 5.2 The DESeq2 idea without the mathematics
+
+DESeq2 starts from **raw integer counts**. The counts must remain on a count scale because the model is built for discrete sequencing counts. Do not convert the input matrix to CPM, TPM, RPKM, percentages, log values, or bigWig signal before fitting DESeq2.
+
+Individual libraries are sequenced to different depths. A count of 500 in one sample therefore does not necessarily represent the same abundance as a count of 500 in another sample. DESeq2 first estimates a **sample-specific size factor** so that differences in overall library size are accounted for internally.
+
+For each gene, the conceptual workflow is:
 
 ```text
-1. where the centre of each condition is
-2. how much biological replicates vary around those centres
-```
-
-The difference between the two fitted condition levels gives the **effect size**.
-
-The variability among replicates determines how precisely that effect can be estimated.
-
-Before doing either, however, DESeq2 must account for differences in library size.
-
----
-
-#### 5.2 First account for differences between libraries
-
-Raw counts cannot be compared directly because samples may have different sequencing depths and library compositions.
-
-DESeq2 estimates one **size factor** $s_j$ for each sample.
-
-The statistical model distinguishes the observed count:
-
-$$
-K_{ij}
-$$
-
-from its modelled mean:
-
-$$
-\mu_{ij}
-$$
-
-The modelled mean is:
-
-$$
-\mu_{ij}=s_j q_{ij}
-$$
-
-where:
-
-* $\mu_{ij}$ is the mean count predicted by the model for gene $i$ in sample $j$;
-* $s_j$ is the size factor for sample $j$;
-* $q_{ij}$ is the expression level predicted by the experimental design after accounting for library size.
-
-The word **expected** is often used for $\mu_{ij}$. It has a statistical meaning:
-
-> $\mu_{ij}$ is the average count that the fitted model predicts for that sample.
-
-It does not mean what we expected biologically before performing the experiment.
-
-For example, suppose a gene has the same expression in two samples, but the second library has twice the sequencing depth:
-
-```text
-modelled expression q:       100     100
-size factor s:                 1       2
-expected count μ:            100     200
-```
-
-The expected raw count is twice as large in the second sample even though the underlying expression level is unchanged.
-
-DESeq2 estimates the size factors from many genes using the **median-of-ratios** method. The basic idea is to determine the relative scale of each library using genes that, collectively, provide a stable reference.
-
-This normalization assumes that large expression changes in one direction do not dominate most of the transcriptome. Experiments involving strong global shifts may require external information such as spike-ins or suitable control genes.
-
-Importantly, DESeq2 still takes **raw integer counts** as input. The size factors are incorporated into the statistical model; we do not normalize the count matrix ourselves before running DESeq2.
-
----
-
-#### 5.3 The design tells DESeq2 what expression levels to fit
-
-Consider the simple design:
-
-```r
-design = ~ condition
-```
-
-with condition A used as the reference.
-
-For the four samples:
-
-```text
-sample         A1   A2   B1   B2
-condition x     0    0    1    1
-```
-
-For each gene, the design says:
-
-```text
-A samples -> fit one expression level for condition A
-B samples -> fit one expression level for condition B
-```
-
-We can write this on the log2 scale as:
-
-$$
-\log_2(q_{ij})=\beta_{i0}+x_j\beta_{i1}
-$$
-
-where:
-
-* $\beta_{i0}$ is the baseline expression of gene $i$ on the log2 scale;
-* $x_j=0$ for condition A and $x_j=1$ for condition B;
-* $\beta_{i1}$ is the condition effect.
-
-For condition A:
-
-$$
-x_j=0
-$$
-
-so:
-
-$$
-\log_2(q_{iA})=\beta_{i0}
-$$
-
-For condition B:
-
-$$
-x_j=1
-$$
-
-so:
-
-$$
-\log_2(q_{iB})=\beta_{i0}+\beta_{i1}
-$$
-
-Thus, in this simple experiment, the model fits one expression level $q_{iA}$ for condition A and another $q_{iB}$ for condition B.
-
-The expected raw count for each individual sample is then obtained by applying its size factor:
-
-$$
-\mu_{ij}=s_j q_{ij}
-$$
-
-Therefore, samples in the same condition have the same modelled expression $q$, but they can have different expected raw counts $\mu$ because their size factors differ.
-
-For example:
-
-```text
-                 A1      A2
-modelled q        110     110
-size factor       0.8     1.2
-expected μ         88     132
-```
-
-If all size factors were equal to 1, the distinction disappears.
-
-For:
-
-```text
-           A1    A2    B1    B2
-observed   100   120   200   220
-```
-
-the fitted condition levels in this simple two-group example would be:
-
-```text
-condition A: 110
-condition B: 210
-```
-
-and, because $s_j=1$:
-
-```text
-           A1    A2    B1    B2
-expected μ 110   110   210   210
-```
-
-This is the simple intuition to keep in mind:
-
-```text
-observed replicate counts
-          |
-          v
-fit a centre for condition A
-and a centre for condition B
-          |
-          v
-adjust the expected raw count
-for the size of each library
-```
-
-With unequal size factors or more complex experimental designs, these fitted values come from the generalized linear model rather than simply taking arithmetic means.
-
----
-
-#### 5.4 The difference between the fitted conditions is the log2 fold change
-
-For the simple two-condition design, the condition coefficient is:
-
-$$
-\beta_{i1}
-=
-\log_2
-\left(
-\frac{q_{iB}}{q_{iA}}
-\right)
-$$
-
-This is the value reported as:
-
-```text
-log2FoldChange
-```
-
-Therefore:
-
-```text
-log2FoldChange =  0   -> same fitted expression in A and B
-log2FoldChange =  1   -> 2-fold higher in B
-log2FoldChange = -1   -> 2-fold lower in B
-```
-
-The null hypothesis is:
-
-$$
-H_0:\beta_{i1}=0
-$$
-
-which, in this simple design, is equivalent to:
-
-$$
-H_0:q_{iA}=q_{iB}
-$$
-
-The question is therefore not merely whether the two fitted values are numerically different.
-
-The question is:
-
-> Is the estimated condition effect sufficiently large relative to the uncertainty with which we estimated it?
-
-To answer that, DESeq2 needs biological replicates.
-
----
-
-#### 5.5 Replicate variability: why use a negative binomial model?
-
-Consider two genes:
-
-```text
-Gene 1
-A: 100  105
-B: 200  210
-
-Gene 2
-A:  40  165
-B: 120  290
-```
-
-Both genes show approximately the same average increase from condition A to condition B.
-
-However, the replicates for Gene 1 are much more consistent.
-
-For Gene 2, there is much greater variability among replicates. We should therefore be less certain about its estimated condition effect.
-
-DESeq2 models the **observed counts themselves** using a negative binomial distribution:
-
-$$
-K_{ij}\sim\mathrm{NB}(\mu_{ij},\alpha_i)
-$$
-
-where:
-
-* $K_{ij}$ is the observed count;
-* $\mu_{ij}$ is the expected count from the fitted model;
-* $\alpha_i$ is the dispersion of gene $i$.
-
-The variance of the negative binomial model is:
-
-$$
-\mathrm{Var}(K_{ij})
-=
-\mu_{ij}
-+
-\alpha_i\mu_{ij}^{2}
-$$
-
-A Poisson model would contain only the first term:
-
-$$
-\mathrm{Var}(K_{ij})=\mu_{ij}
-$$
-
-but real RNA-seq data usually show additional variability among biological replicates.
-
-The dispersion $\alpha_i$ allows DESeq2 to model this extra variability.
-
-Intuitively:
-
-```text
-small dispersion
-    -> replicate counts are relatively consistent
-       with the fitted model
-
-large dispersion
-    -> considerably more variation among replicate
-       counts is plausible
-```
-
-The amount of count variation also depends on the expected count $\mu_{ij}$. Therefore, a difference of 20 reads has a different meaning for a gene with an expected count of 10 than for a gene with an expected count of 10,000.
-
-The negative binomial model captures both properties:
-
-```text
-mean expression level
-        +
-gene-specific dispersion
+RAW INTEGER COUNTS
         |
         v
-expected variability of the counts
-```
-
-A useful distinction is:
-
-```text
-K  -> observed counts
-
-q  -> expression levels predicted by the design
-
-μ  -> expected raw counts after including size factors
-
-α  -> dispersion: extra variability of counts around the fitted model
-```
-
----
-
-#### 5.6 How can DESeq2 estimate dispersion from only a few replicates?
-
-Suppose we have:
-
-```text
-A1  A2
-B1  B2
-```
-
-For one gene, four observations provide very little information about its true variability.
-
-An independent dispersion estimate for every gene would therefore be very unstable.
-
-DESeq2 solves this by using information across all genes.
-
-Conceptually:
-
-```text
-for each gene
-    |
-    v
-obtain a gene-wise dispersion estimate
-from its counts and fitted design
-    |
-    v
-compare dispersion estimates
-across thousands of genes
-    |
-    v
-learn the typical relationship between
-mean normalized count and dispersion
-    |
-    v
-stabilize noisy gene-wise dispersion estimates
-toward this relationship
-```
-
-The important point is that DESeq2 does **not** assume that every gene has the same dispersion.
-
-Each gene retains its own dispersion estimate, but information from all genes is used to make those estimates more stable.
-
-This is particularly important when the number of biological replicates is small.
-
-Extreme dispersion outliers can be treated differently and are not necessarily shrunk toward the fitted trend.
-
-Borrowing information across genes improves estimation of variability; it does **not** replace biological replication.
-
----
-
-#### 5.7 From dispersion to uncertainty in the log2 fold change
-
-After estimating the dispersion, DESeq2 can determine how precisely the condition effect has been estimated.
-
-For each gene it reports:
-
-```text
-log2FoldChange
-lfcSE
-```
-
-`log2FoldChange` is the estimated condition effect.
-
-`lfcSE` is the **standard error of that estimated log2 fold change**.
-
-The intuition is:
-
-```text
-consistent biological replicates
+account for differences in library size
         |
         v
-condition effect can be located precisely
+fit a GLM describing the EXPECTED COUNT
+for each sample from the experimental design
         |
         v
-small lfcSE
-```
-
-whereas:
-
-```text
-variable biological replicates
+ask how much the OBSERVED COUNTS vary
+around those fitted expectations
         |
         v
-many different condition effects
-are reasonably compatible with the data
+model that variability with a gene-specific
+NEGATIVE-BINOMIAL DISPERSION alpha_i
         |
         v
-large lfcSE
-```
-
-For example:
-
-```text
-Gene 1
-log2FoldChange = 1.0
-lfcSE          = 0.15
-
-Gene 2
-log2FoldChange = 1.0
-lfcSE          = 0.80
-```
-
-The estimated effect is identical, but the effect for Gene 1 is much more precisely determined.
-
-More formally, after the mean model and dispersion have been fitted, DESeq2 evaluates how sharply the negative-binomial likelihood identifies the condition coefficient.
-
-```text
-sharp likelihood around the fitted effect
-    -> coefficient is well determined
-    -> small standard error
-
-broad likelihood around the fitted effect
-    -> many effect sizes remain plausible
-    -> large standard error
-```
-
-Therefore, `lfcSE` is **not** the standard deviation of the replicate counts.
-
-It is the uncertainty of the estimated condition coefficient produced by the negative-binomial GLM.
-
----
-
-#### 5.8 Testing whether the condition effect differs from zero
-
-DESeq2 uses a Wald test to assess whether an estimated effect differs significantly from zero relative to its uncertainty. This approach is particularly suitable for testing individual contrasts, such as treated versus untreated conditions. For each gene, DESeq2 divides the estimated log2 fold change by its standard error to obtain a Wald statistic. Under the null hypothesis of no differential expression, this statistic is approximately standard normally distributed, allowing a P value to be calculated from the probability of observing an equally or more extreme value.
-
-
-$$
-z_i
-=
-\frac{\mathrm{log2FoldChange}_i}
-{\mathrm{lfcSE}_i}
-$$
-
-The null hypothesis is:
-
-$$
-H_0:\mathrm{log2FoldChange}_i=0
-$$
-
-For example:
-
-```text
-Gene A
-log2FoldChange = 1.2
-lfcSE          = 0.15
-```
-
-provides much stronger evidence against the null hypothesis than:
-
-```text
-Gene B
-log2FoldChange = 1.2
-lfcSE          = 0.90
-```
-
-even though the estimated fold change is identical.
-
-Thus:
-
-```text
-effect size
-    relative to
-uncertainty of the effect
+stabilize alpha_i by borrowing information
+from the genome-wide mean-dispersion trend
         |
         v
-Wald statistic
+use the stabilized dispersion + fitted means
++ design + number of biological replicates
         |
         v
-p-value
-```
-
-DESeq2 performs this test for thousands of genes. Testing many hypotheses produces some small p-values by chance, so the p-values are adjusted for multiple testing using the Benjamini-Hochberg procedure.
-
-The resulting value is reported as:
-
-```text
-padj
-```
-
-and is used to control the false discovery rate.
-
----
-
-#### 5.9 Biological replicates and blocking factors in the design
-
-For a standard experiment with independent biological replicates:
-
-```text
-A1  A2  A3
-B1  B2  B3
-```
-
-we normally use:
-
-```r
-design = ~ condition
-```
-
-We do **not** add a variable called `replicate`.
-
-The differences among A1, A2 and A3, and among B1, B2 and B3, provide the replicate information from which dispersion is estimated.
-
-A different situation occurs when samples are **paired** or contain another known blocking factor.
-
-For example:
-
-```text
-individual    condition
-1             A
-1             B
-2             A
-2             B
-3             A
-3             B
-```
-
-Here the same three individuals were measured in both conditions.
-
-Suppose one gene gives:
-
-```text
-              A      B
-individual 1  100    150
-individual 2  300    450
-individual 3   50     75
-```
-
-The absolute expression differs strongly among individuals, but every individual shows the same approximately 1.5-fold increase.
-
-If we use:
-
-```r
-design = ~ individual + condition
-```
-
-the model accounts for both:
-
-```text
-individual effect
-    -> systematic baseline differences among individuals
-
-condition effect
-    -> systematic difference between A and B
-       after accounting for those individual differences
-```
-
-On the log2 scale, the model can be written conceptually as:
-
-$$
-\log_2(q_{ij})
-=
-\beta_{i0}
-+
-\gamma_{i,\mathrm{individual}(j)}
-+
-x_j\beta_{i,\mathrm{condition}}
-$$
-
-The condition coefficient now answers:
-
-> After accounting for baseline differences among individuals, is there a consistent change between conditions?
-
-The same principle applies to other known sources of variation, for example:
-
-```r
-design = ~ batch + condition
-```
-
-A variable should be included in the design when it represents a **systematic source of variation that we want to separate from the condition effect**.
-
-In the workshop metadata, replicate identifiers `1`, `2`, and `3` recur across the two oxygen conditions. We therefore use them as a blocking factor in the practical:
-
-```r
-design = ~ replicates + conditions
-```
-
-The coefficient for `conditions` then compares stressed versus control samples after accounting for systematic differences associated with the replicate blocks.
-
-The variables must not be perfectly confounded. For example:
-
-```text
-all condition A samples -> batch 1
-all condition B samples -> batch 2
-```
-
-does not allow condition and batch effects to be estimated separately.
-
----
-
-#### 5.10 The complete logic
-
-The DESeq2 workflow can now be summarized as:
-
-```text
-OBSERVED RAW COUNTS K
+estimate the uncertainty of the condition effect:
+SE(log2FC)
         |
         v
-estimate SIZE FACTORS s
-for the samples
+z = log2FC / SE(log2FC)
         |
         v
-use the EXPERIMENTAL DESIGN
-to define the expected expression pattern
-for each gene
-        |
-        v
-for each gene, fit expected counts μ
-        |
-        v
-estimate a preliminary
-GENE-WISE DISPERSION α
-        |
-        v
-use ALL GENES to learn the typical
-mean-dispersion relationship
-        |
-        v
-obtain stabilized
-GENE-SPECIFIC DISPERSIONS
-        |
-        v
-fit the condition coefficient
-LOG2 FOLD CHANGE
-        |
-        v
-estimate its uncertainty
-lfcSE
-        |
-        v
-WALD TEST:
-is log2FoldChange different from 0?
-        |
-        v
-p-value
+Wald-test p-value
         |
         v
 multiple-testing correction
         |
         v
-padj
+adjusted p-value / FDR
 ```
 
-The quantities to keep separate are:
+Three quantities should remain conceptually distinct:
+
+| Quantity | Interpretation |
+|---|---|
+| **Expected count** | Count predicted by the fitted model for a gene in a sample after accounting for library size and the design |
+| **Dispersion `alpha_i`** | How variable the observed counts for gene `i` are around their fitted expectations |
+| **`SE(log2FC)`** | How uncertain we are about the estimated condition effect |
+
+With only a few biological replicates, a completely independent dispersion estimate for every gene would be unstable. DESeq2 therefore learns the typical relationship between **mean expression and dispersion across all genes** and moderates each gene-specific dispersion toward that trend. By default DESeq2 tries a parametric mean-dispersion trend; if that shape is unsuitable, a local fit can be used instead.
+
+The stabilized dispersion is not itself the standard error of the fold change. It is one of the quantities used by the fitted GLM to determine the uncertainty of the estimated coefficient.
+
+### 5.3 The experimental design: decide what the model should explain
+
+The design formula is not a software detail. It is the statistical representation of the experimental structure.
+
+A good rule is:
+
+> **Include variables that represent real, identifiable sources of systematic variation that should be accounted for while estimating the biological effect of interest. Do not add columns simply because they exist in the metadata.**
+
+The experimental unit matters more than the column name. In particular, a metadata column called `replicate` does **not** automatically belong in the model.
+
+| Experimental structure | Typical DESeq2 design | Principle |
+|---|---|---|
+| Two independent conditions with biological replicates | `~ condition` | Replicate numbers are identifiers, not covariates |
+| Same patient / donor / animal measured in both conditions | `~ subject + condition` | Subject is a blocking factor because measurements are paired |
+| Samples processed in different technical batches, with conditions represented across batches | `~ batch + condition` | Account for systematic batch variation while estimating condition |
+| Genotype and treatment where treatment effect may differ by genotype | `~ genotype + treatment + genotype:treatment` | Use an interaction only when the scientific question is about different responses |
+| Same biological library sequenced twice | Collapse technical runs before DESeq2 | Multiple sequencing runs of the same library are not independent biological replicates |
+| Batch and condition perfectly confounded | No valid formula can separate them | The experiment itself does not contain enough information to estimate both effects |
+
+#### Biological replicate versus blocking factor
+
+For this workshop we have three control and three stressed samples. The metadata labels them as replicate 1, 2, and 3 within each condition, but those replicate numbers are simply identifiers for **independent biological replicates**. Replicate 1 in control is not a repeated measurement of the same biological unit as replicate 1 in stress.
+
+Therefore our workshop model is:
+
+```r
+design = ~ conditions
+```
+
+and **not**:
+
+```r
+design = ~ replicates + conditions
+```
+
+Adding an arbitrary replicate-number factor would incorrectly tell the model that samples carrying the same number form matched blocks.
+
+By contrast, if the experiment contained samples from the same patient before and after treatment, the patient identity would represent genuine pairing and we would use:
+
+```r
+design = ~ patient + condition
+```
+
+#### General principles when choosing covariates
+
+- Define the **biological question and experimental unit first**, then write the design.
+- Include known batch or subject effects when they are biologically/statistically meaningful and **not perfectly confounded** with the condition of interest.
+- Do not treat technical replicates as independent biological evidence.
+- Do not include an arbitrary replicate number simply to "account for replicates"; biological replication is what allows dispersion to be estimated in the first place.
+- Avoid adding many covariates to a very small experiment unless they are essential: every additional coefficient consumes information.
+- Prefer variables specified from the experimental design or strong prior knowledge, not variables selected because they make the desired p-values smaller.
+- If a covariate is perfectly confounded with condition, no statistical model can recover the two effects separately; this is a design problem rather than a DESeq2 problem.
+- For convenience and interpretability, put the main variable of interest last in the formula and set its reference level explicitly.
+
+::: {.callout-warning}
+**Model design is part of the experiment.** A sophisticated model cannot recover information that was never separated experimentally. If all controls were processed in batch 1 and all treated samples in batch 2, `batch` and `condition` are indistinguishable.
+:::
+
+### 5.4 Why PCA before differential expression?
+
+Before testing genes one by one, we should first ask whether the **samples themselves** behave as expected.
+
+NGS experiments typically contain thousands of measured features but relatively few samples. We therefore need sample-level exploratory analyses that summarize the global structure of the data without starting from a list of significant genes.
+
+**Principal component analysis (PCA)** is widely used for this purpose because it is **unsupervised**: the PCA calculation does not know which samples are controls, stressed, batch 1, batch 2, or potential outliers. It simply finds the major directions of variation across the expression profiles. We add biological labels only afterwards to interpret the pattern.
+
+In RNA-seq QC, PCA helps us ask:
+
+- Do biological replicates occupy similar regions of expression space?
+- Is the largest source of variation related to the biological condition we intended to study?
+- Is there an unexpected batch structure?
+- Does one sample behave very differently from all others?
+- Could a sample label have been swapped?
+- Is a putative outlier also unusual in mapping rate, library size, gene assignment, or other QC metrics?
+
+For PCA, each sample is treated as one point described by the expression of many genes. PCA replaces those thousands of gene dimensions with a smaller set of principal components. PC1 captures the largest direction of sample-to-sample variation, PC2 the largest remaining independent direction, and so on. A PC1-versus-PC2 plot is therefore a low-dimensional view of the strongest global structure in the experiment.
+
+::: {.callout-important}
+**PCA is a diagnostic, not an automatic outlier-removal algorithm.**
+
+A sample should not be removed simply because it lies far from the other points or because removing it improves the differential-expression result. A PCA outlier should trigger investigation of sample identity, FASTQ/BAM QC, mapping, strandedness, gene assignment, library size, batch metadata, and laboratory notes. Exclusion is defensible when there is evidence of technical failure, contamination, mislabelling, or another pre-specified reason. If the sample reflects genuine biological heterogeneity, removing it can bias the analysis.
+:::
+
+In this workshop we use `log2(normalized_counts + 1)` for PCA because it keeps the transformation transparent. In larger RNA-seq analyses, DESeq2 `vst()` or `rlog()` are commonly used to reduce the strong dependence of variance on mean expression before PCA and clustering.
+
+### 5.5 Wald test, multiple testing and FDR
+
+After the model has estimated the condition effect and its standard error for each gene, the Wald statistic is simply the effect expressed in units of its uncertainty:
 
 ```text
-Kij
-    -> observed count for gene i in sample j
-
-qij
-    -> expression level predicted by the experimental design
-       on the common, size-factor-adjusted scale
-
-sj
-    -> size factor for sample j
-
-μij = sj qij
-    -> expected raw count for gene i in sample j
-
-αi
-    -> gene-specific dispersion
-
-log2FoldChange
-    -> fitted condition effect on the log2 scale
-
-lfcSE
-    -> standard error of that fitted condition effect
+z = log2FC / SE(log2FC)
 ```
 
-The formal statistical model connecting these quantities is:
+A large absolute `z` means that the estimated effect is large relative to the uncertainty of that estimate. Under the null hypothesis of no condition effect, DESeq2 compares this statistic with the standard normal distribution to obtain a p-value.
 
-$$
-K_{ij}\sim\mathrm{NB}(\mu_{ij},\alpha_i)
-$$
+RNA-seq tests hundreds or thousands of genes simultaneously. Even if no true biological effects existed, some small p-values would occur by chance. DESeq2 therefore reports a **Benjamini-Hochberg adjusted p-value (`padj`)**, which is used to control the **false discovery rate (FDR)**.
 
-with:
+At an FDR threshold of 5%, the procedure aims to keep the expected fraction of false discoveries among the genes called significant at about 5% or below. This is **not** the same as saying that each individual gene with `padj < 0.05` has a 5% probability of being a false positive.
 
-$$
-\mu_{ij}=s_jq_{ij}
-$$
-
-and the experimental design determining $q_{ij}$.
-
-For the simple two-condition design:
-
-$$
-\log_2(q_{ij})
-=
-\beta_{i0}+x_j\beta_{i1}
-$$
-
-where $x_j=0$ for condition A and $x_j=1$ for condition B, so that:
-
-$$
-\beta_{i1}
-=
-\log_2
-\left(
-\frac{q_{iB}}{q_{iA}}
-\right)
-$$
-
-is the reported log2 fold change.
-
-For the formal model and implementation details, see the [DESeq2 vignette](https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html) and the [DESeq2 methods paper](https://doi.org/10.1186/s13059-014-0550-8).
-
-#### 5.11 Build and inspect the DESeq2 analysis interactively
+### 5.6 Build and inspect the DESeq2 analysis interactively
 
 We will build the R analysis during the workshop instead of immediately running a finished script. Each block will be:
 
@@ -1486,7 +892,6 @@ library(ggplot2)
 library(ggrepel)
 
 count_file <- "results/day2_rnaseq/counts/featureCounts_all_samples.txt"
-meta_data <- "raw_data/metadata/RNAseq_metadata.txt"
 out_dir <- "results/day2_rnaseq/deseq2"
 count_matrix_file <- "results/day2_rnaseq/counts/gene_count_matrix.tsv"
 
@@ -1502,32 +907,31 @@ colnames(featureCounts) <- gsub("results/day2_rnaseq/bam/", "", colnames(feature
 colnames(featureCounts) <- gsub(".filtered.bam", "", colnames(featureCounts), fixed = TRUE)
 rownames(featureCounts) <- featureCounts$Geneid
 
-# Import metadata
-meta_rnaseq <- read.delim(meta_data, sep = "\t", comment.char = "#", check.names = FALSE)
-
 # Keep only sample-count columns
-featureCounts <- featureCounts[, colnames(featureCounts) %in% meta_rnaseq[, "Source Name"], drop = FALSE]
-
+featureCounts <- featureCounts[,grep("^WT",colnames(featureCounts))]
 # -------------------------------------------------------------------------
 # Build the sample design
 # -------------------------------------------------------------------------
 
-design_dt <- meta_rnaseq[, c(
-  "Source Name",
-  "Characteristics[replicate]",
-  "Characteristics[environmental stress]"
-)]
+design_dt <- as.data.frame(
+    cbind(
+      colnames(featureCounts),
+      colnames(featureCounts),
+      colnames(featureCounts)
+  )
+)
 
-design_dt <- unique(design_dt)
 colnames(design_dt) <- c("samples", "replicates", "conditions")
+
+design_dt$replicates <- gsub("WTS_","",design_dt$replicates)
+design_dt$replicates <- gsub("WT_","",design_dt$replicates)
+
+design_dt$conditions <- gsub("_1|_2|_3","",design_dt$conditions)
+
 rownames(design_dt) <- design_dt$samples
 
-if (!all(colnames(featureCounts) %in% rownames(design_dt))) {
-  stop("ERROR: not all count-matrix samples are present in the design table")
-}
-
-design_dt$conditions[design_dt$conditions == "no stress (5% O2)"] <- "control"
-design_dt$conditions[design_dt$conditions == "oxidative stress (21% O2)"] <- "stressed"
+design_dt$conditions[design_dt$conditions == "WT"] <- "control"
+design_dt$conditions[design_dt$conditions == "WTS"] <- "stressed"
 
 design_dt$conditions <- factor(design_dt$conditions, levels = c("control", "stressed"))
 design_dt$replicates <- factor(design_dt$replicates)
@@ -1550,7 +954,7 @@ write.table(count_out, count_matrix_file, sep = "\t", quote = FALSE, row.names =
 dds <- DESeq2::DESeqDataSetFromMatrix(
   countData = as.matrix(featureCounts),
   colData = design_dt,
-  design = ~ replicates + conditions
+  design = ~ conditions
 )
 
 # -------------------------------------------------------------------------
@@ -1683,7 +1087,7 @@ top_down <- head(top_down[order(top_down$padj, top_down$log2FoldChange), , drop 
 label_dt <- rbind(top_up, top_down)
 
 ma_plot <- ggplot(res_dt, aes(baseMean + 1, log2FoldChange, color = signed_significance)) +
-  geom_point(alpha = 0.7, size = 1.4, na.rm = TRUE) +
+  geom_point(alpha = 0.9, size = 1, na.rm = TRUE) +
   geom_hline(yintercept = 0, linetype = 2) +
   scale_x_log10() +
   scale_color_gradient2(
@@ -1725,100 +1129,61 @@ volcano <- ggplot(res_dt, aes(log2FoldChange, minus_log10_padj)) +
 ggsave(file.path(out_dir, "volcano.pdf"), volcano, width = 6, height = 5)
 
 writeLines(capture.output(sessionInfo()), file.path(out_dir, "sessionInfo.txt"))
+
 ```
 
-#### What happens before the statistical test?
+### 5.7 Read the analysis in the same order DESeq2 performs it
 
-The first part of the script prepares the count matrix and the sample design, then estimates one **size factor** for each sample. The size factor captures differences in sequencing depth and overall library size.
+The code above contains many R commands, but conceptually the workflow is short.
 
-DESeq2 normalizes a count by dividing the raw count by the sample size factor:
+#### Step 1: raw count matrix + metadata
+
+The rows are genes and the columns are samples. The counts remain integer fragment counts from featureCounts. The metadata describes which samples are control or stressed.
+
+The order must match exactly:
 
 ```text
-normalized count = raw count / size factor
+count-matrix columns  ==  metadata rows
 ```
 
-These normalized counts are useful for comparing samples and for exploratory plots. The differential-expression model itself still starts from the **raw integer counts**.
+DESeq2 does not infer sample identity from filenames once the matrix has been constructed.
 
-The file:
+#### Step 2: size factors
+
+Libraries differ in sequencing depth and overall count scale. DESeq2 estimates one size factor per sample so that counts from different libraries can be compared on a common scale.
+
+We save normalized counts for exploration and visualization, but the statistical model still uses the original raw counts together with the size factors.
+
+#### Step 3: PCA as sample-level QC
+
+We run PCA **before interpreting differential expression**. The important questions are not whether the conditions separate perfectly, but whether the global sample structure makes biological and technical sense.
+
+For this six-sample experiment:
 
 ```text
-results/day2_rnaseq/deseq2/deseq2_size_factors.tsv
+6 samples x many genes
+        |
+        v
+log2-normalized expression
+        |
+        v
+PCA
+        |
+        v
+PC1 / PC2 sample map
 ```
 
-contains both the DESeq2 size factor and its inverse. We save the inverse because it will later be used with `bamCoverage`:
+Each point is one sample. Samples close together have broadly similar global expression profiles; samples far apart differ across many genes. Because PCA is unsupervised, unexpected separation can reveal batch effects or sample problems that would otherwise be hidden by looking only at the final DEG table.
 
-```text
-DESeq2 normalized count = raw count / size factor
+#### Step 4: fit the DESeq2 model
 
-bamCoverage scaled coverage = raw coverage × scaleFactor
-
-therefore:
-
-bamCoverage scaleFactor = 1 / DESeq2 size factor
-```
-
-#### PCA: reducing many genes to a few sample-level components
-
-For PCA, think of each RNA-seq sample as a **vector of gene-expression values**. If we have 20,000 genes, each sample is one point in a 20,000-dimensional space. In the script we therefore transpose the matrix so that PCA sees **samples as observations** and **genes as variables**:
+For this experiment we use:
 
 ```r
-pca <- prcomp(t(log2(normalized_counts + 1)))
+design = ~ conditions
 ```
 
-PCA replaces the original gene axes with a new set of **orthogonal axes**, called principal components. PC1 is the direction through the samples that captures the largest possible amount of variation. PC2 captures the largest remaining variation while being orthogonal to PC1, then PC3, and so on.
-
-A PCA plot is therefore a **projection** of the original high-dimensional sample vectors onto a lower-dimensional plane. When we plot PC1 against PC2, each point is the projection of one RNA-seq sample onto the plane defined by those two components.
-
-```text
-genes define the original high-dimensional space
-                    |
-                    v
-             PCA / SVD
-                    |
-            orthogonal PCs
-                    |
-                    v
-       projection onto PC1-PC2
-                    |
-                    v
-             one point/sample
-```
-
-Computationally, PCA is obtained from the **singular value decomposition (SVD)** of the centred data matrix. SVD identifies the orthogonal directions, how much variation is associated with each direction, and the coordinates of each sample along those directions. The sample coordinates are what we display in the PCA plot.
-
-The number of informative components is limited by the **rank of the centred matrix**:
-
-```text
-maximum non-zero PCs <= min(number of samples - 1, number of genes)
-```
-
-The `-1` appears because PCA centres the samples before decomposition. In RNA-seq, the number of genes is normally much larger than the number of samples, so the number of informative PCs is usually limited by the **number of samples**. For example, with 6 samples and 20,000 genes there can be at most 5 components with non-zero variance.
-
-The **scree plot** shows how the total sample-to-sample variation is distributed across these components. PC1 explains the largest fraction, PC2 the next largest, and so forth. If PC1 and PC2 explain most of the variation, the two-dimensional PCA plot captures much of the main structure; if substantial variance remains in later PCs, the PC1-PC2 view is only part of the picture.
-
-For QC, we use PCA to ask whether biological replicates remain close, whether conditions separate, and whether one sample behaves very differently from the others. PCA itself is **unsupervised**: it does not know which samples are control, stressed, or replicates. We add those labels afterwards to interpret the structure that PCA finds.
-
-::: {.callout-note}
-Here we use `log2(normalized_counts + 1)` to make the transformation explicit. In larger RNA-seq analyses, DESeq2 `vst()` or `rlog()` are commonly used because they stabilize the mean-variance relationship more directly.
-:::
-
-#### Fitting the DESeq2 model
-
-After the exploratory sample checks, the full model is fitted with:
-
-```r
-design = ~ replicates + conditions
-```
-
-This asks DESeq2 to estimate the effect of the experimental condition while accounting for the replicate term included in the design.
-
-The contrast:
-
-```r
-contrast = c("conditions", "stressed", "control")
-```
-
-defines the comparison as:
+The coefficient of interest compares:
 
 ```text
 stressed / control
@@ -1826,52 +1191,59 @@ stressed / control
 
 Therefore:
 
-- positive `log2FoldChange` = higher expression in stressed samples;
-- negative `log2FoldChange` = lower expression in stressed samples.
-
-#### The dispersion plot
-
-RNA-seq count variability is generally larger than expected from a simple Poisson model. DESeq2 models this extra variability with the **negative binomial dispersion** parameter.
-
-The dispersion plot lets us inspect the relationship between mean expression and estimated variability across genes. DESeq2 learns a general mean-dispersion trend and shrinks noisy gene-specific estimates toward this trend.
-
-This borrowing of information across genes is particularly important when the number of biological replicates is small.
-
-#### Reading the custom MA-like plot
-
-The custom MA-like plot uses:
-
 ```text
-x-axis = mean normalized expression (baseMean)
-y-axis = log2 fold change
+positive log2FoldChange  -> higher expression in stressed samples
+negative log2FoldChange  -> lower expression in stressed samples
 ```
 
-Genes near zero on the y-axis change little between conditions. Genes above zero are increased in stressed samples, while genes below zero are decreased.
+When `DESeq()` runs, it carries out the major stages discussed above: size-factor estimation, gene-wise dispersion estimation, fitting/stabilizing the genome-wide dispersion trend, negative-binomial GLM fitting, and coefficient testing.
 
-The colour adds statistical evidence:
+#### Step 5: inspect the dispersion plot
+
+The dispersion plot shows how gene-level variability changes with mean expression and how noisy gene-wise dispersion estimates are stabilized using information from the full set of genes.
+
+The point is not to memorize the exact curve. The important idea is:
+
+> genes with similar expression provide information about the amount of variability we should expect when replication is limited.
+
+#### Step 6: interpret the results table
+
+The main DESeq2 columns are:
+
+| Column | Meaning |
+|---|---|
+| `baseMean` | Mean normalized expression across samples |
+| `log2FoldChange` | Estimated stressed-versus-control effect |
+| `lfcSE` | Standard error of that estimated log2 fold change |
+| `stat` | Wald statistic: effect divided by its SE |
+| `pvalue` | Unadjusted p-value for this gene |
+| `padj` | Multiple-testing-adjusted p-value used for FDR control |
+
+The effect size and statistical evidence are related but not interchangeable. A large fold change can be uncertain when counts are low or variable, while a modest fold change can be estimated precisely when counts are high and replicates are consistent.
+
+#### Step 7: use plots to answer different questions
+
+**PCA** asks whether the samples show sensible global structure before gene-level interpretation.
+
+**Dispersion plot** asks whether the estimated gene variability follows a coherent mean-dispersion relationship and shows the moderation performed by DESeq2.
+
+**MA-like plot** shows effect size against mean expression:
 
 ```text
-blue   -> significant decrease
-white  -> not significant
-red    -> significant increase
+x-axis = mean normalized expression
+ y-axis = log2 fold change
 ```
 
-The most significant genes in each direction are labelled with `ggrepel`.
+It is useful for seeing whether large fold changes are concentrated among low-count genes and for inspecting the dependence of effect estimates on abundance.
 
-The plot is useful because it shows an important feature of RNA-seq data: very large fold changes at extremely low expression are often much less precisely estimated than comparable changes in well-counted genes.
-
-#### Reading the volcano plot
-
-The volcano plot shows a different projection of the same DESeq2 results:
+**Volcano plot** combines effect size and statistical evidence:
 
 ```text
 x-axis = log2 fold change
-y-axis = -log10 adjusted p-value
+ y-axis = -log10 adjusted p-value
 ```
 
-Genes farther left or right have larger estimated changes. Genes higher on the plot have stronger statistical evidence after multiple-testing correction.
-
-The PCA, dispersion plot, MA-like plot, and volcano plot answer different questions. None replaces the DESeq2 statistical model; together they help us check the data and interpret the fitted results.
+A volcano plot is a presentation of the fitted results, not the statistical model itself. Always interpret it together with the count structure, PCA, dispersion, and MA plot.
 
 When the interactive inspection is finished, leave R with:
 
@@ -1880,6 +1252,7 @@ q(save = "no")
 ```
 
 The container is removed, but the script and all files written under `/work` remain on the laptop.
+
 
 ## 6. Optional: make RNA-seq bigWig tracks with the DESeq2 size factors
 
@@ -1922,13 +1295,22 @@ do
 
   echo "${sample}: DESeq2 size factor=${deseq2_size_factor}; bamCoverage scale factor=${bamcoverage_scale_factor}"
 
-  bamCoverage \
+bamCoverage \
     -b "${bam}" \
-    -o "${out_dir}/${sample}.deseq2.bw" \
+	--filterRNAstrand forward \
+    -o "${out_dir}/${sample}.norm.fw.bw" \
+    --scaleFactor "${bamcoverage_scale_factor}" \
+    --binSize 10 \
+    --numberOfProcessors 2
+ bamCoverage \
+    -b "${bam}" \
+	--filterRNAstrand reverse \
+    -o "${out_dir}/${sample}.norm.rv.bw" \
     --scaleFactor "${bamcoverage_scale_factor}" \
     --binSize 10 \
     --numberOfProcessors 2
 done
+
 ```
 
 Run it:
@@ -1953,6 +1335,7 @@ These tracks use the same sample-specific multiplicative scaling implied by the 
 ## 7. Summarize Day 2 logs with MultiQC
 
 MultiQC collects tool logs into one HTML report. This makes it easier to compare samples side by side instead of opening each Bowtie2, samtools, and featureCounts log separately.
+[MultiQC](https://docs.seqera.io/multiqc).
 
 Create `scripts/day2_rnaseq/06_multiqc_day2.sh`:
 
@@ -1966,27 +1349,20 @@ Paste this script:
 #!/usr/bin/env bash
 set -euo pipefail
 
-log_dir="results/logs/day2"
+day1_fastp_dir="results/logs/day1/fastp"
+day2_log_dir="results/logs/day2"
 counts_dir="results/day2_rnaseq/counts"
 qc_dir="results/day2_rnaseq/qc"
 
 mkdir -p "${qc_dir}"
 
-if [[ ! -d "${log_dir}" ]]; then
-  echo "ERROR: Day 2 log directory not found: ${log_dir}" >&2
-  exit 1
-fi
-
-if ! compgen -G "${log_dir}/*" > /dev/null; then
-  echo "ERROR: No Day 2 logs found in ${log_dir}" >&2
-  exit 1
-fi
-
 multiqc \
-  "${log_dir}" \
+  "${day1_fastp_dir}" \
+  "${day2_log_dir}" \
   "${counts_dir}" \
   --outdir "${qc_dir}" \
   --filename multiqc_report.html \
+  --title "Workshop RNA-seq QC: Day 1 + Day 2" \
   --force
 ```
 
@@ -2098,11 +1474,15 @@ git push
 1. Why is Bowtie2 suitable for this bacterial RNA-seq dataset but not the usual default for mammalian spliced RNA-seq?
 2. What is the difference between SAM, BAM, and BAI?
 3. Which mapping and pairing metrics would you inspect before trusting the count matrix?
-4. How does the relationship between R1 and the transcript determine whether featureCounts uses `-s 0`, `-s 1`, or `-s 2`?
+4. Why does this directional library require `featureCounts -s 2`, and how did we validate that choice?
 5. Why can a sample map well but still have poor featureCounts assignment?
-6. Why does DESeq2 use raw integer counts rather than CPM, TPM, or bigWig signal?
-7. What does the dispersion parameter represent intuitively?
-8. What does `log2FoldChange` estimate, and why do we also need `lfcSE` and `padj`?
+6. Why does DESeq2 require raw integer counts rather than CPM, TPM, or bigWig signal?
+7. Why is the workshop design `~ conditions` rather than `~ replicates + conditions`?
+8. When would `~ patient + condition` or `~ batch + condition` be appropriate?
+9. What does the dispersion parameter represent intuitively, and why is information borrowed across genes?
+10. What does PCA tell us before differential-expression testing, and why should PCA alone not be used to remove a sample?
+11. What is the difference between `log2FoldChange`, `lfcSE`, `pvalue`, and `padj`?
+12. What does an FDR threshold of 5% mean at the level of a set of discoveries?
 
 ## 12. Common problems
 
@@ -2111,5 +1491,14 @@ git push
 | Bowtie2 cannot find the index | Day 2 index build was skipped or used another prefix | `reference_genome/bowtie2_index/genome*.bt2` |
 | Mapping is unexpectedly low | Wrong assembly, damaged FASTQ, contamination, or overly strict filtering | Day 1 fastp report, reference accession, Bowtie2 log |
 | featureCounts assignment is low | Annotation mismatch, wrong feature/ID field, or wrong strandedness | GFF3, `-t gene -g ID`, and the metadata/RSeQC-supported `-s` value |
-| DESeq2 sample mismatch | Count column names differ from metadata-derived `analysis_id` | `RNAseq_metadata.txt` and count-matrix header |
+| DESeq2 sample mismatch | Count-matrix column names do not match metadata sample names or are in a different order | `RNAseq_metadata.txt`, `Source Name`, and the count-matrix header |
 | Volcano plot has few points | Low counts, high dispersion, or adjusted p-values are `NA` | Count summary, PCA, dispersion and MA plots |
+
+## 13. References and further reading
+
+- Love MI, Huber W, Anders S. **Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2.** *Genome Biology* 15, 550 (2014). [doi:10.1186/s13059-014-0550-8](https://doi.org/10.1186/s13059-014-0550-8)
+- Anders S, Huber W. **Differential expression analysis for sequence count data.** *Genome Biology* 11, R106 (2010). [doi:10.1186/gb-2010-11-10-r106](https://doi.org/10.1186/gb-2010-11-10-r106)
+- Robinson MD, McCarthy DJ, Smyth GK. **edgeR: a Bioconductor package for differential expression analysis of digital gene expression data.** *Bioinformatics* 26, 139-140 (2010). [doi:10.1093/bioinformatics/btp616](https://doi.org/10.1093/bioinformatics/btp616)
+- Law CW, Chen Y, Shi W, Smyth GK. **voom: precision weights unlock linear model analysis tools for RNA-seq read counts.** *Genome Biology* 15, R29 (2014). [doi:10.1186/gb-2014-15-2-r29](https://doi.org/10.1186/gb-2014-15-2-r29)
+- DESeq2 vignette: [Analyzing RNA-seq data with DESeq2](https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html)
+

@@ -10,18 +10,12 @@ mkdir -p "${bam_dir}" "${log_dir}"
 
 for read1 in "${fastq_dir}"/*_R1.trimmed.fastq.gz
 do
-  [[ -e "${read1}" ]] || continue
 
   read2="${read1/_R1.trimmed.fastq.gz/_R2.trimmed.fastq.gz}"
   sample_id="$(basename "${read1}" _R1.trimmed.fastq.gz)"
   sam_file="${bam_dir}/${sample_id}.sam"
   bam_file="${bam_dir}/${sample_id}.sorted.bam"
   filtered_bam="${bam_dir}/${sample_id}.filtered.bam"
-
-  if [[ ! -f "${read2}" ]]; then
-    echo "ERROR: paired read not found for ${read1}" >&2
-    exit 1
-  fi
 
   echo "Mapping ${sample_id}"
   bowtie2 \
@@ -38,7 +32,6 @@ do
     "${sam_file}"
 
   samtools index "${bam_file}"
-
   samtools flagstat "${bam_file}" > "${log_dir}/${sample_id}.flagstat.txt"
 
   samtools view \

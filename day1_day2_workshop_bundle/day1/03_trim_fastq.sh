@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-raw_dir="raw_data_sra/fastq"
+raw_dir="raw_data/fastq"
 out_dir="results/day1_qc/trimmed_fastq"
 report_dir="results/logs/day1/fastp"
 
 mkdir -p "${out_dir}/rnaseq" "${out_dir}/chipseq" "${report_dir}"
 
-for assay in chipseq
+for assay in rnaseq chipseq
 do
   for read1 in "${raw_dir}/${assay}"/*_R1.fastq.gz
   do
@@ -36,7 +36,7 @@ do
       --json "${report_dir}/${assay}_${sample_id}.fastp.json" \
       > "${report_dir}/${assay}_${sample_id}.log" 2>&1
 
-    # rm "${read1}" "${read2}"
+    rm "${read1}" "${read2}"
     echo "Finished ${assay} ${sample_id}; raw FASTQ pair removed"
   done
 done

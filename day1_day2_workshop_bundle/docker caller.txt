@@ -1,0 +1,126 @@
+# Day 1 + Day 2 Docker calls
+# Run these from the root of the workshop repository: ~/workshop_ngs
+# The script paths below match the Quarto lessons: scripts/day1/... and scripts/day2_rnaseq/...
+
+# =============================================================================
+# DAY 1
+# =============================================================================
+
+# 1. Reference genome + annotation
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-curl \
+  bash scripts/day1/01_reference_genome_annotation.sh
+
+# 2. Metadata + FASTQ download through ENA
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-curl \
+  bash scripts/day1/02_download_ena_fastq.sh
+
+# OPTIONAL ALTERNATIVE TO THE ENA DOWNLOAD:
+# Download through SRA Toolkit instead.
+# This script writes under raw_data_sra/ in the Day 1 lesson.
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-sra-tools:latest \
+  bash scripts/day1/04_download_sra_fastq.sh
+
+# 3. FASTQ QC / trimming with fastp
+# Run this after the ENA route used by the main workshop workflow.
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-fastp \
+  bash scripts/day1/03_trim_fastq.sh
+
+
+# =============================================================================
+# DAY 2
+# =============================================================================
+
+# 4. Build Bowtie2 genome index
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-bowtie2-samtools \
+  bash scripts/day2_rnaseq/01_build_bowtie2_index.sh
+
+# 5. Map RNA-seq reads, sort/index/filter BAM files
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-bowtie2-samtools \
+  bash scripts/day2_rnaseq/02_map_bowtie2_sort_index.sh
+
+# 6. Check strandedness with RSeQC
+# This is intentionally a direct terminal loop in the Day 2 Quarto rather than a separate script.
+mkdir -p results/logs/day2
+
+{
+for f in results/day2_rnaseq/bam/*.filtered.bam; do
+    echo
+    echo "===== $f ====="
+
+    docker run --rm \
+      --user "$(id -u):$(id -g)" \
+      -v "$PWD:/work" \
+      -w /work \
+      docker.io/getwilds/rseqc \
+      infer_experiment.py \
+      -i "$f" \
+      -r reference_genome/genes.bed
+
+done
+} 2>&1 | tee results/logs/day2/rseqc_strandedness.log
+
+# 7. Count fragments with featureCounts
+# The extracted script uses -s 2.
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-featurecounts \
+  bash scripts/day2_rnaseq/03_featurecounts_all_samples.sh
+
+# 8. DESeq2
+# The lesson itself launches an interactive R session:
+docker run --rm -it \
+  --user "$(id -u):$(id -g)" \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-r-bioc \
+  R --vanilla
+
+# To execute the completed saved R script directly instead:
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-r-bioc \
+  Rscript scripts/day2_rnaseq/04_deseq2_analysis.R
+
+# 9. Generate RNA-seq bigWig tracks
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-deeptools \
+  bash scripts/day2_rnaseq/05_make_bigwig_bamcoverage.sh
+
+# 10. MultiQC
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/multiqc/multiqc \
+  bash scripts/day2_rnaseq/06_multiqc_day2.sh

@@ -10,6 +10,15 @@ mkdir -p \
 log_file="results/logs/day1/metadata_fastq_download.log"
 : > "${log_file}"
 
+# Fail early if EMBL-EBI cannot be reached.
+echo "Checking network access to EMBL-EBI..." | tee -a "${log_file}"
+if ! curl -fsS --connect-timeout 10 -o /dev/null https://www.ebi.ac.uk/; then
+  echo "ERROR: EMBL-EBI cannot be reached. If curl reports error 6, DNS resolution is failing." >&2
+  echo "Current resolver configuration:" >&2
+  cat /etc/resolv.conf 2>/dev/null || true
+  exit 1
+fi
+
 
 # -------------------------------------------------------------------------
 # RNA-seq metadata
@@ -40,8 +49,8 @@ head -n 1 raw_data/metadata/RNAseq_metadata.tmp |
 tail -n +2 raw_data/metadata/RNAseq_metadata.tmp |
 while IFS= read -r line; do
 
-  sample=$(printf '%s\n' "${line}" | cut -f1)
-  url=$(printf '%s\n' "${line}" | cut -f32 | tr -d '\r')
+  sample=$(printf '%s\n' "${line}" | cut -d $'\t' -f1)
+  url=$(printf '%s\n' "${line}" | cut -d $'\t' -f32 | tr -d '\r')
 
   # ftp://... -> https://...
   url="https://${url#ftp://}"
@@ -92,8 +101,8 @@ head -n 1 raw_data/metadata/Chipseq_metadata.tmp |
 tail -n +2 raw_data/metadata/Chipseq_metadata.tmp |
 while IFS= read -r line; do
 
-  sample=$(printf '%s\n' "${line}" | cut -f1)
-  url=$(printf '%s\n' "${line}" | cut -f31 | tr -d '\r')
+  sample=$(printf '%s\n' "${line}" | cut -d $'\t' -f1)
+  url=$(printf '%s\n' "${line}" | cut -d $'\t' -f31 | tr -d '\r')
 
   # ftp://... -> https://...
   url="https://${url#ftp://}"
@@ -125,7 +134,7 @@ echo "Downloading RNA-seq FASTQ files" | tee -a "${log_file}"
 
 # The two new columns are columns 33 and 34
 rev raw_data/metadata/RNAseq_metadata.txt |
-cut -f1,2 |
+cut -d $'\t' -f1,2 |
 rev |
 tail -n +2 |
 while IFS=$'\t' read -r url fastq_name; do
@@ -147,7 +156,7 @@ echo "Downloading ChIP-seq FASTQ files" | tee -a "${log_file}"
 
 # The two new columns are columns 32 and 33
 rev raw_data/metadata/Chipseq_metadata.txt |
-cut -f1,2 |
+cut -d $'\t' -f1,2 |
 rev |
 tail -n +2 |
 while IFS=$'\t' read -r url fastq_name; do

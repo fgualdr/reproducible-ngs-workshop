@@ -38,3 +38,4 @@ featureCounts \
   2>&1 | tee "${log_dir}/featureCounts_all_samples.log"
 
 echo "Wrote ${featurecounts_out}"
+
