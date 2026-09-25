@@ -28,6 +28,7 @@ do
 
   samtools sort \
     -@ 2 \
+    -b \
     -o "${bam_file}" \
     "${sam_file}"
 
