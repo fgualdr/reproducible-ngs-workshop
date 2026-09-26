@@ -874,7 +874,7 @@ results/day2_rnaseq/bam/*.filtered.bam.bai</code></pre>
 <p>Use <a href="https://rseqc.sourceforge.net/#infer-experiment-py"><code>infer_experiment.py</code></a> from RSeQC together with the 12-column BED gene model created by the Day 1 reference script:</p>
 <pre class="text"><code>reference_genome/genes.bed</code></pre>
 <p>This BED file must describe the same <code>GCF_025998455.1</code> assembly as the BAM files and must use the same sequence name, <code>NZ_AP026446.1</code>. A BED file made for the study’s original <code>NC_000915.1</code> alignment cannot be used with the workshop BAM files.</p>
-<p>Inspect one representative filtered BAM. The image is pinned by digest so that the same RSeQC environment is used throughout the workshop. Because <code>infer_experiment.py</code> samples alignments from the BAM, this check is fast enough to run directly from the terminal:</p>
+<p>During the workshop we inspected one BAM. The code below instead lops through each BAM and save the log output in a file. The for loop is the same as the one we did before but as we want to save all the logs to the same file using 2&gt; as before.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> results/logs/day2</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="kw">{</span></span>
@@ -892,7 +892,7 @@ results/day2_rnaseq/bam/*.filtered.bam.bai</code></pre>
 <span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>      <span class="at">-r</span> reference_genome/genes.bed</span>
 <span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
-<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span> <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span> <span class="kw">|</span> <span class="fu">tee</span> results/logs/day2/rseqc_strandedness.log</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span> <span class="dv">2</span><span class="op">&gt;</span> results/logs/day2/rseqc_strandedness.log</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>For paired-end data, the RSeQC strings encode the read number, the strand on which that read aligns, and the annotated transcript strand. For example, <code>1++</code> means that R1 aligns to the <code>+</code> genomic strand over a <code>+</code> transcript.</p>
 <table class="caption-top table">
 <colgroup>

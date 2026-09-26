@@ -487,9 +487,10 @@ reference_genome/genes.bed
 
 This BED file must describe the same `GCF_025998455.1` assembly as the BAM files and must use the same sequence name, `NZ_AP026446.1`. A BED file made for the study's original `NC_000915.1` alignment cannot be used with the workshop BAM files.
 
-Inspect one representative filtered BAM. 
-The image is pinned by digest so that the same RSeQC environment is used throughout the workshop. 
-Because `infer_experiment.py` samples alignments from the BAM, this check is fast enough to run directly from the terminal:
+During the workshop we inspected one BAM.
+The code below instead lops through each BAM and save the log output in a file.
+The for loop is the same as the one we did before but as we want to save all the logs to the same file using 2> as before.
+
 
 ```bash
 mkdir -p results/logs/day2
@@ -509,7 +510,7 @@ for f in results/day2_rnaseq/bam/*.filtered.bam; do
       -r reference_genome/genes.bed
 
 done
-} 2>&1 | tee results/logs/day2/rseqc_strandedness.log
+} 2> results/logs/day2/rseqc_strandedness.log
 
 ```
 
