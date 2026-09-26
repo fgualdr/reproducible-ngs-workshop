@@ -306,8 +306,13 @@ do
     -S "${sam_file}" \
     2> "${log_dir}/${sample_id}.bowtie2.log"
 
+  # SAM -> BAM: Here was the error during the workshop!
+  # -b was missing 
+  # looking the actual samtool manual:
+  # The -b, -C, -1, -u, -h, -H, and -c options change the output format from the default of headerless SAM, and the -o and -U options set the output file name(s).
   samtools sort \
     -@ 2 \
+    -b \
     -o "${bam_file}" \
     "${sam_file}"
 
