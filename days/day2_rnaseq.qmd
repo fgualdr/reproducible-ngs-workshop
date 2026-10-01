@@ -306,13 +306,11 @@ do
     -S "${sam_file}" \
     2> "${log_dir}/${sample_id}.bowtie2.log"
 
-  # SAM -> BAM: Here was the error during the workshop!
-  # -b was missing 
-  # looking the actual samtool manual:
-  # The -b, -C, -1, -u, -h, -H, and -c options change the output format from the default of headerless SAM, and the -o and -U options set the output file name(s).
+  # Convert the SAM alignments to a coordinate-sorted BAM.
+  # samtools sort accepts SAM input directly; -O BAM makes the output format explicit.
   samtools sort \
     -@ 2 \
-    -b \
+    -O BAM \
     -o "${bam_file}" \
     "${sam_file}"
 
@@ -360,11 +358,12 @@ The log is written separately with `2>` because Bowtie2 sends its progress and s
 
 ##### 3.5.2 Convert SAM to a coordinate-sorted BAM
 
-`samtools sort` reads the text SAM file and writes a compressed BAM file sorted by genomic coordinate:
+`samtools sort` reads the text SAM file directly and writes a coordinate-sorted BAM. The `-O BAM` option makes the output format explicit:
 
 ```bash
 samtools sort \
   -@ 2 \
+  -O BAM \
   -o "${bam_file}" \
   "${sam_file}"
 ```
@@ -487,9 +486,7 @@ reference_genome/genes.bed
 
 This BED file must describe the same `GCF_025998455.1` assembly as the BAM files and must use the same sequence name, `NZ_AP026446.1`. A BED file made for the study's original `NC_000915.1` alignment cannot be used with the workshop BAM files.
 
-During the workshop we inspected one BAM.
-The code below instead lops through each BAM and save the log output in a file.
-The for loop is the same as the one we did before but as we want to save all the logs to the same file using 2> as before.
+During the workshop we inspected one BAM. The code below loops through every filtered BAM and saves the complete RSeQC report to one log file. `infer_experiment.py` writes the report to standard output, so we combine standard output and standard error and pass both through `tee`.
 
 
 ```bash
@@ -510,7 +507,7 @@ for f in results/day2_rnaseq/bam/*.filtered.bam; do
       -r reference_genome/genes.bed
 
 done
-} 2> results/logs/day2/rseqc_strandedness.log
+} 2>&1 | tee results/logs/day2/rseqc_strandedness.log
 
 ```
 
@@ -1280,16 +1277,16 @@ set -euo pipefail
 
 bam_dir="results/day2_rnaseq/bam"
 out_dir="results/day2_rnaseq/bigwig"
+log_dir="results/logs/day2"
 scale_file="results/day2_rnaseq/deseq2/deseq2_size_factors.tsv"
 
-mkdir -p "${out_dir}"
+mkdir -p "${out_dir}" "${log_dir}"
 
 if [[ ! -f "${scale_file}" ]]; then
   echo "ERROR: DESeq2 scale-factor table not found: ${scale_file}" >&2
   exit 1
 fi
 
-tail -n +2 "${scale_file}" |
 while IFS=$'\t' read -r sample deseq2_size_factor bamcoverage_scale_factor
 do
   bam="${bam_dir}/${sample}.filtered.bam"
@@ -1301,21 +1298,14 @@ do
 
   echo "${sample}: DESeq2 size factor=${deseq2_size_factor}; bamCoverage scale factor=${bamcoverage_scale_factor}"
 
-bamCoverage \
+  bamCoverage \
     -b "${bam}" \
-	--filterRNAstrand forward \
-    -o "${out_dir}/${sample}.norm.fw.bw" \
+    -o "${out_dir}/${sample}.deseq2.bw" \
     --scaleFactor "${bamcoverage_scale_factor}" \
     --binSize 10 \
-    --numberOfProcessors 2
- bamCoverage \
-    -b "${bam}" \
-	--filterRNAstrand reverse \
-    -o "${out_dir}/${sample}.norm.rv.bw" \
-    --scaleFactor "${bamcoverage_scale_factor}" \
-    --binSize 10 \
-    --numberOfProcessors 2
-done
+    --numberOfProcessors 2 \
+    2>&1 | tee "${log_dir}/${sample}.bamCoverage.log"
+done < <(tail -n +2 "${scale_file}")
 
 ```
 
@@ -1336,7 +1326,7 @@ Expected output:
 results/day2_rnaseq/bigwig/*.deseq2.bw
 ```
 
-These tracks use the same sample-specific multiplicative scaling implied by the DESeq2 size factors. They are intended for visualization and sample comparison; DESeq2 itself still uses the raw integer gene counts as input.
+Each sample produces one total-coverage bigWig named `*.deseq2.bw`. These tracks use the same sample-specific multiplicative scaling implied by the DESeq2 size factors. They are intended for visualization and sample comparison; DESeq2 itself still uses the raw integer gene counts as input.
 
 ## 7. Summarize Day 2 logs with MultiQC
 

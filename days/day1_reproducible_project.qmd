@@ -526,6 +526,14 @@ $3 == "gene" {
 }
 ' "${out_dir}/annotation.gff3" > "${out_dir}/genes.bed"
 
+echo "Calculating SHA-256 checksums" | tee -a "${log_file}"
+sha256sum \
+  "${out_dir}/genome.fa" \
+  "${out_dir}/annotation.gff3" \
+  "${out_dir}/annotation.gtf" \
+  "${out_dir}/genes.bed" \
+  > "${out_dir}/reference_files.sha256"
+
 cat > "${out_dir}/REFERENCE.md" <<EOF
 # Reference genome and annotation
 
@@ -566,6 +574,7 @@ Bash is a command-line interpreter: it reads commands from the terminal or from 
 | `awk -F '\t'` | Read the tab-separated GFF3 and select rows whose feature type is `gene`. |
 | `bed_start = $4 - 1` | Convert the 1-based inclusive GFF3 start to the 0-based BED start. The GFF3 end coordinate already matches the BED end boundary. |
 | `print ...` | Write the 12 BED columns required by RSeQC. Each intron-free bacterial gene is represented as one block. |
+| `sha256sum ... > reference_files.sha256` | Record checksums for the generated FASTA, GFF3, GTF, and BED files so the exact reference bundle can be verified later. |
 
 To inspect command options:
 

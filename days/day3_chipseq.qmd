@@ -224,6 +224,7 @@ do
 
   samtools sort \
     -@ "${THREADS}" \
+    -O BAM \
     -o "${bam_file}" \
     "${sam_file}"
 
@@ -375,9 +376,10 @@ Run it:
 ```bash
 docker run --rm \
   --user "$(id -u):$(id -g)" \
+  --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  quay.io/biocontainers/phantompeakqualtools \
+  quay.io/biocontainers/phantompeakqualtools:1.2.2--hdfd78af_1 \
   bash scripts/day3_chipseq/02_phantom_peak_cross_correlation.sh
 ```
 
@@ -616,7 +618,7 @@ results/day3_chipseq/counts/consensus_peak_counts.tsv
 
 `day4_consensus_peaks.bed` is the explicit ChIP-seq peak input for Day 4.
 
-The count table is a simple workshop matrix from `bedtools multicov`. It counts filtered BAM alignments overlapping each consensus peak. For a formal differential-binding analysis with paired-end fragments, use a fragment-aware counter such as `featureCounts` on a consensus peak annotation or `summarizeOverlaps` in Bioconductor. Here, the count table is mainly a transparent QC and handoff file.
+The count table is generated with `featureCounts` in paired-end mode. We first convert the merged BED intervals to **SAF** (Simplified Annotation Format), then count one fragment per read pair with `-p --countReadPairs`. This keeps the peak-count matrix on the same raw-integer scale required by DESeq2 and avoids counting R1 and R2 as two independent observations.
 
 Create `scripts/day3_chipseq/06_make_consensus_peak_counts.sh`:
 
@@ -635,9 +637,12 @@ bam_dir="results/day3_chipseq/bam"
 out_dir="results/day3_chipseq/peaks/consensus"
 count_dir="results/day3_chipseq/counts"
 log_dir="results/logs/day3"
+THREADS="${THREADS:-2}"
 
 consensus_bed="${out_dir}/consensus_peaks.bed"
 day4_peak_set="${out_dir}/day4_consensus_peaks.bed"
+saf_file="${out_dir}/consensus_peaks.saf"
+featurecounts_out="${count_dir}/featureCounts_consensus_peaks.txt"
 count_matrix="${count_dir}/consensus_peak_counts.tsv"
 log_file="${log_dir}/consensus_peak_counts.log"
 
@@ -659,25 +664,33 @@ fi
 tmp_peaks="${out_dir}/all_sample_peaks.tmp.bed"
 sorted_peaks="${out_dir}/all_sample_peaks.sorted.tmp.bed"
 merged_peaks="${out_dir}/merged_peaks.tmp.bed"
-raw_counts="${count_dir}/consensus_peak_counts.raw.tmp.tsv"
 
 echo "Creating a merged consensus peak set" | tee "${log_file}"
 : > "${tmp_peaks}"
 
 for peak_file in "${peak_files[@]}"
 do
-  sample_id="$(basename "${peak_file}" _peaks.narrowPeak)"
-  awk -v sample="${sample_id}" 'BEGIN { OFS = "\t" } NF >= 3 { print $1, $2, $3, sample }' \
+  awk 'BEGIN { OFS = "\t" } NF >= 3 { print $1, $2, $3 }' \
     "${peak_file}" >> "${tmp_peaks}"
 done
 
-sort -k1,1 -k2,2n "${tmp_peaks}" > "${sorted_peaks}"
+LC_ALL=C sort -k1,1 -k2,2n -k3,3n "${tmp_peaks}" > "${sorted_peaks}"
 
-bedtools merge \
-  -i "${sorted_peaks}" \
-  -c 4 \
-  -o count \
-  > "${merged_peaks}" 2>> "${log_file}"
+# Merge overlapping or book-ended BED intervals. Column 4 records how many
+# original peak records contributed to each merged interval.
+awk 'BEGIN { OFS = "\t" }
+NR == 1 { chrom = $1; start = $2; end = $3; n = 1; next }
+$1 == chrom && $2 <= end {
+  if ($3 > end) end = $3
+  n++
+  next
+}
+{
+  print chrom, start, end, n
+  chrom = $1; start = $2; end = $3; n = 1
+}
+END { if (NR > 0) print chrom, start, end, n }' \
+  "${sorted_peaks}" > "${merged_peaks}"
 
 if [[ ! -s "${merged_peaks}" ]]; then
   echo "ERROR: Consensus peak set is empty after merging" >&2
@@ -689,27 +702,53 @@ awk 'BEGIN { OFS = "\t" } { printf "%s\t%s\t%s\tpeak_%04d\t%s\n", $1, $2, $3, NR
 
 cp "${consensus_bed}" "${day4_peak_set}"
 
-echo "Counting filtered BAM alignments in consensus peaks" | tee -a "${log_file}"
-bedtools multicov \
-  -bams "${bam_files[@]}" \
-  -bed "${consensus_bed}" \
-  > "${raw_counts}" 2>> "${log_file}"
+# featureCounts SAF uses 1-based closed coordinates, so BED start + 1 is used.
+awk 'BEGIN { OFS = "\t"; print "GeneID", "Chr", "Start", "End", "Strand" }
+{ print $4, $1, $2 + 1, $3, "." }' \
+  "${consensus_bed}" > "${saf_file}"
 
-{
+echo "Counting paired-end fragments in consensus peaks" | tee -a "${log_file}"
+featureCounts \
+  -T "${THREADS}" \
+  -p \
+  --countReadPairs \
+  -B \
+  -C \
+  -s 0 \
+  -F SAF \
+  -a "${saf_file}" \
+  -o "${featurecounts_out}" \
+  "${bam_files[@]}" \
+  2>&1 | tee -a "${log_file}"
+
+# Convert the complete featureCounts table into the compact Day 3 matrix.
+# SAF coordinates are converted back to BED coordinates for the first columns.
+awk 'BEGIN { FS = OFS = "\t" }
+FNR == NR { record_count[$4] = $5; next }
+/^#/ { next }
+!header_done {
   printf "chrom\tstart\tend\tpeak_id\tpeak_record_count"
-  for bam in "${bam_files[@]}"
-  do
-    sample_id="$(basename "${bam}" .filtered.bam)"
-    printf "\t%s" "${sample_id}"
-  done
+  for (i = 7; i <= NF; i++) {
+    sample = $i
+    sub(/^.*\//, "", sample)
+    sub(/\.filtered\.bam$/, "", sample)
+    printf "\t%s", sample
+  }
   printf "\n"
-  cat "${raw_counts}"
-} > "${count_matrix}"
+  header_done = 1
+  next
+}
+{
+  printf "%s\t%d\t%s\t%s\t%s", $2, $3 - 1, $4, $1, record_count[$1]
+  for (i = 7; i <= NF; i++) printf "\t%s", $i
+  printf "\n"
+}' "${consensus_bed}" "${featurecounts_out}" > "${count_matrix}"
 
-rm -f "${tmp_peaks}" "${sorted_peaks}" "${merged_peaks}" "${raw_counts}"
+rm -f "${tmp_peaks}" "${sorted_peaks}" "${merged_peaks}"
 
 echo "Wrote ${consensus_bed}" | tee -a "${log_file}"
 echo "Wrote ${day4_peak_set}" | tee -a "${log_file}"
+echo "Wrote ${saf_file}" | tee -a "${log_file}"
 echo "Wrote ${count_matrix}" | tee -a "${log_file}"
 ```
 
@@ -720,7 +759,7 @@ docker run --rm \
   --user "$(id -u):$(id -g)" \
   -v "$PWD:/work" \
   -w /work \
-  docker.io/fgualdr/ngs-bedtools \
+  docker.io/fgualdr/ngs-featurecounts \
   bash scripts/day3_chipseq/06_make_consensus_peak_counts.sh
 ```
 
@@ -729,6 +768,8 @@ Check the outputs:
 ```bash
 ls -lh results/day3_chipseq/peaks/consensus
 head results/day3_chipseq/peaks/consensus/day4_consensus_peaks.bed
+head results/day3_chipseq/peaks/consensus/consensus_peaks.saf
+ls -lh results/day3_chipseq/counts/featureCounts_consensus_peaks.txt
 ls -lh results/day3_chipseq/counts/consensus_peak_counts.tsv
 head results/day3_chipseq/counts/consensus_peak_counts.tsv
 cat results/logs/day3/consensus_peak_counts.log
@@ -920,7 +961,7 @@ peakCounts <- peakCounts[rowSums(peakCounts) >= 10, , drop = FALSE]
 dds <- DESeq2::DESeqDataSetFromMatrix(
   countData = as.matrix(peakCounts),
   colData = design_dt,
-  design = ~ replicates + conditions
+  design = ~ conditions
 )
 
 # -------------------------------------------------------------------------
@@ -1106,13 +1147,13 @@ Before interpreting individual differential peaks, inspect the QC plots in this 
 The DESeq2 design is:
 
 ```r
-design = ~ replicates + conditions
+design = ~ conditions
 ```
 
-This uses replicate as a blocking term and tests the condition effect after accounting for replicate-to-replicate differences, matching the logic used for RNA-seq on Day 2.
+The workshop model uses condition as the explanatory factor, matching Day 2. The replicate labels are retained for QC plotting and sample tracking, but they are not treated as matched blocks unless the experimental design explicitly establishes such pairing.
 
 ::: {.callout-note}
-This remains a simplified workshop differential-binding analysis. `bedtools multicov` counts overlapping **alignments**, not paired-end fragments, and the permissive union peak set was derived from the same data being tested. A publication-grade workflow should use fragment-aware counting and a carefully defined differential-binding strategy. DESeq2 normalization also assumes that most counted regions do not undergo a strong systematic shift in the same direction; large global occupancy changes require additional thought about normalization.
+This remains a simplified workshop differential-binding analysis. The matrix now contains paired-end **fragment counts** from featureCounts, but the permissive union peak set was still derived from the same samples being tested. A publication-grade workflow should use a carefully defined differential-binding strategy and consider how the region set is constructed. DESeq2 normalization also assumes that most counted regions do not undergo a strong systematic shift in the same direction; large global occupancy changes require additional thought about normalization.
 :::
 
 Expected handoff to Day 4:
@@ -1198,9 +1239,10 @@ Run it:
 ```bash
 docker run --rm \
   --user "$(id -u):$(id -g)" \
+  --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  quay.io/biocontainers/idr \
+  quay.io/biocontainers/idr:2.0.4.2--py39h031d066_12 \
   bash scripts/day3_chipseq/05_idr_replicate_qc.sh
 ```
 

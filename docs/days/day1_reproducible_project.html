@@ -852,27 +852,35 @@ NZ_AP026446.1  1499  2400  gene-example  0  -  1499  2400  0  1  901  0</code></
 <span id="cb26-42"><a href="#cb26-42" aria-hidden="true" tabindex="-1"></a><span class="st">}</span></span>
 <span id="cb26-43"><a href="#cb26-43" aria-hidden="true" tabindex="-1"></a><span class="st">'</span> <span class="st">"</span><span class="va">${out_dir}</span><span class="st">/annotation.gff3"</span> <span class="op">&gt;</span> <span class="st">"</span><span class="va">${out_dir}</span><span class="st">/genes.bed"</span></span>
 <span id="cb26-44"><a href="#cb26-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-45"><a href="#cb26-45" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> <span class="op">&gt;</span> <span class="st">"</span><span class="va">${out_dir}</span><span class="st">/REFERENCE.md"</span> <span class="op">&lt;&lt;EOF</span></span>
-<span id="cb26-46"><a href="#cb26-46" aria-hidden="true" tabindex="-1"></a><span class="st"># Reference genome and annotation</span></span>
-<span id="cb26-47"><a href="#cb26-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-48"><a href="#cb26-48" aria-hidden="true" tabindex="-1"></a><span class="st">- Organism: Helicobacter pylori strain CHC155</span></span>
-<span id="cb26-49"><a href="#cb26-49" aria-hidden="true" tabindex="-1"></a><span class="st">- RefSeq assembly accession: GCF_025998455.1</span></span>
-<span id="cb26-50"><a href="#cb26-50" aria-hidden="true" tabindex="-1"></a><span class="st">- Assembly name: ASM2599845v1</span></span>
-<span id="cb26-51"><a href="#cb26-51" aria-hidden="true" tabindex="-1"></a><span class="st">- Chromosome accession: NZ_AP026446.1</span></span>
-<span id="cb26-52"><a href="#cb26-52" aria-hidden="true" tabindex="-1"></a><span class="st">- Primary workflow annotation: reference_genome/annotation.gff3</span></span>
-<span id="cb26-53"><a href="#cb26-53" aria-hidden="true" tabindex="-1"></a><span class="st">- Companion annotation: reference_genome/annotation.gtf</span></span>
-<span id="cb26-54"><a href="#cb26-54" aria-hidden="true" tabindex="-1"></a><span class="st">- RSeQC BED12 gene model: reference_genome/genes.bed</span></span>
-<span id="cb26-55"><a href="#cb26-55" aria-hidden="true" tabindex="-1"></a><span class="st">- Genome FASTA: reference_genome/genome.fa</span></span>
-<span id="cb26-56"><a href="#cb26-56" aria-hidden="true" tabindex="-1"></a><span class="st">- SHA-256 checksums: reference_genome/reference_files.sha256</span></span>
-<span id="cb26-57"><a href="#cb26-57" aria-hidden="true" tabindex="-1"></a><span class="st">- NCBI FTP directory: </span><span class="va">${base_url}</span><span class="st">/</span></span>
-<span id="cb26-58"><a href="#cb26-58" aria-hidden="true" tabindex="-1"></a><span class="st">- Download script: scripts/day1/01_reference_genome_annotation.sh</span></span>
-<span id="cb26-59"><a href="#cb26-59" aria-hidden="true" tabindex="-1"></a><span class="st">- Downloaded (UTC): </span><span class="va">$(</span><span class="fu">date</span> <span class="at">-u</span> <span class="st">'+%Y-%m-%dT%H:%M:%SZ'</span><span class="va">)</span></span>
-<span id="cb26-60"><a href="#cb26-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-61"><a href="#cb26-61" aria-hidden="true" tabindex="-1"></a><span class="st">All workshop reads and all derived coordinates are generated against this</span></span>
-<span id="cb26-62"><a href="#cb26-62" aria-hidden="true" tabindex="-1"></a><span class="st">assembly. Processed files from other assemblies are not compatible.</span></span>
-<span id="cb26-63"><a href="#cb26-63" aria-hidden="true" tabindex="-1"></a><span class="op">EOF</span></span>
-<span id="cb26-64"><a href="#cb26-64" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-65"><a href="#cb26-65" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"Reference bundle ready in </span><span class="va">${out_dir}</span><span class="st">"</span> <span class="kw">|</span> <span class="fu">tee</span> <span class="at">-a</span> <span class="st">"</span><span class="va">${log_file}</span><span class="st">"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb26-45"><a href="#cb26-45" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"Calculating SHA-256 checksums"</span> <span class="kw">|</span> <span class="fu">tee</span> <span class="at">-a</span> <span class="st">"</span><span class="va">${log_file}</span><span class="st">"</span></span>
+<span id="cb26-46"><a href="#cb26-46" aria-hidden="true" tabindex="-1"></a><span class="fu">sha256sum</span> <span class="dt">\</span></span>
+<span id="cb26-47"><a href="#cb26-47" aria-hidden="true" tabindex="-1"></a>  <span class="st">"</span><span class="va">${out_dir}</span><span class="st">/genome.fa"</span> <span class="dt">\</span></span>
+<span id="cb26-48"><a href="#cb26-48" aria-hidden="true" tabindex="-1"></a>  <span class="st">"</span><span class="va">${out_dir}</span><span class="st">/annotation.gff3"</span> <span class="dt">\</span></span>
+<span id="cb26-49"><a href="#cb26-49" aria-hidden="true" tabindex="-1"></a>  <span class="st">"</span><span class="va">${out_dir}</span><span class="st">/annotation.gtf"</span> <span class="dt">\</span></span>
+<span id="cb26-50"><a href="#cb26-50" aria-hidden="true" tabindex="-1"></a>  <span class="st">"</span><span class="va">${out_dir}</span><span class="st">/genes.bed"</span> <span class="dt">\</span></span>
+<span id="cb26-51"><a href="#cb26-51" aria-hidden="true" tabindex="-1"></a>  <span class="op">&gt;</span> <span class="st">"</span><span class="va">${out_dir}</span><span class="st">/reference_files.sha256"</span></span>
+<span id="cb26-52"><a href="#cb26-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-53"><a href="#cb26-53" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> <span class="op">&gt;</span> <span class="st">"</span><span class="va">${out_dir}</span><span class="st">/REFERENCE.md"</span> <span class="op">&lt;&lt;EOF</span></span>
+<span id="cb26-54"><a href="#cb26-54" aria-hidden="true" tabindex="-1"></a><span class="st"># Reference genome and annotation</span></span>
+<span id="cb26-55"><a href="#cb26-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-56"><a href="#cb26-56" aria-hidden="true" tabindex="-1"></a><span class="st">- Organism: Helicobacter pylori strain CHC155</span></span>
+<span id="cb26-57"><a href="#cb26-57" aria-hidden="true" tabindex="-1"></a><span class="st">- RefSeq assembly accession: GCF_025998455.1</span></span>
+<span id="cb26-58"><a href="#cb26-58" aria-hidden="true" tabindex="-1"></a><span class="st">- Assembly name: ASM2599845v1</span></span>
+<span id="cb26-59"><a href="#cb26-59" aria-hidden="true" tabindex="-1"></a><span class="st">- Chromosome accession: NZ_AP026446.1</span></span>
+<span id="cb26-60"><a href="#cb26-60" aria-hidden="true" tabindex="-1"></a><span class="st">- Primary workflow annotation: reference_genome/annotation.gff3</span></span>
+<span id="cb26-61"><a href="#cb26-61" aria-hidden="true" tabindex="-1"></a><span class="st">- Companion annotation: reference_genome/annotation.gtf</span></span>
+<span id="cb26-62"><a href="#cb26-62" aria-hidden="true" tabindex="-1"></a><span class="st">- RSeQC BED12 gene model: reference_genome/genes.bed</span></span>
+<span id="cb26-63"><a href="#cb26-63" aria-hidden="true" tabindex="-1"></a><span class="st">- Genome FASTA: reference_genome/genome.fa</span></span>
+<span id="cb26-64"><a href="#cb26-64" aria-hidden="true" tabindex="-1"></a><span class="st">- SHA-256 checksums: reference_genome/reference_files.sha256</span></span>
+<span id="cb26-65"><a href="#cb26-65" aria-hidden="true" tabindex="-1"></a><span class="st">- NCBI FTP directory: </span><span class="va">${base_url}</span><span class="st">/</span></span>
+<span id="cb26-66"><a href="#cb26-66" aria-hidden="true" tabindex="-1"></a><span class="st">- Download script: scripts/day1/01_reference_genome_annotation.sh</span></span>
+<span id="cb26-67"><a href="#cb26-67" aria-hidden="true" tabindex="-1"></a><span class="st">- Downloaded (UTC): </span><span class="va">$(</span><span class="fu">date</span> <span class="at">-u</span> <span class="st">'+%Y-%m-%dT%H:%M:%SZ'</span><span class="va">)</span></span>
+<span id="cb26-68"><a href="#cb26-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-69"><a href="#cb26-69" aria-hidden="true" tabindex="-1"></a><span class="st">All workshop reads and all derived coordinates are generated against this</span></span>
+<span id="cb26-70"><a href="#cb26-70" aria-hidden="true" tabindex="-1"></a><span class="st">assembly. Processed files from other assemblies are not compatible.</span></span>
+<span id="cb26-71"><a href="#cb26-71" aria-hidden="true" tabindex="-1"></a><span class="op">EOF</span></span>
+<span id="cb26-72"><a href="#cb26-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-73"><a href="#cb26-73" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"Reference bundle ready in </span><span class="va">${out_dir}</span><span class="st">"</span> <span class="kw">|</span> <span class="fu">tee</span> <span class="at">-a</span> <span class="st">"</span><span class="va">${log_file}</span><span class="st">"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 </section>
 <section id="read-the-first-bash-script" class="level4">
@@ -933,6 +941,10 @@ NZ_AP026446.1  1499  2400  gene-example  0  -  1499  2400  0  1  901  0</code></
 <tr class="odd">
 <td><code>print ...</code></td>
 <td>Write the 12 BED columns required by RSeQC. Each intron-free bacterial gene is represented as one block.</td>
+</tr>
+<tr class="even">
+<td><code>sha256sum ... &gt; reference_files.sha256</code></td>
+<td>Record checksums for the generated FASTA, GFF3, GTF, and BED files so the exact reference bundle can be verified later.</td>
 </tr>
 </tbody>
 </table>

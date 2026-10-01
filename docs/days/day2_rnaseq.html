@@ -655,35 +655,33 @@ results/logs/day2/</code></pre>
 <span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">-S</span> <span class="st">"</span><span class="va">${sam_file}</span><span class="st">"</span> <span class="dt">\</span></span>
 <span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2</span><span class="op">&gt;</span> <span class="st">"</span><span class="va">${log_dir}</span><span class="st">/</span><span class="va">${sample_id}</span><span class="st">.bowtie2.log"</span></span>
 <span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>  <span class="co"># SAM -&gt; BAM: Here was the error during the workshop!</span></span>
-<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>  <span class="co"># -b was missing </span></span>
-<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>  <span class="co"># looking the actual samtool manual:</span></span>
-<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The -b, -C, -1, -u, -h, -H, and -c options change the output format from the default of headerless SAM, and the -o and -U options set the output file name(s).</span></span>
-<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>  <span class="ex">samtools</span> sort <span class="dt">\</span></span>
-<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>    <span class="at">-@</span> 2 <span class="dt">\</span></span>
-<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a>    <span class="at">-b</span> <span class="dt">\</span></span>
-<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a>    <span class="at">-o</span> <span class="st">"</span><span class="va">${bam_file}</span><span class="st">"</span> <span class="dt">\</span></span>
-<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span><span class="va">${sam_file}</span><span class="st">"</span></span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Convert the SAM alignments to a coordinate-sorted BAM.</span></span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>  <span class="co"># samtools sort accepts SAM input directly; -O BAM makes the output format explicit.</span></span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>  <span class="ex">samtools</span> sort <span class="dt">\</span></span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>    <span class="at">-@</span> 2 <span class="dt">\</span></span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">-O</span> BAM <span class="dt">\</span></span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>    <span class="at">-o</span> <span class="st">"</span><span class="va">${bam_file}</span><span class="st">"</span> <span class="dt">\</span></span>
+<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span><span class="va">${sam_file}</span><span class="st">"</span></span>
+<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a>  <span class="ex">samtools</span> index <span class="st">"</span><span class="va">${bam_file}</span><span class="st">"</span></span>
 <span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a>  <span class="ex">samtools</span> index <span class="st">"</span><span class="va">${bam_file}</span><span class="st">"</span></span>
+<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a>  <span class="ex">samtools</span> flagstat <span class="st">"</span><span class="va">${bam_file}</span><span class="st">"</span> <span class="op">&gt;</span> <span class="st">"</span><span class="va">${log_dir}</span><span class="st">/</span><span class="va">${sample_id}</span><span class="st">.flagstat.txt"</span></span>
 <span id="cb14-46"><a href="#cb14-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-47"><a href="#cb14-47" aria-hidden="true" tabindex="-1"></a>  <span class="ex">samtools</span> flagstat <span class="st">"</span><span class="va">${bam_file}</span><span class="st">"</span> <span class="op">&gt;</span> <span class="st">"</span><span class="va">${log_dir}</span><span class="st">/</span><span class="va">${sample_id}</span><span class="st">.flagstat.txt"</span></span>
-<span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a>  <span class="ex">samtools</span> view <span class="dt">\</span></span>
-<span id="cb14-50"><a href="#cb14-50" aria-hidden="true" tabindex="-1"></a>    <span class="at">-@</span> 2 <span class="dt">\</span></span>
-<span id="cb14-51"><a href="#cb14-51" aria-hidden="true" tabindex="-1"></a>    <span class="at">-b</span> <span class="dt">\</span></span>
-<span id="cb14-52"><a href="#cb14-52" aria-hidden="true" tabindex="-1"></a>    <span class="at">-q</span> 10 <span class="dt">\</span></span>
-<span id="cb14-53"><a href="#cb14-53" aria-hidden="true" tabindex="-1"></a>    <span class="at">-f</span> 2 <span class="dt">\</span></span>
-<span id="cb14-54"><a href="#cb14-54" aria-hidden="true" tabindex="-1"></a>    <span class="at">-F</span> 2828 <span class="dt">\</span></span>
-<span id="cb14-55"><a href="#cb14-55" aria-hidden="true" tabindex="-1"></a>    <span class="at">-o</span> <span class="st">"</span><span class="va">${filtered_bam}</span><span class="st">"</span> <span class="dt">\</span></span>
-<span id="cb14-56"><a href="#cb14-56" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span><span class="va">${bam_file}</span><span class="st">"</span></span>
+<span id="cb14-47"><a href="#cb14-47" aria-hidden="true" tabindex="-1"></a>  <span class="ex">samtools</span> view <span class="dt">\</span></span>
+<span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a>    <span class="at">-@</span> 2 <span class="dt">\</span></span>
+<span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a>    <span class="at">-b</span> <span class="dt">\</span></span>
+<span id="cb14-50"><a href="#cb14-50" aria-hidden="true" tabindex="-1"></a>    <span class="at">-q</span> 10 <span class="dt">\</span></span>
+<span id="cb14-51"><a href="#cb14-51" aria-hidden="true" tabindex="-1"></a>    <span class="at">-f</span> 2 <span class="dt">\</span></span>
+<span id="cb14-52"><a href="#cb14-52" aria-hidden="true" tabindex="-1"></a>    <span class="at">-F</span> 2828 <span class="dt">\</span></span>
+<span id="cb14-53"><a href="#cb14-53" aria-hidden="true" tabindex="-1"></a>    <span class="at">-o</span> <span class="st">"</span><span class="va">${filtered_bam}</span><span class="st">"</span> <span class="dt">\</span></span>
+<span id="cb14-54"><a href="#cb14-54" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span><span class="va">${bam_file}</span><span class="st">"</span></span>
+<span id="cb14-55"><a href="#cb14-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-56"><a href="#cb14-56" aria-hidden="true" tabindex="-1"></a>  <span class="ex">samtools</span> index <span class="st">"</span><span class="va">${filtered_bam}</span><span class="st">"</span></span>
 <span id="cb14-57"><a href="#cb14-57" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-58"><a href="#cb14-58" aria-hidden="true" tabindex="-1"></a>  <span class="ex">samtools</span> index <span class="st">"</span><span class="va">${filtered_bam}</span><span class="st">"</span></span>
+<span id="cb14-58"><a href="#cb14-58" aria-hidden="true" tabindex="-1"></a>  <span class="ex">samtools</span> flagstat <span class="st">"</span><span class="va">${filtered_bam}</span><span class="st">"</span> <span class="op">&gt;</span> <span class="st">"</span><span class="va">${log_dir}</span><span class="st">/</span><span class="va">${sample_id}</span><span class="st">.filtered.flagstat.txt"</span></span>
 <span id="cb14-59"><a href="#cb14-59" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-60"><a href="#cb14-60" aria-hidden="true" tabindex="-1"></a>  <span class="ex">samtools</span> flagstat <span class="st">"</span><span class="va">${filtered_bam}</span><span class="st">"</span> <span class="op">&gt;</span> <span class="st">"</span><span class="va">${log_dir}</span><span class="st">/</span><span class="va">${sample_id}</span><span class="st">.filtered.flagstat.txt"</span></span>
-<span id="cb14-61"><a href="#cb14-61" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-62"><a href="#cb14-62" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rm</span> <span class="at">-f</span> <span class="st">"</span><span class="va">${sam_file}</span><span class="st">"</span></span>
-<span id="cb14-63"><a href="#cb14-63" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb14-60"><a href="#cb14-60" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rm</span> <span class="at">-f</span> <span class="st">"</span><span class="va">${sam_file}</span><span class="st">"</span></span>
+<span id="cb14-61"><a href="#cb14-61" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The loop performs the following steps for each paired-end sample.</p>
 <pre class="text"><code>trimmed R1 + R2
   -&gt; Bowtie2 mapping -&gt; temporary SAM + Bowtie2 log
@@ -703,11 +701,12 @@ results/logs/day2/</code></pre>
 </section>
 <section id="convert-sam-to-a-coordinate-sorted-bam" class="level5">
 <h5 class="anchored" data-anchor-id="convert-sam-to-a-coordinate-sorted-bam">3.5.2 Convert SAM to a coordinate-sorted BAM</h5>
-<p><code>samtools sort</code> reads the text SAM file and writes a compressed BAM file sorted by genomic coordinate:</p>
+<p><code>samtools sort</code> reads the text SAM file directly and writes a coordinate-sorted BAM. The <code>-O BAM</code> option makes the output format explicit:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="ex">samtools</span> sort <span class="dt">\</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-@</span> 2 <span class="dt">\</span></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-o</span> <span class="st">"</span><span class="va">${bam_file}</span><span class="st">"</span> <span class="dt">\</span></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"</span><span class="va">${sam_file}</span><span class="st">"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-O</span> BAM <span class="dt">\</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-o</span> <span class="st">"</span><span class="va">${bam_file}</span><span class="st">"</span> <span class="dt">\</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"</span><span class="va">${sam_file}</span><span class="st">"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Conversion and sorting therefore happen in the same command. Coordinate sorting places alignments from the same genomic region together, which is required for BAM indexing and makes downstream access efficient.</p>
 </section>
 <section id="index-and-summarize-the-sorted-bam" class="level5">
@@ -874,7 +873,7 @@ results/day2_rnaseq/bam/*.filtered.bam.bai</code></pre>
 <p>Use <a href="https://rseqc.sourceforge.net/#infer-experiment-py"><code>infer_experiment.py</code></a> from RSeQC together with the 12-column BED gene model created by the Day 1 reference script:</p>
 <pre class="text"><code>reference_genome/genes.bed</code></pre>
 <p>This BED file must describe the same <code>GCF_025998455.1</code> assembly as the BAM files and must use the same sequence name, <code>NZ_AP026446.1</code>. A BED file made for the study’s original <code>NC_000915.1</code> alignment cannot be used with the workshop BAM files.</p>
-<p>During the workshop we inspected one BAM. The code below instead lops through each BAM and save the log output in a file. The for loop is the same as the one we did before but as we want to save all the logs to the same file using 2&gt; as before.</p>
+<p>During the workshop we inspected one BAM. The code below loops through every filtered BAM and saves the complete RSeQC report to one log file. <code>infer_experiment.py</code> writes the report to standard output, so we combine standard output and standard error and pass both through <code>tee</code>.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> results/logs/day2</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="kw">{</span></span>
@@ -892,7 +891,7 @@ results/day2_rnaseq/bam/*.filtered.bam.bai</code></pre>
 <span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>      <span class="at">-r</span> reference_genome/genes.bed</span>
 <span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
-<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span> <span class="dv">2</span><span class="op">&gt;</span> results/logs/day2/rseqc_strandedness.log</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span> <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span> <span class="kw">|</span> <span class="fu">tee</span> results/logs/day2/rseqc_strandedness.log</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>For paired-end data, the RSeQC strings encode the read number, the strand on which that read aligns, and the annotated transcript strand. For example, <code>1++</code> means that R1 aligns to the <code>+</code> genomic strand over a <code>+</code> transcript.</p>
 <table class="caption-top table">
 <colgroup>
@@ -1780,16 +1779,16 @@ negative log2FoldChange  -&gt; lower expression in stressed samples</code></pre>
 <span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a><span class="va">bam_dir</span><span class="op">=</span><span class="st">"results/day2_rnaseq/bam"</span></span>
 <span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a><span class="va">out_dir</span><span class="op">=</span><span class="st">"results/day2_rnaseq/bigwig"</span></span>
-<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a><span class="va">scale_file</span><span class="op">=</span><span class="st">"results/day2_rnaseq/deseq2/deseq2_size_factors.tsv"</span></span>
-<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> <span class="st">"</span><span class="va">${out_dir}</span><span class="st">"</span></span>
-<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-10"><a href="#cb47-10" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">[[</span> <span class="ot">!</span> <span class="ot">-f</span> <span class="st">"</span><span class="va">${scale_file}</span><span class="st">"</span> <span class="kw">]];</span> <span class="cf">then</span></span>
-<span id="cb47-11"><a href="#cb47-11" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">"ERROR: DESeq2 scale-factor table not found: </span><span class="va">${scale_file}</span><span class="st">"</span> <span class="op">&gt;&amp;</span><span class="dv">2</span></span>
-<span id="cb47-12"><a href="#cb47-12" aria-hidden="true" tabindex="-1"></a>  <span class="bu">exit</span> 1</span>
-<span id="cb47-13"><a href="#cb47-13" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span>
-<span id="cb47-14"><a href="#cb47-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-15"><a href="#cb47-15" aria-hidden="true" tabindex="-1"></a><span class="fu">tail</span> <span class="at">-n</span> +2 <span class="st">"</span><span class="va">${scale_file}</span><span class="st">"</span> <span class="kw">|</span></span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a><span class="va">log_dir</span><span class="op">=</span><span class="st">"results/logs/day2"</span></span>
+<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a><span class="va">scale_file</span><span class="op">=</span><span class="st">"results/day2_rnaseq/deseq2/deseq2_size_factors.tsv"</span></span>
+<span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> <span class="st">"</span><span class="va">${out_dir}</span><span class="st">"</span> <span class="st">"</span><span class="va">${log_dir}</span><span class="st">"</span></span>
+<span id="cb47-10"><a href="#cb47-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-11"><a href="#cb47-11" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">[[</span> <span class="ot">!</span> <span class="ot">-f</span> <span class="st">"</span><span class="va">${scale_file}</span><span class="st">"</span> <span class="kw">]];</span> <span class="cf">then</span></span>
+<span id="cb47-12"><a href="#cb47-12" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">"ERROR: DESeq2 scale-factor table not found: </span><span class="va">${scale_file}</span><span class="st">"</span> <span class="op">&gt;&amp;</span><span class="dv">2</span></span>
+<span id="cb47-13"><a href="#cb47-13" aria-hidden="true" tabindex="-1"></a>  <span class="bu">exit</span> 1</span>
+<span id="cb47-14"><a href="#cb47-14" aria-hidden="true" tabindex="-1"></a><span class="cf">fi</span></span>
+<span id="cb47-15"><a href="#cb47-15" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb47-16"><a href="#cb47-16" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="va">IFS</span><span class="op">=</span><span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">sample</span> <span class="va">deseq2_size_factor</span> <span class="va">bamcoverage_scale_factor</span></span>
 <span id="cb47-17"><a href="#cb47-17" aria-hidden="true" tabindex="-1"></a><span class="cf">do</span></span>
 <span id="cb47-18"><a href="#cb47-18" aria-hidden="true" tabindex="-1"></a>  <span class="va">bam</span><span class="op">=</span><span class="st">"</span><span class="va">${bam_dir}</span><span class="st">/</span><span class="va">${sample}</span><span class="st">.filtered.bam"</span></span>
@@ -1801,21 +1800,14 @@ negative log2FoldChange  -&gt; lower expression in stressed samples</code></pre>
 <span id="cb47-24"><a href="#cb47-24" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb47-25"><a href="#cb47-25" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">"</span><span class="va">${sample}</span><span class="st">: DESeq2 size factor=</span><span class="va">${deseq2_size_factor}</span><span class="st">; bamCoverage scale factor=</span><span class="va">${bamcoverage_scale_factor}</span><span class="st">"</span></span>
 <span id="cb47-26"><a href="#cb47-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb47-27"><a href="#cb47-27" aria-hidden="true" tabindex="-1"></a><span class="ex">bamCoverage</span> <span class="dt">\</span></span>
+<span id="cb47-27"><a href="#cb47-27" aria-hidden="true" tabindex="-1"></a>  <span class="ex">bamCoverage</span> <span class="dt">\</span></span>
 <span id="cb47-28"><a href="#cb47-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">-b</span> <span class="st">"</span><span class="va">${bam}</span><span class="st">"</span> <span class="dt">\</span></span>
-<span id="cb47-29"><a href="#cb47-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">--filterRNAstrand</span> forward <span class="dt">\</span></span>
-<span id="cb47-30"><a href="#cb47-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">-o</span> <span class="st">"</span><span class="va">${out_dir}</span><span class="st">/</span><span class="va">${sample}</span><span class="st">.norm.fw.bw"</span> <span class="dt">\</span></span>
-<span id="cb47-31"><a href="#cb47-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">--scaleFactor</span> <span class="st">"</span><span class="va">${bamcoverage_scale_factor}</span><span class="st">"</span> <span class="dt">\</span></span>
-<span id="cb47-32"><a href="#cb47-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">--binSize</span> 10 <span class="dt">\</span></span>
-<span id="cb47-33"><a href="#cb47-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">--numberOfProcessors</span> 2</span>
-<span id="cb47-34"><a href="#cb47-34" aria-hidden="true" tabindex="-1"></a> <span class="ex">bamCoverage</span> <span class="dt">\</span></span>
-<span id="cb47-35"><a href="#cb47-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">-b</span> <span class="st">"</span><span class="va">${bam}</span><span class="st">"</span> <span class="dt">\</span></span>
-<span id="cb47-36"><a href="#cb47-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">--filterRNAstrand</span> reverse <span class="dt">\</span></span>
-<span id="cb47-37"><a href="#cb47-37" aria-hidden="true" tabindex="-1"></a>    <span class="at">-o</span> <span class="st">"</span><span class="va">${out_dir}</span><span class="st">/</span><span class="va">${sample}</span><span class="st">.norm.rv.bw"</span> <span class="dt">\</span></span>
-<span id="cb47-38"><a href="#cb47-38" aria-hidden="true" tabindex="-1"></a>    <span class="at">--scaleFactor</span> <span class="st">"</span><span class="va">${bamcoverage_scale_factor}</span><span class="st">"</span> <span class="dt">\</span></span>
-<span id="cb47-39"><a href="#cb47-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">--binSize</span> 10 <span class="dt">\</span></span>
-<span id="cb47-40"><a href="#cb47-40" aria-hidden="true" tabindex="-1"></a>    <span class="at">--numberOfProcessors</span> 2</span>
-<span id="cb47-41"><a href="#cb47-41" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb47-29"><a href="#cb47-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">-o</span> <span class="st">"</span><span class="va">${out_dir}</span><span class="st">/</span><span class="va">${sample}</span><span class="st">.deseq2.bw"</span> <span class="dt">\</span></span>
+<span id="cb47-30"><a href="#cb47-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">--scaleFactor</span> <span class="st">"</span><span class="va">${bamcoverage_scale_factor}</span><span class="st">"</span> <span class="dt">\</span></span>
+<span id="cb47-31"><a href="#cb47-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">--binSize</span> 10 <span class="dt">\</span></span>
+<span id="cb47-32"><a href="#cb47-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">--numberOfProcessors</span> 2 <span class="dt">\</span></span>
+<span id="cb47-33"><a href="#cb47-33" aria-hidden="true" tabindex="-1"></a>    <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span> <span class="kw">|</span> <span class="fu">tee</span> <span class="st">"</span><span class="va">${log_dir}</span><span class="st">/</span><span class="va">${sample}</span><span class="st">.bamCoverage.log"</span></span>
+<span id="cb47-34"><a href="#cb47-34" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span> <span class="op">&lt;</span> <span class="op">&lt;(</span><span class="fu">tail</span> <span class="at">-n</span> +2 <span class="st">"</span><span class="va">${scale_file}</span><span class="st">"</span><span class="op">)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Run it:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb48"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
 <span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--user</span> <span class="st">"</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-u</span><span class="va">)</span><span class="st">:</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-g</span><span class="va">)</span><span class="st">"</span> <span class="dt">\</span></span>
@@ -1825,7 +1817,7 @@ negative log2FoldChange  -&gt; lower expression in stressed samples</code></pre>
 <span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a>  bash scripts/day2_rnaseq/05_make_bigwig_bamcoverage.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Expected output:</p>
 <pre class="text"><code>results/day2_rnaseq/bigwig/*.deseq2.bw</code></pre>
-<p>These tracks use the same sample-specific multiplicative scaling implied by the DESeq2 size factors. They are intended for visualization and sample comparison; DESeq2 itself still uses the raw integer gene counts as input.</p>
+<p>Each sample produces one total-coverage bigWig named <code>*.deseq2.bw</code>. These tracks use the same sample-specific multiplicative scaling implied by the DESeq2 size factors. They are intended for visualization and sample comparison; DESeq2 itself still uses the raw integer gene counts as input.</p>
 </section>
 <section id="summarize-day-2-logs-with-multiqc" class="level2">
 <h2 class="anchored" data-anchor-id="summarize-day-2-logs-with-multiqc">7. Summarize Day 2 logs with MultiQC</h2>
