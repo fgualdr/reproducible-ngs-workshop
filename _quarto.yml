@@ -4,6 +4,8 @@ project:
   render:
     - index.qmd
     - "!docs/**"
+  resources:
+    - checkpoints/**
 
 profile:
   default: day4
@@ -35,4 +37,4 @@ format:
 
 execute:
   freeze: auto
-  eval: false
+  eval: true

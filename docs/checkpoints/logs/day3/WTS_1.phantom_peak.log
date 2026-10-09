@@ -1,0 +1,40 @@
+Loading required package: Rcpp
+################
+ChIP data: /work/results/day3_chipseq/bam/WTS_1.filtered.bam 
+Control data: NA 
+strandshift(min): -500 
+strandshift(step): 5 
+strandshift(max) 1500 
+user-defined peak shift NA 
+exclusion(min): 10 
+exclusion(max): NaN 
+num parallel nodes: 2 
+FDR threshold: 0.01 
+NumPeaks Threshold: NA 
+Output Directory: /work/results/day3_chipseq/qc/phantom_peak/WTS_1 
+narrowPeak output file name: NA 
+regionPeak output file name: NA 
+Rdata filename: NA 
+plot pdf filename: /work/results/day3_chipseq/qc/phantom_peak/WTS_1/WTS_1.filtered.pdf 
+result filename: /work/results/day3_chipseq/qc/phantom_peak/WTS_1/WTS_1.phantom_peak_qc.tsv 
+Overwrite files?: TRUE
+
+[1] TRUE
+Reading ChIP tagAlign/BAM file /work/results/day3_chipseq/bam/WTS_1.filtered.bam 
+opened /work/results/day3_chipseq/qc/phantom_peak/WTS_1/WTS_1.filtered.tagAlign1d53d3bdd56
+done. read 15199008 fragments
+ChIP data read length 150 
+[1] TRUE
+Calculating peak characteristics
+Minimum cross-correlation value 0.9536713 
+Minimum cross-correlation shift 1500 
+Top 3 cross-correlation values 0.987132849759124,0.956976075578743,0.956779972750278 
+Top 3 estimates for fragment length 230,985,1015 
+Window half size 550 
+Phantom peak location 155 
+Phantom peak Correlation 0.982309 
+Normalized Strand cross-correlation coefficient (NSC) 1.035087 
+Relative Strand cross-correlation Coefficient (RSC) 1.168443 
+Phantom Peak Quality Tag 1 
+null device 
+          1 

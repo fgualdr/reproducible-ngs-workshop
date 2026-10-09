@@ -105,6 +105,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script>
+<script src="../site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="../site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="../site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
 
 
 <link rel="stylesheet" href="../assets/css/styles.css">
@@ -177,6 +180,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">Day 2 - RNA-seq</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../days/day3_chipseq.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Day 3 - ChIP-seq</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../days/day4_integration.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Day 4 - Integration</span></a>
+  </div>
+</li>
       </ul>
   </li>
         <li class="sidebar-item sidebar-item-section">
@@ -218,8 +233,38 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="menu-text">RNA-seq Concepts</span></a>
   </div>
 </li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modules/chipseq_concepts.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">ChIP-seq Concepts</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../modules/genomic_intervals.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Genomic Intervals</span></a>
+  </div>
+</li>
       </ul>
   </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../scripts/README.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Scripts</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../checkpoints/README.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Checkpoints</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../assessments/submission_checklist.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Assessment</span></a>
+  </div>
+</li>
     </ul>
     </div>
 </nav>
@@ -280,6 +325,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="overview">Overview</h2>
 <p>This preparatory session ensures that every participant has a working computational environment before the start of the workshop. Personal computers are preferred, but if limitations or installation issues arise, participants will be able to use computers from the University.</p>
 <p>The goal is not to learn bioinformatics yet. Instead, we will verify that the required software is installed correctly and that containers can access files on the local computer.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart TD
+    accounts["Create or verify GitHub + Docker Hub accounts"]
+    vscode["Install VS Code and prepare the terminal environment"]
+    git["Install and verify Git"]
+    docker["Install Docker and run a test container"]
+    igv["Install and open IGV"]
+    ready["Workshop environment ready for Day 1"]
+
+    accounts --&gt; vscode
+    vscode --&gt; git
+    git --&gt; docker
+    docker --&gt; igv
+    igv --&gt; ready
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
 </section>
 <section id="what-you-will-have-ready-today" class="level2">
 <h2 class="anchored" data-anchor-id="what-you-will-have-ready-today">What you will have ready today</h2>

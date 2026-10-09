@@ -2,8 +2,6 @@
 title: "Day 1 - Reproducible project, public data, FASTQ QC, trimming, and reference files"
 subtitle: "Build the RNA-seq and ChIP-seq inputs used by the rest of the workshop"
 format: html
-execute:
-  eval: false
 ---
 
 ## 1. Before we start
@@ -42,19 +40,27 @@ Today we will discuss:
 - how to run `fastp` for FASTQ quality assessment and trimming;
 - how to inspect the `fastp` HTML/JSON reports.
 
-This workshop follows one workflow:
+The Day 1 workflow is:
 
-```text
-public data + metadata
-  -> reference genome + annotation
-  -> FASTQ quality assessment and preprocessing with fastp
-  -> RNA-seq mapping/counting/differential expression
-  -> ChIP-seq mapping/peak calling/motifs
-  -> RNA-seq and ChIP-seq integration
-  -> genome-browser inspection and interpretation
+```{mermaid}
+flowchart TD
+    project["Create a reproducible project + Git repository"]
+    metadata["Retrieve and organise public sample metadata"]
+    reference["Download matching reference genome + annotation"]
+    fastq["Download selected RNA-seq + ChIP-seq FASTQ files"]
+    inspect["Inspect compressed FASTQ files"]
+    fastp["Run fastp QC + trimming"]
+    ready["Reference + metadata + trimmed FASTQ ready for Days 2 and 3"]
+
+    project --> metadata
+    metadata --> reference
+    reference --> fastq
+    fastq --> inspect
+    inspect --> fastp
+    fastp --> ready
 ```
 
-Today we retrieve the data required for Days 2, 3, and 4.
+Today we retrieve and prepare the data required for the downstream RNA-seq and ChIP-seq analyses.
 
 The main study is the HP1021 *Helicobacter pylori* multi-omics study:
 

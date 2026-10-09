@@ -1,0 +1,47 @@
+Detecting adapter sequence for read1...
+No adapter detected for read1
+
+Detecting adapter sequence for read2...
+CTTGGATTTCGACAGATTTCTTGTCGCGCAGATAGCATGCCAAGCGCTGCTTGTAAAACA
+
+Read1 before filtering:
+total reads: 7186171
+total bases: 1077925650
+Q20 bases: 1047060110(97.1366%)
+Q30 bases: 995468320(92.3504%)
+
+Read2 before filtering:
+total reads: 7186171
+total bases: 1077925650
+Q20 bases: 1040211569(96.5012%)
+Q30 bases: 972852027(90.2522%)
+
+Read1 after filtering:
+total reads: 7130431
+total bases: 1065429776
+Q20 bases: 1036657732(97.2995%)
+Q30 bases: 986337754(92.5765%)
+
+Read2 after filtering:
+total reads: 7130431
+total bases: 1065375555
+Q20 bases: 1030498050(96.7263%)
+Q30 bases: 964480721(90.5296%)
+
+Filtering result:
+reads passed filter: 14260862
+reads failed due to low quality: 73396
+reads failed due to too many N: 1538
+reads failed due to too short: 36546
+reads with adapter trimmed: 367679
+bases trimmed due to adapters: 9650492
+
+Duplication rate: 21.9354%
+
+Insert size peak (evaluated by paired-end reads): 269
+
+JSON report: results/logs/day1/fastp/rnaseq_WTS_3.fastp.json
+HTML report: results/logs/day1/fastp/rnaseq_WTS_3.fastp.html
+
+fastp -i raw_data_sra/fastq/rnaseq/WTS_3_R1.fastq.gz -I raw_data_sra/fastq/rnaseq/WTS_3_R2.fastq.gz -o results/day1_qc/trimmed_fastq/rnaseq/WTS_3_R1.trimmed.fastq.gz -O results/day1_qc/trimmed_fastq/rnaseq/WTS_3_R2.trimmed.fastq.gz --detect_adapter_for_pe --cut_tail --cut_tail_window_size 4 --cut_tail_mean_quality 20 --thread 2 --html results/logs/day1/fastp/rnaseq_WTS_3.fastp.html --json results/logs/day1/fastp/rnaseq_WTS_3.fastp.json 
+fastp v0.23.4, time used: 38 seconds

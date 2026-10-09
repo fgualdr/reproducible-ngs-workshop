@@ -1,0 +1,60 @@
+
+===== results/day2_rnaseq/bam/WTS_1.filtered.bam =====
+Reading reference gene model reference_genome/genes.bed ... Done
+Loading SAM/BAM file ...  Total 200000 usable reads were sampled
+
+
+This is PairEnd Data
+Fraction of reads failed to determine: 0.0027
+Fraction of reads explained by "1++,1--,2+-,2-+": 0.0305
+Fraction of reads explained by "1+-,1-+,2++,2--": 0.9668
+
+===== results/day2_rnaseq/bam/WTS_2.filtered.bam =====
+Reading reference gene model reference_genome/genes.bed ... Done
+Loading SAM/BAM file ...  Total 200000 usable reads were sampled
+
+
+This is PairEnd Data
+Fraction of reads failed to determine: 0.0028
+Fraction of reads explained by "1++,1--,2+-,2-+": 0.0327
+Fraction of reads explained by "1+-,1-+,2++,2--": 0.9646
+
+===== results/day2_rnaseq/bam/WTS_3.filtered.bam =====
+Reading reference gene model reference_genome/genes.bed ... Done
+Loading SAM/BAM file ...  Total 200000 usable reads were sampled
+
+
+This is PairEnd Data
+Fraction of reads failed to determine: 0.0022
+Fraction of reads explained by "1++,1--,2+-,2-+": 0.0329
+Fraction of reads explained by "1+-,1-+,2++,2--": 0.9649
+
+===== results/day2_rnaseq/bam/WT_1.filtered.bam =====
+Reading reference gene model reference_genome/genes.bed ... Done
+Loading SAM/BAM file ...  Total 200000 usable reads were sampled
+
+
+This is PairEnd Data
+Fraction of reads failed to determine: 0.0017
+Fraction of reads explained by "1++,1--,2+-,2-+": 0.0261
+Fraction of reads explained by "1+-,1-+,2++,2--": 0.9722
+
+===== results/day2_rnaseq/bam/WT_2.filtered.bam =====
+Reading reference gene model reference_genome/genes.bed ... Done
+Loading SAM/BAM file ...  Total 200000 usable reads were sampled
+
+
+This is PairEnd Data
+Fraction of reads failed to determine: 0.0023
+Fraction of reads explained by "1++,1--,2+-,2-+": 0.0272
+Fraction of reads explained by "1+-,1-+,2++,2--": 0.9706
+
+===== results/day2_rnaseq/bam/WT_3.filtered.bam =====
+Reading reference gene model reference_genome/genes.bed ... Done
+Loading SAM/BAM file ...  Total 200000 usable reads were sampled
+
+
+This is PairEnd Data
+Fraction of reads failed to determine: 0.0013
+Fraction of reads explained by "1++,1--,2+-,2-+": 0.0270
+Fraction of reads explained by "1+-,1-+,2++,2--": 0.9717

@@ -1,649 +1,545 @@
 ---
-title: "Day 4 - RNA-seq and ChIP-seq Integration, Visualization and Final Presentation"
+title: "Optional Day 4 - Basic RNA-seq and ChIP-seq integration in R"
+subtitle: "GRanges, peak-to-gene links and sequence composition"
 format: html
-execute:
-  eval: false
 ---
 
-## Overview
-
-Day 4 combines RNA-seq and ChIP-seq outputs. You will connect differential expression results to nearby ChIP-seq peaks, produce interpretable figures and prepare a concise three-slide lab-meeting summary.
-
-The goal is careful prioritization of candidate regulatory relationships, not overstatement. A ChIP-seq peak near a differentially expressed gene is a candidate direct regulatory link that depends on the assumptions and quality of the data.
-
-## Today's path: how your repository grows
-
-![RNA-seq and ChIP-seq integration concept](../assets/images/day4/integration_concept_flow.svg){#fig-integration-concept-flow width="100%" fig-alt="Integration workflow combining differential expression, peaks and gene annotation to generate candidate direct targets."}
-
-```text
-DESeq2 result table
-  + Day 3 consensus ChIP-seq peak file
-  + Day 3 differential peak result table
-  + genome annotation
-  -> genomic interval objects
-  -> peak-to-gene table
-  -> DE genes with nearby peaks
-  -> summary plots
-  -> final three slides
-  -> final commit and push
-```
-
-## Learning outcomes
-
-By the end of Day 4, you should be able to:
-
-- explain genomic intervals and coordinate-system pitfalls;
-- import DESeq2 results, peak files and gene annotations;
-- compute nearest-gene and promoter-overlap annotations;
-- distinguish candidate direct and indirect regulatory effects;
-- create interpretable summary plots;
-- document limitations of RNA-seq and ChIP-seq integration;
-- prepare a three-slide presentation of data, workflow and biological interpretation.
-
-## Before you start
-
-Open the same `workshop_ngs` repository that you used on Day 1.
-
-- Windows users should open Visual Studio Code connected to Ubuntu WSL, open a WSL terminal, and run the commands there.
-- macOS and Linux users should open the `workshop_ngs` folder in Visual Studio Code and use the VS Code terminal or a normal terminal.
-- Before running commands, move to the repository root:
-
-```bash
-cd ~/workshop_ngs
-pwd
-```
-
-If your repository is stored somewhere else, replace this path with the location of your own `workshop_ngs` folder. The command `pwd` should end with `workshop_ngs`.
-
-Use your own outputs or checkpoint files:
-
-```text
-results/day2_rnaseq/deseq2/deseq2_results.tsv
-results/day3_chipseq/peaks/consensus/day4_consensus_peaks.bed
-results/day3_chipseq/counts/consensus_peak_counts.tsv
-results/day3_chipseq/differential_peaks/differential_peak_results.tsv
-reference_genome/annotation.gff3
-raw_data/metadata/RNAseq_metadata.txt
-raw_data/metadata/Chipseq_metadata.txt
-```
-
-If checkpoint files are used, record their source in `scripts/day4_integration/execution_note.md`.
-
-Before integration, verify that the annotation and Day 3 BED file both use chromosome `NZ_AP026446.1`:
-
-```bash
-grep -v '^#' reference_genome/annotation.gff3 | head -1
-head -1 results/day3_chipseq/peaks/consensus/day4_consensus_peaks.bed
-```
-
-Day 4 must stop rather than translate or guess coordinates if any input was generated against another assembly.
-
-## Time plan
-
-| Part | Topic | Target time |
-|---|---|---:|
-| 1 | Genomic interval theory | 35 min |
-| 2 | Import RNA-seq, ChIP-seq and annotation | 35 min |
-| 3 | Peak-to-gene annotation | 55 min |
-| 4 | DEG and peak integration | 55 min |
-| 5 | Figures and final slides | 90 min |
-| 6 | Final commit | 15 min |
-
-## Conceptual background
-
-### Genomic intervals
-
-A genomic interval is a feature on a sequence coordinate system:
-
-```text
-sequence name, start, end, strand, metadata columns
-```
-
-Examples include genes, CDS features, promoters, ChIP-seq peaks, read alignments and motif matches. Most integration problems in genomics reduce to operations on intervals.
-
-An interval $A$ can be represented as:
-
-$$
-A = (chr_A, start_A, end_A, strand_A)
-$$
-
-Two intervals on the same chromosome overlap when:
-
-$$
-start_A \le end_B \quad \text{and} \quad start_B \le end_A
-$$
-
-In software, exact definitions depend on whether coordinates are one-based closed intervals or zero-based half-open intervals. This is why file formats matter.
-
-### Coordinate systems and file formats
-
-| Format | Common convention | Practical warning |
-|---|---|---|
-| GFF3/GTF | one-based, closed | gene annotations usually use this |
-| BED/narrowPeak | zero-based, half-open | MACS peak outputs are BED-like |
-| BAM/SAM | one-based leftmost alignment position in SAM display | tools handle this internally |
-| bigWig | indexed genome coverage | mostly used for visualization |
-
-Most R/Bioconductor import functions handle common formats correctly. Problems usually arise when files come from different genome assemblies or use inconsistent chromosome names.
-
-::: {.callout-important}
-Never integrate RNA-seq genes and ChIP-seq peaks unless the genome assembly and sequence names are consistent.
+::: {.callout-important title="This entire page is optional"}
+Day 4 is an optional extension for students who want to practise basic genomic integration in R. It is not required to complete the core FASTQ-to-result workflows from Days 1–3.
 :::
 
-### Peak-to-gene annotation is a rule, not proof
+## 1. Aim
 
-There are several reasonable ways to associate peaks with genes:
+The goal is not to build a complete regulatory-network pipeline. The goal is to understand a small set of reusable R/Bioconductor objects and operations:
 
-| Strategy | Biological question | Limitation |
-|---|---|---|
-| nearest gene | Which gene is closest to each peak? | closest is not always regulated |
-| promoter window | Is the peak near a likely promoter? | promoter boundaries may be uncertain |
-| overlap with gene body | Does the peak overlap an annotated feature? | TFs often bind outside coding regions |
-| distance to TSS | How close is binding to transcription start? | TSS annotation may be incomplete |
+```{mermaid}
+flowchart TD
+    inputs["Import DESeq2 results + consensus peaks + gene annotation"]
+    objects["Represent genomic intervals as GRanges"]
+    links["Find nearest genes + promoter overlaps"]
+    joined["Join peak-gene links with RNA-seq results"]
+    fasta["Retrieve peak DNA from indexed FASTA"]
+    sequence["DNAStringSet peak sequences"]
+    composition["Calculate GC fraction + CpG counts"]
 
-For bacteria, promoter-proximal binding is often informative, but operons and divergent promoters complicate interpretation. A peak between two genes may regulate either, both or neither.
-
-In bacterial genomes, annotation may also list genes rather than true transcription start sites. That means "nearest gene" and "nearest promoter" are practical approximations. They are useful for prioritization, but they should be reported as assumptions in the final interpretation.
-
-### Promoter windows and strand
-
-For a gene on the positive strand, a simple promoter window might be:
-
-$$
-[start - 500,\ start + 100]
-$$
-
-For a gene on the negative strand, transcription starts at the higher coordinate, so the corresponding window is:
-
-$$
-[end - 100,\ end + 500]
-$$
-
-The exact values are assumptions. In this practical, a fixed window such as 500 bp upstream and 100 bp downstream is acceptable if it is clearly documented.
-
-### Integrating DESeq2 and ChIP-seq results
-
-RNA-seq and ChIP-seq provide different evidence:
-
-| Evidence | What it supports |
-|---|---|
-| RNA-seq differential expression | gene expression changes between conditions |
-| ChIP-seq peak | protein occupancy or enrichment at genomic region |
-| motif in peak | sequence pattern compatible with binding |
-| peak near DE gene | candidate direct regulatory relationship |
-
-A useful classification is:
-
-```text
-DE gene with nearby peak       -> candidate direct target
-DE gene without nearby peak    -> candidate indirect effect or missed binding
-peak near non-DE gene          -> binding without detected expression change
-neither DE nor nearby peak     -> no evidence in this experiment
+    inputs --> objects
+    objects --> links
+    links --> joined
+    joined --> fasta
+    fasta --> sequence
+    sequence --> composition
 ```
 
-This classification is a hypothesis-generating summary. Biological validation or independent evidence is required for strong mechanistic claims.
+By the end, you should be able to explain:
 
-### Visualization principles
+- why a regular table and a genomic interval object are different;
+- how BED and GFF3 become `GRanges` objects;
+- how `distanceToNearest()` and `findOverlaps()` answer different questions;
+- how promoter windows depend on strand;
+- how an indexed FASTA can supply peak DNA sequences;
+- how to calculate GC fraction and CpG counts;
+- why a peak near a differentially expressed gene is a candidate relationship, not proof of direct regulation.
 
-Good final figures should answer specific questions:
+## 2. Input files
 
-| Question | Useful plot/table |
-|---|---|
-| Did replicates behave as expected? | PCA or sample-distance plot |
-| Which genes changed? | MA plot, volcano plot, top DEG table |
-| How many peaks were called? | Day 3 peak-count table and consensus peak summary |
-| Where are peaks relative to genes? | distance-to-gene histogram |
-| Which DE genes have nearby peaks? | candidate direct target table |
-| What does one locus look like? | genome-browser track snapshot |
+Use the files generated in Days 1–3 or the matching checkpoints:
 
-For the final three slides, prefer a small number of clear plots over many partially explained figures.
+```text
+reference_genome/genome.fa
+reference_genome/genome.fa.fai
+reference_genome/annotation.gff3
+results/day2_rnaseq/deseq2/deseq2_results.tsv
+results/day3_chipseq/peaks/consensus/consensus_peaks.bed
+results/day3_chipseq/differential_peaks/differential_peak_results.tsv   # optional
+```
 
-## What the tools are doing
-
-### rtracklayer
-
-`rtracklayer` imports genomic file formats such as GFF3, GTF, BED, narrowPeak and bigWig into R/Bioconductor objects. It preserves coordinates and metadata columns when possible.
-
-### GenomicRanges
-
-`GenomicRanges` represents genomic features as interval objects. Core operations include:
-
-| Operation | Typical function | Question |
-|---|---|---|
-| overlap | `findOverlaps()` | Which intervals intersect? |
-| nearest neighbor | `nearest()` / `distanceToNearest()` | Which gene is closest to each peak? |
-| resize/extend | `resize()`, `flank()` | What is the promoter region? |
-| set operations | `intersect()`, `union()`, `setdiff()` | How do interval sets compare? |
-
-The advantage of using interval-aware objects is that chromosome names, ranges and strand can be handled explicitly rather than through ad hoc spreadsheet operations.
-
-### dplyr / ggplot2
-
-After interval operations, many outputs become regular tables: peak ID, nearest gene, distance, log2 fold change, adjusted p-value and annotation category. `dplyr` is useful for filtering and joining these tables. `ggplot2` is useful for producing final plots.
-
-## Guided demonstration
-
-In the guided demonstration, you will see:
-
-- importing a DESeq2 result table;
-- importing the Day 3 consensus BED peak file;
-- importing GFF3 annotation;
-- converting gene features into genomic intervals;
-- computing nearest genes to peaks;
-- linking peak-associated genes to DESeq2 results;
-- selecting one result suitable for the final presentation.
-
-## Hands-on practical
+All genomic files must use `GCF_025998455.1` and sequence name `NZ_AP026446.1`.
 
 Create folders:
 
 ```bash
-mkdir -p scripts/day4_integration
+mkdir -p scripts/day4_optional
+mkdir -p results/day4_optional/tables
+mkdir -p results/day4_optional/plots
 mkdir -p results/logs/day4
-mkdir -p results/day4_integration/tables
-mkdir -p results/day4_integration/plots
-mkdir -p slides
 ```
 
-Create `scripts/day4_integration/execution_note.md` in VS Code and paste:
+Create one script and add the code blocks below in order:
 
-```markdown
-# Day 4 execution note
-
-## Inputs used
-- DESeq2 table:
-- Day 3 consensus peak file:
-- optional Day 3 peak-count table:
-- annotation file:
-- checkpoint files, if any:
-
-## Integration rules
-- nearest gene:
-- promoter window:
-- adjusted p-value threshold:
-- log2 fold-change threshold:
-
-## Limitations
--
+```bash
+nano scripts/day4_optional/01_basic_integration.R
 ```
 
-## R script for interval integration
+## 3. The four object types used today
 
-Create `scripts/day4_integration/peak_gene_integration.R`. This is the complete workshop script: it checks sequence-name compatibility, constructs the documented strand-aware promoter windows, computes nearest-gene distances and promoter overlaps, joins RNA-seq results, optionally joins the Day 3 differential-peak results, and writes the main tables and plots.
+| R object | Represents | Typical operation |
+|---|---|---|
+| `data.frame` | rectangular statistics or metadata | filter, sort, merge |
+| `GRanges` | genomic intervals plus metadata | overlap, nearest, distance, resize |
+| `Hits` | index pairs connecting two interval sets | query and subject extraction |
+| `FaFile` / `DNAStringSet` | indexed genome on disk / sequences in memory | retrieve bases, count letters and motifs |
+
+The distinction matters. A `data.frame` knows that a column is named `start`, but it does not know that `start`, `end`, chromosome and strand form a genomic interval. `GRanges` does.
+
+## 4. Load packages and define paths
+
+Add:
 
 ```r
 #!/usr/bin/env Rscript
 
-suppressPackageStartupMessages({
-  library(GenomicRanges)
-  library(rtracklayer)
-  library(tidyverse)
-})
+library(GenomicRanges)
+library(rtracklayer)
+library(Rsamtools)
+library(Biostrings)
+library(ggplot2)
 
-peak_file <- "results/day3_chipseq/peaks/consensus/day4_consensus_peaks.bed"
+rna_file <- "results/day2_rnaseq/deseq2/deseq2_results.tsv"
+peak_file <- "results/day3_chipseq/peaks/consensus/consensus_peaks.bed"
+peak_de_file <- "results/day3_chipseq/differential_peaks/differential_peak_results.tsv"
 annotation_file <- "reference_genome/annotation.gff3"
-deseq_file <- "results/day2_rnaseq/deseq2/deseq2_results.tsv"
-chip_de_file <- "results/day3_chipseq/differential_peaks/differential_peak_results.tsv"
-table_dir <- "results/day4_integration/tables"
-plot_dir <- "results/day4_integration/plots"
+genome_file <- "reference_genome/genome.fa"
 
-required_files <- c(peak_file, annotation_file, deseq_file)
-missing_files <- required_files[!file.exists(required_files)]
-if (length(missing_files) > 0) {
-  stop("Missing required input file(s): ", paste(missing_files, collapse = ", "))
-}
+table_dir <- "results/day4_optional/tables"
+plot_dir <- "results/day4_optional/plots"
 
 dir.create(table_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(plot_dir, recursive = TRUE, showWarnings = FALSE)
+```
 
-# -------------------------------------------------------------------------
-# Import peaks, annotation and RNA-seq results
-# -------------------------------------------------------------------------
+## 5. Import tables, intervals and the indexed genome
 
-peaks <- rtracklayer::import(peak_file, format = "BED")
-annotation <- rtracklayer::import(annotation_file)
-de <- readr::read_tsv(deseq_file, show_col_types = FALSE)
+Add:
 
-if (length(peaks) == 0) stop("No peaks were imported from: ", peak_file)
-
+```r
+rna <- read.delim(rna_file, check.names = FALSE)
+peaks <- import(peak_file, format = "BED")
+annotation <- import(annotation_file, format = "GFF3")
 genes <- annotation[annotation$type == "gene"]
-if (length(genes) == 0) stop("No gene features were imported from: ", annotation_file)
+genome <- FaFile(genome_file)
+genome_index <- scanFaIndex(genome)
+```
 
-# Use the GFF3 ID used by featureCounts whenever available.
-gene_id <- NULL
-for (column in c("ID", "gene_id", "locus_tag")) {
-  if (column %in% colnames(mcols(genes))) {
-    values <- as.character(mcols(genes)[[column]])
-    if (any(!is.na(values) & nzchar(values))) {
-      gene_id <- values
-      break
-    }
-  }
+Inspect the objects:
+
+```r
+class(rna)
+class(peaks)
+class(genes)
+class(genome)
+class(genome_index)
+
+rna[1:3, ]
+peaks[1:3]
+genes[1:3]
+genome_index
+```
+
+What happened during import?
+
+- the TSV remained a `data.frame`;
+- the BED coordinates were converted into a `GRanges` object;
+- the GFF3 gene features became another `GRanges` object;
+- `FaFile` points to the indexed FASTA without loading the whole genome as an ordinary character string;
+- `scanFaIndex()` returns the sequence ranges available in the FASTA index.
+
+### 5.1 Add stable peak and gene identifiers
+
+BED column 4 is imported as the `name` metadata column. Add:
+
+```r
+if (!"name" %in% names(mcols(peaks))) {
+  stop("Consensus BED must contain peak IDs in column 4")
 }
-if (is.null(gene_id)) {
-  stop("Could not identify a stable gene ID column in the GFF3 gene features")
-}
-mcols(genes)$gene_id <- gene_id
+peaks$peak_id <- as.character(peaks$name)
+names(peaks) <- peaks$peak_id
+```
 
-# Give every peak a stable ID. BED column 4 is imported as 'name'.
-peak_id <- if ("name" %in% colnames(mcols(peaks))) as.character(mcols(peaks)$name) else rep(NA_character_, length(peaks))
-missing_peak_id <- is.na(peak_id) | !nzchar(peak_id)
-peak_id[missing_peak_id] <- sprintf("peak_%04d", which(missing_peak_id))
-mcols(peaks)$peak_id <- peak_id
+GFF3 attribute names vary. Select the first suitable gene-identifier field:
 
-# Stop if the peak and gene objects do not share the same sequence names.
-peak_seqnames <- unique(as.character(seqnames(peaks)))
-gene_seqnames <- unique(as.character(seqnames(genes)))
-if (!all(peak_seqnames %in% gene_seqnames)) {
-  stop(
-    "Peak sequence name(s) are absent from the annotation: ",
-    paste(setdiff(peak_seqnames, gene_seqnames), collapse = ", ")
-  )
+```r
+candidate_id_columns <- c("ID", "gene_id", "locus_tag", "Name")
+gene_id_column <- intersect(candidate_id_columns, names(mcols(genes)))[1]
+
+if (is.na(gene_id_column)) {
+  stop("No suitable gene identifier found in the GFF3 gene features")
 }
 
-# -------------------------------------------------------------------------
-# Nearest gene per peak
-# -------------------------------------------------------------------------
+genes$gene_id <- as.character(mcols(genes)[[gene_id_column]])
+names(genes) <- genes$gene_id
+```
 
+Set chromosome lengths from the FASTA index so that interval trimming is explicit:
+
+```r
+genome_lengths <- setNames(width(genome_index), as.character(seqnames(genome_index)))
+common_seqlevels <- intersect(names(genome_lengths), union(seqlevels(peaks), seqlevels(genes)))
+
+seqlengths(peaks)[common_seqlevels] <- genome_lengths[common_seqlevels]
+seqlengths(genes)[common_seqlevels] <- genome_lengths[common_seqlevels]
+```
+
+Check that peaks and genes share sequence names:
+
+```r
+shared_sequences <- intersect(seqlevelsInUse(peaks), seqlevelsInUse(genes))
+if (length(shared_sequences) == 0) {
+  stop("Peaks and genes do not share chromosome names")
+}
+shared_sequences
+```
+
+## 6. Nearest gene: a distance question
+
+`distanceToNearest()` returns a `Hits` object. Each hit connects one query peak to one nearest subject gene and stores the distance.
+
+Add:
+
+```r
 nearest_hits <- distanceToNearest(peaks, genes, ignore.strand = TRUE)
-nearest_table <- tibble(
-  peak_index = queryHits(nearest_hits),
-  gene_index = subjectHits(nearest_hits),
-  peak_id = mcols(peaks)$peak_id[queryHits(nearest_hits)],
-  gene_id = mcols(genes)$gene_id[subjectHits(nearest_hits)],
-  distance_to_gene = mcols(nearest_hits)$distance,
-  peak_chr = as.character(seqnames(peaks))[queryHits(nearest_hits)],
+class(nearest_hits)
+nearest_hits
+```
+
+Convert the index pairs into a readable table:
+
+```r
+nearest_table <- data.frame(
+  peak_id = peaks$peak_id[queryHits(nearest_hits)],
+  peak_chrom = as.character(seqnames(peaks))[queryHits(nearest_hits)],
   peak_start = start(peaks)[queryHits(nearest_hits)],
-  peak_end = end(peaks)[queryHits(nearest_hits)]
+  peak_end = end(peaks)[queryHits(nearest_hits)],
+  gene_id = genes$gene_id[subjectHits(nearest_hits)],
+  gene_strand = as.character(strand(genes))[subjectHits(nearest_hits)],
+  distance_to_gene = mcols(nearest_hits)$distance
 )
 
-readr::write_tsv(nearest_table, file.path(table_dir, "peak_nearest_gene.tsv"))
-
-# -------------------------------------------------------------------------
-# Strand-aware promoter windows
-# -------------------------------------------------------------------------
-
-# GenomicRanges::promoters() is strand aware. With upstream = 500 and
-# downstream = 101 it implements:
-#   + strand: TSS - 500 ... TSS + 100
-#   - strand: TSS - 100 ... TSS + 500
-promoter_ranges <- GenomicRanges::promoters(genes, upstream = 500, downstream = 101)
-start(promoter_ranges) <- pmax(start(promoter_ranges), 1L)
-mcols(promoter_ranges)$gene_id <- mcols(genes)$gene_id
-
-promoter_hits <- findOverlaps(peaks, promoter_ranges, ignore.strand = TRUE)
-
-promoter_table <- tibble(
-  peak_index = queryHits(promoter_hits),
-  gene_index = subjectHits(promoter_hits),
-  peak_id = mcols(peaks)$peak_id[queryHits(promoter_hits)],
-  gene_id = mcols(promoter_ranges)$gene_id[subjectHits(promoter_hits)],
-  peak_chr = as.character(seqnames(peaks))[queryHits(promoter_hits)],
-  peak_start = start(peaks)[queryHits(promoter_hits)],
-  peak_end = end(peaks)[queryHits(promoter_hits)],
-  promoter_start = start(promoter_ranges)[subjectHits(promoter_hits)],
-  promoter_end = end(promoter_ranges)[subjectHits(promoter_hits)],
-  gene_strand = as.character(strand(promoter_ranges))[subjectHits(promoter_hits)]
+write.table(
+  nearest_table,
+  file.path(table_dir, "peak_nearest_gene.tsv"),
+  sep = "\t", quote = FALSE, row.names = FALSE
 )
+```
 
-readr::write_tsv(promoter_table, file.path(table_dir, "peak_promoter_overlaps.tsv"))
+Interpretation:
 
-# -------------------------------------------------------------------------
-# Join promoter-associated genes to DESeq2 results
-# -------------------------------------------------------------------------
+- distance `0` means that the peak overlaps the gene interval;
+- a positive distance means that the peak is outside the gene body;
+- “nearest” does not mean “regulated.” It is a geometric annotation rule.
 
-if (!"gene_id" %in% names(de)) {
-  names(de)[1] <- "gene_id"
-}
-de <- de %>% mutate(gene_id = as.character(gene_id))
+Plot the distance distribution:
 
-required_de_columns <- c("gene_id", "log2FoldChange", "padj")
-if (!all(required_de_columns %in% names(de))) {
-  stop("DESeq2 table must contain gene_id, log2FoldChange and padj columns")
-}
-
-integrated <- promoter_table %>%
-  left_join(de, by = "gene_id") %>%
-  mutate(
-    is_de = !is.na(padj) & padj < 0.05 & abs(log2FoldChange) >= 1,
-    candidate_class = if_else(
-      is_de,
-      "DE gene with promoter-overlapping peak",
-      "Promoter-overlapping peak without DE evidence"
-    )
-  )
-
-readr::write_tsv(integrated, file.path(table_dir, "promoter_peak_gene_deseq2_join.tsv"))
-
-candidate_targets <- integrated %>%
-  filter(is_de) %>%
-  arrange(padj, desc(abs(log2FoldChange)))
-
-readr::write_tsv(candidate_targets, file.path(table_dir, "candidate_direct_targets.tsv"))
-
-# -------------------------------------------------------------------------
-# Plot nearest-gene distances
-# -------------------------------------------------------------------------
-
+```r
 distance_plot <- ggplot(nearest_table, aes(distance_to_gene)) +
   geom_histogram(bins = 40) +
   theme_bw() +
   labs(
     x = "Distance from peak to nearest annotated gene (bp)",
-    y = "Number of peaks",
-    title = "Peak-to-gene distance distribution"
+    y = "Number of peaks"
   )
 
-ggsave(file.path(plot_dir, "peak_gene_distance_histogram.pdf"), distance_plot, width = 7, height = 5)
-
-# -------------------------------------------------------------------------
-# Optional: join Day 3 differential peak results and plot RNA vs ChIP change
-# -------------------------------------------------------------------------
-
-if (file.exists(chip_de_file)) {
-  chip_de <- readr::read_tsv(chip_de_file, show_col_types = FALSE)
-
-  required_chip_columns <- c("peak_id", "log2FoldChange", "padj")
-  if (all(required_chip_columns %in% names(chip_de))) {
-    chip_de_small <- chip_de %>%
-      transmute(
-        peak_id = as.character(peak_id),
-        chip_log2FoldChange = log2FoldChange,
-        chip_padj = padj
-      )
-
-    rna_chip <- integrated %>%
-      rename(
-        rna_log2FoldChange = log2FoldChange,
-        rna_padj = padj
-      ) %>%
-      left_join(chip_de_small, by = "peak_id")
-
-    readr::write_tsv(rna_chip, file.path(table_dir, "rna_chip_promoter_integration.tsv"))
-
-    plot_dt <- rna_chip %>%
-      filter(is.finite(rna_log2FoldChange), is.finite(chip_log2FoldChange))
-
-    if (nrow(plot_dt) > 0) {
-      quadrant_plot <- ggplot(plot_dt, aes(chip_log2FoldChange, rna_log2FoldChange)) +
-        geom_hline(yintercept = 0, linetype = 2) +
-        geom_vline(xintercept = 0, linetype = 2) +
-        geom_point(alpha = 0.7) +
-        theme_bw() +
-        labs(
-          x = "ChIP-seq log2 fold change (stressed / control)",
-          y = "RNA-seq log2 fold change (stressed / control)",
-          title = "Promoter-associated RNA-seq and ChIP-seq changes"
-        )
-
-      ggsave(file.path(plot_dir, "rna_vs_chip_log2fc.pdf"), quadrant_plot, width = 6, height = 5)
-    }
-  } else {
-    warning("Differential peak table found but required columns are missing; skipping RNA-vs-ChIP join")
-  }
-}
-
-writeLines(capture.output(sessionInfo()), file.path(table_dir, "sessionInfo.txt"))
+ggsave(
+  file.path(plot_dir, "peak_to_nearest_gene_distance.pdf"),
+  distance_plot,
+  width = 7, height = 5
+)
 ```
 
-Run it:
+## 7. Promoter overlap: an interval-overlap question
+
+For this optional exercise, define a strand-aware promoter as 500 bp upstream and 100 bp downstream of the annotated gene start.
+
+`promoters()` understands gene strand:
+
+```r
+promoter_ranges <- promoters(genes, upstream = 500, downstream = 101)
+promoter_ranges <- trim(promoter_ranges)
+promoter_ranges$gene_id <- genes$gene_id
+```
+
+For a `+`-strand gene, the promoter extends toward smaller coordinates. For a `-`-strand gene, upstream extends toward larger coordinates.
+
+Find peak-promoter overlaps:
+
+```r
+promoter_hits <- findOverlaps(peaks, promoter_ranges, ignore.strand = TRUE)
+class(promoter_hits)
+```
+
+Build a table:
+
+```r
+promoter_table <- data.frame(
+  peak_id = peaks$peak_id[queryHits(promoter_hits)],
+  peak_chrom = as.character(seqnames(peaks))[queryHits(promoter_hits)],
+  peak_start = start(peaks)[queryHits(promoter_hits)],
+  peak_end = end(peaks)[queryHits(promoter_hits)],
+  gene_id = promoter_ranges$gene_id[subjectHits(promoter_hits)],
+  promoter_start = start(promoter_ranges)[subjectHits(promoter_hits)],
+  promoter_end = end(promoter_ranges)[subjectHits(promoter_hits)],
+  gene_strand = as.character(strand(promoter_ranges))[subjectHits(promoter_hits)]
+)
+
+write.table(
+  promoter_table,
+  file.path(table_dir, "peak_promoter_overlaps.tsv"),
+  sep = "\t", quote = FALSE, row.names = FALSE
+)
+```
+
+One peak can overlap more than one promoter, especially in a compact bacterial genome with divergent or closely spaced genes. That is a biological ambiguity, not a software error.
+
+## 8. Join promoter-associated peaks to RNA-seq results
+
+The interval operation produced a regular table. We can now merge it with the DESeq2 result table by gene identifier.
+
+First confirm the RNA-seq identifier column:
+
+```r
+if (!"gene_id" %in% names(rna)) {
+  names(rna)[1] <- "gene_id"
+}
+rna$gene_id <- as.character(rna$gene_id)
+```
+
+Join and classify candidate relationships:
+
+```r
+integrated <- merge(promoter_table, rna, by = "gene_id", all.x = TRUE)
+
+integrated$is_de <- !is.na(integrated$padj) &
+  integrated$padj < 0.05 &
+  abs(integrated$log2FoldChange) >= 1
+
+integrated$candidate_class <- ifelse(
+  integrated$is_de,
+  "DE gene with promoter-overlapping peak",
+  "promoter-overlapping peak without DE evidence"
+)
+
+write.table(
+  integrated,
+  file.path(table_dir, "promoter_peak_rnaseq_integration.tsv"),
+  sep = "\t", quote = FALSE, row.names = FALSE
+)
+
+candidate_targets <- integrated[integrated$is_de, , drop = FALSE]
+candidate_targets <- candidate_targets[order(candidate_targets$padj), , drop = FALSE]
+
+write.table(
+  candidate_targets,
+  file.path(table_dir, "candidate_regulatory_relationships.tsv"),
+  sep = "\t", quote = FALSE, row.names = FALSE
+)
+```
+
+The phrase **candidate regulatory relationship** is deliberate. Promoter-proximal occupancy plus differential expression is stronger combined evidence than either result alone, but it does not establish causality or distinguish direct from indirect effects without additional evidence.
+
+## 9. Optional: add Day 3 differential-peak statistics
+
+When the Day 3 differential-peak table exists, join ChIP-seq and RNA-seq effect estimates by `peak_id` and `gene_id`.
+
+Add:
+
+```r
+if (file.exists(peak_de_file)) {
+  peak_de <- read.delim(peak_de_file, check.names = FALSE)
+
+  peak_de_small <- peak_de[, c(
+    "peak_id", "log2FoldChange", "padj", "significant"
+  )]
+
+  names(peak_de_small)[names(peak_de_small) == "log2FoldChange"] <- "chip_log2FoldChange"
+  names(peak_de_small)[names(peak_de_small) == "padj"] <- "chip_padj"
+  names(peak_de_small)[names(peak_de_small) == "significant"] <- "chip_significant"
+
+  rna_chip <- merge(integrated, peak_de_small, by = "peak_id", all.x = TRUE)
+  names(rna_chip)[names(rna_chip) == "log2FoldChange"] <- "rna_log2FoldChange"
+  names(rna_chip)[names(rna_chip) == "padj"] <- "rna_padj"
+
+  write.table(
+    rna_chip,
+    file.path(table_dir, "rna_chip_peak_integration.tsv"),
+    sep = "\t", quote = FALSE, row.names = FALSE
+  )
+
+  plot_dt <- rna_chip[
+    is.finite(rna_chip$rna_log2FoldChange) &
+      is.finite(rna_chip$chip_log2FoldChange),
+    , drop = FALSE
+  ]
+
+  if (nrow(plot_dt) > 0) {
+    effect_plot <- ggplot(plot_dt, aes(chip_log2FoldChange, rna_log2FoldChange)) +
+      geom_hline(yintercept = 0, linetype = 2) +
+      geom_vline(xintercept = 0, linetype = 2) +
+      geom_point(alpha = 0.7) +
+      theme_bw() +
+      labs(
+        x = "ChIP-seq peak log2 fold change",
+        y = "RNA-seq gene log2 fold change"
+      )
+
+    ggsave(
+      file.path(plot_dir, "rna_vs_chip_log2foldchange.pdf"),
+      effect_plot,
+      width = 6, height = 5
+    )
+  }
+}
+```
+
+The four quadrants are descriptive, not automatically activating/repressing mechanisms. Condition-dependent occupancy and expression can be related through many direct and indirect processes.
+
+## 10. Retrieve peak DNA from the FASTA
+
+`FaFile` keeps the genome on disk. `scanFa()` retrieves only the requested `GRanges` intervals and returns a `DNAStringSet`.
+
+Add:
+
+```r
+open(genome)
+peak_sequences <- scanFa(genome, param = peaks)
+close(genome)
+
+names(peak_sequences) <- peaks$peak_id
+class(peak_sequences)
+peak_sequences[1:3]
+```
+
+The objects now have complementary roles:
+
+```text
+peaks          = where the intervals are
+peak_sequences = which DNA bases occur in those intervals
+```
+
+## 11. Calculate GC fraction and CpG counts
+
+GC fraction is the proportion of bases that are `G` or `C`. CpG count is the number of exact `CG` dinucleotides.
+
+Add:
+
+```r
+base_counts <- letterFrequency(
+  peak_sequences,
+  letters = c("A", "C", "G", "T"),
+  as.prob = FALSE
+)
+
+sequence_width <- width(peak_sequences)
+gc_fraction <- (base_counts[, "G"] + base_counts[, "C"]) / sequence_width
+cpg_count <- vcountPattern("CG", peak_sequences, fixed = TRUE)
+
+sequence_table <- data.frame(
+  peak_id = names(peak_sequences),
+  width = sequence_width,
+  A = base_counts[, "A"],
+  C = base_counts[, "C"],
+  G = base_counts[, "G"],
+  T = base_counts[, "T"],
+  GC_fraction = gc_fraction,
+  CpG_count = cpg_count,
+  CpG_per_100bp = 100 * cpg_count / sequence_width
+)
+
+write.table(
+  sequence_table,
+  file.path(table_dir, "peak_sequence_composition.tsv"),
+  sep = "\t", quote = FALSE, row.names = FALSE
+)
+```
+
+Plot simple distributions:
+
+```r
+gc_plot <- ggplot(sequence_table, aes(GC_fraction)) +
+  geom_histogram(bins = 30) +
+  theme_bw() +
+  labs(x = "GC fraction", y = "Number of peaks")
+
+ggsave(
+  file.path(plot_dir, "peak_GC_fraction.pdf"),
+  gc_plot,
+  width = 6, height = 4
+)
+
+cpg_plot <- ggplot(sequence_table, aes(CpG_per_100bp)) +
+  geom_histogram(bins = 30) +
+  theme_bw() +
+  labs(x = "CpG dinucleotides per 100 bp", y = "Number of peaks")
+
+ggsave(
+  file.path(plot_dir, "peak_CpG_density.pdf"),
+  cpg_plot,
+  width = 6, height = 4
+)
+```
+
+Sequence composition can help diagnose motif and background effects. It does not by itself show protein binding or regulatory function.
+
+## 12. Save the R session information
+
+Add at the end of the script:
+
+```r
+writeLines(
+  capture.output(sessionInfo()),
+  file.path(table_dir, "sessionInfo.txt")
+)
+```
+
+Run the complete script:
 
 ```bash
-mkdir -p results/logs/day4
-
 docker run --rm \
   --user "$(id -u):$(id -g)" \
   -v "$PWD:/work" \
   -w /work \
   docker.io/fgualdr/ngs-r-bioc \
-  Rscript scripts/day4_integration/peak_gene_integration.R \
-  2>&1 | tee results/logs/day4/01_peak_gene_integration.log
+  Rscript scripts/day4_optional/01_basic_integration.R \
+  2>&1 | tee results/logs/day4/01_basic_integration.log
 ```
 
-The key distinction is now explicit: **nearest-gene distance** is used for descriptive annotation and the distance histogram, whereas **candidate direct targets** require overlap with the documented strand-aware promoter window. A peak merely lying within 500 bp of any part of a gene is not labelled promoter-proximal.
-
-## Outputs and plots
-
-The integration script writes the principal Day 4 outputs in one run. Inspect them before preparing the final slides:
+Inspect:
 
 ```bash
-ls -lh results/day4_integration/tables/
-ls -lh results/day4_integration/plots/
-head results/day4_integration/tables/peak_nearest_gene.tsv
-head results/day4_integration/tables/peak_promoter_overlaps.tsv
-head results/day4_integration/tables/candidate_direct_targets.tsv
+ls -lh results/day4_optional/tables
+ls -lh results/day4_optional/plots
+head results/day4_optional/tables/peak_nearest_gene.tsv
+head results/day4_optional/tables/peak_promoter_overlaps.tsv
+head results/day4_optional/tables/peak_sequence_composition.tsv
 ```
 
-The main interpretation tables are:
+## 13. What to keep from this optional day
 
-- `peak_nearest_gene.tsv`: one nearest annotated gene per peak, used for descriptive distance summaries;
-- `peak_promoter_overlaps.tsv`: peak-gene pairs defined by the explicit strand-aware promoter window;
-- `promoter_peak_gene_deseq2_join.tsv`: promoter-associated peaks joined to RNA-seq results;
-- `candidate_direct_targets.tsv`: promoter-associated genes meeting the workshop DE threshold;
-- `rna_chip_promoter_integration.tsv`: optional RNA/ChIP integration when Day 3 differential-peak results are available.
+The transferable ideas are more important than the exact thresholds:
 
-The term **candidate direct target** remains hypothesis-generating: promoter-proximal binding plus differential expression is stronger combined evidence than either result alone, but it does not prove direct regulation.
+- genomic interval operations should be done with interval-aware objects;
+- nearest-gene and promoter-overlap annotations answer different questions;
+- strand changes the location of an upstream promoter window;
+- a `Hits` object stores relationships between interval sets;
+- an indexed FASTA can return only the requested sequences;
+- DNA sequence composition is a property of the intervals, not evidence of regulation;
+- ChIP-seq binding plus RNA-seq change generates a hypothesis, not a proof.
 
-## Final three slides
-
-Prepare three slides in `slides/final_summary.qmd` or another slide format assigned for the course.
-
-```text
-Slide 1 - Data and design
-  organism, biological question, conditions, replicates, public accessions or checkpoint source
-  use the current archive name: ArrayExpress collection in BioStudies; linked raw reads in ENA
-
-Slide 2 - Workflow and quality control
-  execution route, main commands/tools, QC summary, mapping/counting or peak-calling summary
-  explicitly state: workshop WT-only/no-external-control ChIP reanalysis ≠ published WT/ΔHP1021 csaw/edgeR + MACS3 analysis
-
-Slide 3 - Biological result and limitation
-  one key RNA-seq or ChIP-seq result, integration summary, one limitation and one next step
-```
-
-Avoid filling slides with command lines. Commands belong in the repository. Slides should communicate design, evidence and interpretation.
-
-## Checkpoint route
-
-Checkpoint mode is acceptable if documented. Include:
-
-```text
-which files were provided
-which steps were demonstrated but not run locally
-which analyses you ran
-how the checkpoint files relate to the full workflow
-confirmation that every checkpoint uses GCF_025998455.1
-```
-
-The final repository should make it clear whether you performed:
-
-```text
-full local execution
-partial local execution
-university-machine execution
-checkpoint-based downstream analysis
-```
-
-## Expected outputs
-
-Commit small outputs:
-
-```text
-scripts/day4_integration/
-results/logs/day4/
-results/day4_integration/tables/
-results/day4_integration/plots/
-slides/final_summary.qmd or exported PDF
-README.md updated with final workflow summary
-```
-
-Do not commit large binary tracks unless instructed:
-
-```text
-*.bam
-*.bai
-*.bw
-*.bigWig
-```
-
-## Final repository checklist
-
-Your repository should contain:
-
-- a clear `README.md` with biological question, dataset, tools and execution route;
-- metadata tables for RNA-seq and/or ChIP-seq;
-- accession tables or checkpoint provenance;
-- scripts or clearly documented commands;
-- `.gitignore` excluding large sequencing files;
-- logs or summaries from executed steps;
-- DESeq2 or peak-calling result tables;
-- integration tables or plots when relevant;
-- final three-slide summary;
-- a short limitations section.
-
-## Final commit
-
-```bash
-git add README.md scripts/day4_integration results/logs/day4 results/day4_integration slides
-git commit -m "Add Day 4 integration and final presentation"
-git push
-```
-
-## Self-check questions
-
-1. What coordinate-system assumptions are involved when combining GFF3 and BED-like peak files?
-2. Why is nearest-gene annotation not equivalent to proof of regulation?
-3. How does promoter-window analysis differ for positive- and negative-strand genes?
-4. What evidence supports a candidate direct target?
-5. Which result from your analysis would be most convincing in a lab meeting?
-6. What is the most important limitation of your analysis?
-
-## Common problems
+## 14. Common problems
 
 | Symptom | Likely cause | Check |
 |---|---|---|
-| No shared sequence names | Reference, annotation, and peaks use different assemblies or chromosome labels | FASTA headers, GFF3 column 1, and BED column 1 |
-| Most joined RNA values are missing | `gene_id` values differ between featureCounts and the annotation | First column of the DESeq2 table and GFF3 `ID`/`gene_id` attributes |
-| ChIP-change columns are empty | Day 3 differential peak analysis was skipped or used different peak IDs | `differential_peak_results.tsv` and `day4_consensus_peaks.bed` |
-| Quadrant plot is absent | No matched finite RNA and ChIP log2 fold changes were available | The joined integration table |
+| No shared sequence names | files use different assemblies or chromosome labels | GFF3 column 1, BED column 1 and FASTA headers |
+| Most RNA-seq values are missing after the join | annotation gene IDs differ from featureCounts/DESeq2 IDs | selected GFF3 identifier and first RNA result column |
+| Promoter ranges extend outside the chromosome | no sequence lengths were attached before `trim()` | FASTA index and `seqlengths()` |
+| `scanFa()` fails | FASTA index is absent or sequence names differ | `genome.fa.fai` and `seqlevelsInUse(peaks)` |
+| A peak maps to two promoters | compact/divergent bacterial gene organization | retain both links and interpret biologically |
+| No RNA-versus-ChIP plot | no matched finite effect estimates | joined table and Day 3 differential-peak output |
 
-## How to report issues
+## 15. Self-check questions
 
-If you have a GitHub account, report Day 4 problems by opening an **Issue** in your repository.
-
-Include:
-
-- `Day 4` and the step number in the issue title;
-- your operating system;
-- whether you used full local execution or checkpoint mode;
-- the command you ran;
-- the exact error message;
-- the relevant log file, for example `results/logs/day4/01_peak_gene_integration.log`.
-
-If you cannot create or access a GitHub account, email:
-
-```text
-francesco.gualdrini@gmail.com
-```
-
-Use email only for GitHub account/access problems. Use GitHub Issues for workshop technical questions whenever possible.
+1. What information does `GRanges` understand that a `data.frame` does not?
+2. What is stored in a `Hits` object?
+3. Why are nearest-gene and promoter-overlap annotations not interchangeable?
+4. How does strand alter a promoter window?
+5. Why is `FaFile` useful for a large reference genome?
+6. How are `DNAStringSet`, GC fraction and CpG counts related?
+7. Why is promoter binding plus differential expression still only a candidate regulatory relationship?

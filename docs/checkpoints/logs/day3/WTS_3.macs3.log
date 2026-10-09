@@ -1,0 +1,42 @@
+INFO  @ 04 Oct 2026 16:37:38: [33 MB] 
+# Command line: callpeak -t results/day3_chipseq/bam/WTS_3.filtered.bam -f BAMPE -g 1696601 -n WTS_3 --outdir results/day3_chipseq/peaks/no_input --keep-dup all --call-summits
+# ARGUMENTS LIST:
+# name = WTS_3
+# format = BAMPE
+# ChIP-seq file = ['results/day3_chipseq/bam/WTS_3.filtered.bam']
+# control file = None
+# effective genome size = 1.70e+06
+# band width = 300
+# model fold = [5, 50]
+# qvalue cutoff = 5.00e-02
+# The maximum gap between significant sites is assigned as the read length/tag size.
+# The minimum length of peaks is assigned as the predicted fragment length "d".
+# Larger dataset will be scaled towards smaller dataset.
+# Range for calculating regional lambda is: 10000 bps
+# Broad region calling is off
+# Paired-End mode is on
+# Searching for subpeak summits is on
+ 
+INFO  @ 04 Oct 2026 16:37:38: [33 MB] #1 read fragment files... 
+INFO  @ 04 Oct 2026 16:37:38: [33 MB] #1 read treatment fragments... 
+INFO  @ 04 Oct 2026 16:37:40: [71 MB]  1000000 fragments parsed 
+INFO  @ 04 Oct 2026 16:37:42: [79 MB]  2000000 fragments parsed 
+INFO  @ 04 Oct 2026 16:37:44: [86 MB]  3000000 fragments parsed 
+INFO  @ 04 Oct 2026 16:37:45: [94 MB]  4000000 fragments parsed 
+INFO  @ 04 Oct 2026 16:37:47: [102 MB]  5000000 fragments parsed 
+INFO  @ 04 Oct 2026 16:37:49: [109 MB]  6000000 fragments parsed 
+INFO  @ 04 Oct 2026 16:37:50: [113 MB] 6477789 fragments have been read. 
+INFO  @ 04 Oct 2026 16:37:51: [113 MB] #1 mean fragment size is determined as 259.8 bp from treatment 
+INFO  @ 04 Oct 2026 16:37:51: [113 MB] #1 fragment size = 259.8 
+INFO  @ 04 Oct 2026 16:37:51: [113 MB] #1  total fragments in treatment: 6477789 
+INFO  @ 04 Oct 2026 16:37:51: [113 MB] #1 finished! 
+INFO  @ 04 Oct 2026 16:37:51: [113 MB] #2 Build Peak Model... 
+INFO  @ 04 Oct 2026 16:37:51: [113 MB] #2 Skipped... 
+INFO  @ 04 Oct 2026 16:37:51: [113 MB] #3 Call peaks... 
+INFO  @ 04 Oct 2026 16:37:51: [113 MB] #3 Going to call summits inside each peak ... 
+INFO  @ 04 Oct 2026 16:37:51: [113 MB] #3 Pre-compute pvalue-qvalue table... 
+INFO  @ 04 Oct 2026 16:38:32: [347 MB] #3 Call peaks for each chromosome... 
+INFO  @ 04 Oct 2026 16:38:32: [368 MB] #4 Write output xls file... results/day3_chipseq/peaks/no_input/WTS_3_peaks.xls 
+INFO  @ 04 Oct 2026 16:38:32: [368 MB] #4 Write peak in narrowPeak format file... results/day3_chipseq/peaks/no_input/WTS_3_peaks.narrowPeak 
+INFO  @ 04 Oct 2026 16:38:32: [368 MB] #4 Write summits bed file... results/day3_chipseq/peaks/no_input/WTS_3_summits.bed 
+INFO  @ 04 Oct 2026 16:38:32: [368 MB] Done! 

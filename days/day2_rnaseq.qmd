@@ -2,8 +2,6 @@
 title: "Day 2 - RNA-seq from FASTQ to differential expression"
 subtitle: "Reference-based mapping, BAM cleanup, gene counting, and DESeq2"
 format: html
-execute:
-  eval: false
 ---
 
 ## 1. Before we start
@@ -54,18 +52,26 @@ Today we turn RNA-seq reads into a gene-by-sample count matrix and then use that
 
 The Day 2 workflow is:
 
-```text
-trimmed RNA-seq FASTQ
-  -> reference genome index
-  -> Bowtie2 mapping
-  -> SAM/BAM alignment files
-  -> sorted and indexed BAM files
-  -> samtools cleanup and mapping summaries
-  -> determine RNA-seq library strandedness
-  -> featureCounts gene counts
-  -> raw gene count matrix
-  -> DESeq2 differential expression
-  -> plots and result tables
+```{mermaid}
+flowchart TD
+    fastq["Trimmed RNA-seq paired-end FASTQ"]
+    index["Bowtie2 reference index"]
+    mapping["Bowtie2 mapping"]
+    bam["Sorted, filtered + indexed BAM"]
+    qc["Mapping QC + library strandedness"]
+    counts["featureCounts gene counting"]
+    matrix["Raw gene count matrix"]
+    deseq2["DESeq2 differential expression"]
+    results["Diagnostic plots + result tables"]
+
+    fastq --> mapping
+    index --> mapping
+    mapping --> bam
+    bam --> qc
+    qc --> counts
+    counts --> matrix
+    matrix --> deseq2
+    deseq2 --> results
 ```
 
 Today we will produce:
@@ -236,11 +242,6 @@ genome="reference_genome/genome.fa"
 index_prefix="reference_genome/bowtie2_index/genome"
 
 mkdir -p reference_genome/bowtie2_index
-
-if [[ ! -f "${genome}" ]]; then
-  echo "ERROR: genome FASTA not found: ${genome}" >&2
-  exit 1
-fi
 
 bowtie2-build \
   --threads 2 \
@@ -773,7 +774,7 @@ The experimental unit matters more than the column name. In particular, a metada
 
 #### Biological replicate versus blocking factor
 
-For this workshop we have three control and three stressed samples. The metadata labels them as replicate 1, 2, and 3 within each condition, but those replicate numbers are simply identifiers for **independent biological replicates**. Replicate 1 in control is not a repeated measurement of the same biological unit as replicate 1 in stress.
+For this workshop we have three control and three treated samples. The metadata labels them as replicate 1, 2, and 3 within each condition, but those replicate numbers are simply identifiers for **independent biological replicates**. Replicate 1 in control is not a repeated measurement of the same biological unit as replicate 1 in treated.
 
 Therefore our workshop model is:
 
@@ -816,7 +817,7 @@ Before testing genes one by one, we should first ask whether the **samples thems
 
 NGS experiments typically contain thousands of measured features but relatively few samples. We therefore need sample-level exploratory analyses that summarize the global structure of the data without starting from a list of significant genes.
 
-**Principal component analysis (PCA)** is widely used for this purpose because it is **unsupervised**: the PCA calculation does not know which samples are controls, stressed, batch 1, batch 2, or potential outliers. It simply finds the major directions of variation across the expression profiles. We add biological labels only afterwards to interpret the pattern.
+**Principal component analysis (PCA)** is widely used for this purpose because it is **unsupervised**: the PCA calculation does not know which samples are controls, treated, batch 1, batch 2, or potential outliers. It simply finds the major directions of variation across the expression profiles. We add biological labels only afterwards to interpret the pattern.
 
 In RNA-seq QC, PCA helps us ask:
 
@@ -887,6 +888,29 @@ Keep this R session open. In the VS Code Explorer, create `scripts/day2_rnaseq/0
 
 Use one continuous script for the analysis. We will run and comment the same code interactively, but keeping it in one file makes the complete sequence of operations easy to follow and reproducible.
 
+::: {.callout-note title="Checkpoint: raw RNA-seq count table"}
+
+If mapping or feature counting could not be completed on your laptop,
+you can continue the workshop from the instructor-provided raw
+`featureCounts` table.
+
+[**Download `featureCounts_all_samples.txt`**](../checkpoints/rnaseq/featureCounts_all_samples.txt)
+[**Download `count_matrix_hpylori.txt`**](../checkpoints/rnaseq/count_matrix_hpylori.txt)
+
+Save the downloaded file as:
+
+```text
+results/day2_rnaseq/counts/featureCounts_all_samples.txt
+```
+
+Alternatively we can start from the original data of the Paper whihc includes all the conditions.
+
+```text
+results/day2_rnaseq/counts/count_matrix_hpylori.txt
+```
+
+:::
+
 ```r
 #!/usr/bin/env Rscript
 
@@ -916,35 +940,21 @@ featureCounts <- featureCounts[,grep("^WT",colnames(featureCounts))]
 # Build the sample design
 # -------------------------------------------------------------------------
 
-design_dt <- as.data.frame(
-    cbind(
-      colnames(featureCounts),
-      colnames(featureCounts),
-      colnames(featureCounts)
-  )
+design_dt <- data.frame(
+    samples = colnames(featureCounts),
+    conditions = gsub("_1|_2|_3","",colnames(featureCounts)),
+    replicates = gsub("WT_","",gsub("WTS_","",colnames(featureCounts)))
 )
 
-colnames(design_dt) <- c("samples", "replicates", "conditions")
-
-design_dt$replicates <- gsub("WTS_","",design_dt$replicates)
-design_dt$replicates <- gsub("WT_","",design_dt$replicates)
-
-design_dt$conditions <- gsub("_1|_2|_3","",design_dt$conditions)
+design_dt$conditions[design_dt$conditions == "WT"] <- "control"
+design_dt$conditions[design_dt$conditions == "WTS"] <- "treated"
+design_dt$conditions <- factor(design_dt$conditions, levels = c("control", "treated"))
 
 rownames(design_dt) <- design_dt$samples
-
-design_dt$conditions[design_dt$conditions == "WT"] <- "control"
-design_dt$conditions[design_dt$conditions == "WTS"] <- "stressed"
-
-design_dt$conditions <- factor(design_dt$conditions, levels = c("control", "stressed"))
-design_dt$replicates <- factor(design_dt$replicates)
 
 # Put the design rows in exactly the same order as the count columns
 design_dt <- design_dt[colnames(featureCounts), , drop = FALSE]
 featureCounts <- featureCounts[, rownames(design_dt), drop = FALSE]
-
-# Remove genes with almost no information
-featureCounts <- featureCounts[rowSums(featureCounts) >= 10, , drop = FALSE]
 
 # Save the clean raw count matrix
 count_out <- data.frame(gene_id = rownames(featureCounts), featureCounts, check.names = FALSE)
@@ -960,40 +970,29 @@ dds <- DESeq2::DESeqDataSetFromMatrix(
   design = ~ conditions
 )
 
+# inspect the content using attributes(dds)!
+
 # -------------------------------------------------------------------------
 # Estimate library-size factors BEFORE fitting the full model
 # -------------------------------------------------------------------------
 
 dds <- DESeq2::estimateSizeFactors(dds)
 
-size_factors <- DESeq2::sizeFactors(dds)
-normalized_counts <- DESeq2::counts(dds, normalized = TRUE)
-
-normalized_out <- data.frame(gene_id = rownames(normalized_counts), normalized_counts, check.names = FALSE)
-write.table(normalized_out, file.path(out_dir, "normalized_counts.tsv"),
-            sep = "\t", quote = FALSE, row.names = FALSE)
-
-# DESeq2 divides counts by the size factor.
-# Later we will use bamCoverage to create BigWig tracks
-# bamCoverage  multiplies coverage by --scaleFactor.
-# Therefore the matching bamCoverage factor is 1 / DESeq2 size factor.
-scale_dt <- data.frame(
-  sample = names(size_factors),
-  deseq2_size_factor = as.numeric(size_factors),
-  bamcoverage_scale_factor = 1 / as.numeric(size_factors)
-)
-
-write.table(scale_dt, file.path(out_dir, "deseq2_size_factors.tsv"),
-            sep = "\t", quote = FALSE, row.names = FALSE)
-
-print(scale_dt)
-
 # -------------------------------------------------------------------------
 # PCA on log2-normalized counts: inspect sample relationships and outliers
+# Before diving into DEGs we check if the expected biological perturbation is the main driver of the variation in the experiment!
+# Use PCA
 # -------------------------------------------------------------------------
+normalized_counts <- DESeq2::counts(dds, normalized = TRUE)
+pca_input <- log2(normalized_counts+1) 
+# Here there are different ways to treat the count data before PCA!
+# log, scale, center, center+scale, Yeo-Johnson, Box-Cox, Quantile, etc...
 
-pca_input <- log2(normalized_counts + 1)
-pca <- prcomp(t(pca_input))
+pca <- prcomp(
+  t(pca_input),
+  center = TRUE,
+  scale. = FALSE
+)
 
 variance_explained <- 100 * (pca$sdev^2 / sum(pca$sdev^2))
 
@@ -1005,7 +1004,7 @@ pca_dt <- data.frame(
   replicates = design_dt[rownames(pca$x), "replicates"]
 )
 
-pca_plot <- ggplot(pca_dt, aes(PC1, PC2, color = conditions, shape = replicates, label = sample)) +
+pca_plot <- ggplot(pca_dt, aes(x=PC1, y=PC2, color = conditions, shape = replicates, label = sample)) +
   geom_point(size = 3) +
   ggrepel::geom_text_repel(show.legend = FALSE) +
   theme_bw() +
@@ -1014,14 +1013,14 @@ pca_plot <- ggplot(pca_dt, aes(PC1, PC2, color = conditions, shape = replicates,
     y = sprintf("PC2 (%.1f%%)", variance_explained[2])
   )
 
-ggsave(file.path(out_dir, "pca.pdf"), pca_plot, width = 6, height = 5)
+ggsave(file.path(out_dir, "pc1_pc2_pca.pdf"), pca_plot, width = 6, height = 5)
 
 scree_dt <- data.frame(
   PC = seq_along(variance_explained),
   variance = variance_explained
 )
 
-scree_plot <- ggplot(scree_dt, aes(PC, variance)) +
+scree_plot <- ggplot(scree_dt, aes(x=PC, y=variance)) +
   geom_col() +
   scale_x_continuous(breaks = scree_dt$PC) +
   theme_bw() +
@@ -1030,7 +1029,7 @@ scree_plot <- ggplot(scree_dt, aes(PC, variance)) +
 ggsave(file.path(out_dir, "pca_scree.pdf"), scree_plot, width = 6, height = 4)
 
 # -------------------------------------------------------------------------
-# Fit the DESeq2 model and extract stressed versus control
+# Fit the DESeq2 model and extract treated versus control
 # -------------------------------------------------------------------------
 
 dds <- DESeq2::DESeq(dds, fitType = "parametric")
@@ -1039,31 +1038,46 @@ print(DESeq2::resultsNames(dds))
 
 res2 <- DESeq2::results(
   dds,
-  contrast = c("conditions", "stressed", "control")
+  contrast = c("conditions", "treated", "control") # treated vs control so control is the denominator!
 )
-
-print(summary(res2))
 
 res_dt <- as.data.frame(res2)
 res_dt$gene_id <- rownames(res_dt)
-res_dt <- res_dt[, c("gene_id", setdiff(colnames(res_dt), "gene_id"))]
 
-write.table(res_dt, file.path(out_dir, "deseq2_results.tsv"),
-            sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(
+  res_dt, 
+  file.path(out_dir, "deseq2_results.tsv"),
+  sep = "\t", 
+  quote = FALSE, 
+  row.names = FALSE
+  )
 
 ranked <- res_dt[!is.na(res_dt$padj), , drop = FALSE]
-ranked <- ranked[order(ranked$padj, -abs(ranked$log2FoldChange)), , drop = FALSE]
-write.table(head(ranked, 20), file.path(out_dir, "top_deg.tsv"),
-            sep = "\t", quote = FALSE, row.names = FALSE)
 
-write.csv(design_dt, file.path(out_dir, "sample_design.csv"), row.names = FALSE)
+ranked <- ranked[order(ranked$padj, abs(ranked$log2FoldChange)), , drop = FALSE]
+
+normalized_counts <- DESeq2::counts(dds, normalized = TRUE)
+
+l <- list()
+for(cond in unique(design_dt$conditions)){
+  idx <- which(
+    colnames(normalized_counts)  %in% rownames(design_dt[design_dt$conditions == cond,])
+    )
+  a <- normalized_counts[, idx]
+  a <- rowMeans(a)
+  l[[cond]] <- a
+}
+av_l <- as.data.frame(do.call(cbind,l))
+av_l <- av_l[,c("control","treated")]
+
+ranked <- cbind(ranked,av_l[rownames(ranked),])
 
 # -------------------------------------------------------------------------
 # Dispersion plot
 # -------------------------------------------------------------------------
 
 pdf(file.path(out_dir, "dispersion_plot.pdf"))
-DESeq2::plotDispEsts(dds)
+  DESeq2::plotDispEsts(dds)
 dev.off()
 
 # -------------------------------------------------------------------------
@@ -1110,7 +1124,7 @@ ma_plot <- ggplot(res_dt, aes(baseMean + 1, log2FoldChange, color = signed_signi
   theme_bw() +
   labs(
     x = "Mean normalized expression (baseMean + 1, log10 scale)",
-    y = "log2 fold change (stressed / control)"
+    y = "log2 fold change (treated / control)"
   )
 
 ggsave(file.path(out_dir, "ma_plot.pdf"), ma_plot, width = 7, height = 5)
@@ -1125,13 +1139,46 @@ volcano <- ggplot(res_dt, aes(log2FoldChange, minus_log10_padj)) +
   geom_point(alpha = 0.6, size = 1, na.rm = TRUE) +
   theme_bw() +
   labs(
-    x = "log2 fold change (stressed / control)",
+    x = "log2 fold change (treated / control)",
     y = "-log10 adjusted p-value"
   )
 
 ggsave(file.path(out_dir, "volcano.pdf"), volcano, width = 6, height = 5)
 
 writeLines(capture.output(sessionInfo()), file.path(out_dir, "sessionInfo.txt"))
+
+# -------------------------------------------------------------------------
+# We will save usefull data for the generation of scaled Tracks!
+# -------------------------------------------------------------------------
+
+size_factors <- DESeq2::sizeFactors(dds)
+normalized_counts <- DESeq2::counts(dds, normalized = TRUE)
+normalized_out <- data.frame(gene_id = rownames(normalized_counts), normalized_counts, check.names = FALSE)
+
+write.table(
+  normalized_out, 
+  file.path(out_dir, "normalized_counts.tsv"),
+  sep = "\t", 
+  quote = FALSE, 
+  row.names = FALSE
+  )
+
+# DESeq2 divides counts by the size factor.
+# Later we will use bamCoverage to create BigWig tracks
+# bamCoverage  multiplies coverage by --scaleFactor.
+# Therefore the matching bamCoverage factor is 1 / DESeq2 size factor.
+scale_dt <- data.frame(
+  sample = names(size_factors),
+  deseq2_size_factor = as.numeric(size_factors),
+  bamcoverage_scale_factor = 1 / as.numeric(size_factors) 
+  # this as Deseq2 divide so scales down to the lower. BamCoverage used for BigWig generation instead uses multiplicative scaling
+)
+
+write.table(scale_dt, file.path(out_dir, "deseq2_size_factors.tsv"),
+            sep = "\t", quote = FALSE, row.names = FALSE)
+
+print(scale_dt)
+
 
 ```
 
@@ -1141,7 +1188,7 @@ The code above contains many R commands, but conceptually the workflow is short.
 
 #### Step 1: raw count matrix + metadata
 
-The rows are genes and the columns are samples. The counts remain integer fragment counts from featureCounts. The metadata describes which samples are control or stressed.
+The rows are genes and the columns are samples. The counts remain integer fragment counts from featureCounts. The metadata describes which samples are control or treated.
 
 The order must match exactly:
 
@@ -1189,14 +1236,14 @@ design = ~ conditions
 The coefficient of interest compares:
 
 ```text
-stressed / control
+treated / control
 ```
 
 Therefore:
 
 ```text
-positive log2FoldChange  -> higher expression in stressed samples
-negative log2FoldChange  -> lower expression in stressed samples
+positive log2FoldChange  -> higher expression in treated samples
+negative log2FoldChange  -> lower expression in treated samples
 ```
 
 When `DESeq()` runs, it carries out the major stages discussed above: size-factor estimation, gene-wise dispersion estimation, fitting/stabilizing the genome-wide dispersion trend, negative-binomial GLM fitting, and coefficient testing.
@@ -1216,7 +1263,7 @@ The main DESeq2 columns are:
 | Column | Meaning |
 |---|---|
 | `baseMean` | Mean normalized expression across samples |
-| `log2FoldChange` | Estimated stressed-versus-control effect |
+| `log2FoldChange` | Estimated treated-versus-control effect |
 | `lfcSE` | Standard error of that estimated log2 fold change |
 | `stat` | Wald statistic: effect divided by its SE |
 | `pvalue` | Unadjusted p-value for this gene |
@@ -1282,19 +1329,10 @@ scale_file="results/day2_rnaseq/deseq2/deseq2_size_factors.tsv"
 
 mkdir -p "${out_dir}" "${log_dir}"
 
-if [[ ! -f "${scale_file}" ]]; then
-  echo "ERROR: DESeq2 scale-factor table not found: ${scale_file}" >&2
-  exit 1
-fi
 
 while IFS=$'\t' read -r sample deseq2_size_factor bamcoverage_scale_factor
 do
   bam="${bam_dir}/${sample}.filtered.bam"
-
-  if [[ ! -f "${bam}" ]]; then
-    echo "ERROR: BAM file not found: ${bam}" >&2
-    exit 1
-  fi
 
   echo "${sample}: DESeq2 size factor=${deseq2_size_factor}; bamCoverage scale factor=${bamcoverage_scale_factor}"
 
@@ -1381,9 +1419,9 @@ results/day2_rnaseq/qc/multiqc_report.html
 
 Open the report in a browser and check whether one sample has a clearly different alignment rate, properly paired rate, or featureCounts assignment rate.
 
-## 8. Files needed by Day 4
+## 8. Files retained for the optional Day 4 integration
 
-Day 4 integration uses the RNA-seq results from this page together with ChIP-seq peaks and genome annotation. Keep these files and names stable:
+The optional Day 4 exercises may reuse the RNA-seq results from this page together with ChIP-seq peaks and the genome annotation. Keep these files and names stable:
 
 ```text
 reference_genome/genome.fa

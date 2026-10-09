@@ -2,8 +2,6 @@
 title: "Day 0 - Technical setup for a reproducible NGS workshop"
 subtitle: "Accounts, software, containers, and readiness checks"
 format: html
-execute:
-  eval: false
 ---
 
 ## Overview
@@ -12,6 +10,22 @@ This preparatory session ensures that every participant has a working computatio
 Personal computers are preferred, but if limitations or installation issues arise, participants will be able to use computers from the University.
 
 The goal is not to learn bioinformatics yet. Instead, we will verify that the required software is installed correctly and that containers can access files on the local computer.
+
+```{mermaid}
+flowchart TD
+    accounts["Create or verify GitHub + Docker Hub accounts"]
+    vscode["Install VS Code and prepare the terminal environment"]
+    git["Install and verify Git"]
+    docker["Install Docker and run a test container"]
+    igv["Install and open IGV"]
+    ready["Workshop environment ready for Day 1"]
+
+    accounts --> vscode
+    vscode --> git
+    git --> docker
+    docker --> igv
+    igv --> ready
+```
 
 ## What you will have ready today
 
