@@ -1,0 +1,44 @@
+FROM bioconductor/bioconductor_docker:RELEASE_3_22
+
+LABEL org.opencontainers.image.title="NGS RNA-seq dupRadar QC"
+LABEL org.opencontainers.image.description="samtools, featureCounts and dupRadar for RNA-seq QC"
+LABEL org.opencontainers.image.authors="fgualdr"
+
+USER root
+
+# ------------------------------------------------------------
+# Command-line tools
+# ------------------------------------------------------------
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        --no-install-recommends \
+        samtools \
+        subread \
+        gawk \
+        coreutils \
+        && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# ------------------------------------------------------------
+# R / Bioconductor packages
+# ------------------------------------------------------------
+
+RUN R -e 'BiocManager::install( \
+    c("dupRadar"), \
+    ask = FALSE, \
+    update = FALSE \
+)'
+
+# ------------------------------------------------------------
+# Verify installation during the image build
+# ------------------------------------------------------------
+
+RUN samtools --version | head -n 1 && \
+    featureCounts -v && \
+    R -e 'library(dupRadar); packageVersion("dupRadar")'
+
+WORKDIR /work
+
+CMD ["bash"]

@@ -71,7 +71,7 @@ The main study is the HP1021 *Helicobacter pylori* multi-omics study:
 The RNA-seq dataset is **rRNA-depleted, directional prokaryotic RNA-seq**, sequenced as **150-bp paired-end reads (PE150; 2 × 150 bp)**. The [publication's library-preparation methods](https://www.nature.com/articles/s41467-023-42364-6) describe rRNA removal and dUTP/USER-based strand-selective library construction. This information affects how we interpret residual rRNA and, on Day 2, which strandedness setting we use for gene counting.
 :::
 
-The full publication analysis is more complex than this workshop workflow. Our small subset captures the main logic of the published analysis, but it is simplified for laptop-scale execution.
+The full publication analysis is more complex than this workshop workflow. We retain the complete WT/WTS and ΔHP1021/ΔHP1021S sample design used in the workshop, while simplifying the downstream analysis for laptop-scale execution.
 
 ## 3. Reproducibility in bioinformatics
 
@@ -126,7 +126,7 @@ Git should not be used as storage for large sequencing data. FASTQ, BAM, BAI, bi
 
 During this lesson, you will use your GitHub account to create an empty personal repository for the workshop.
 
-#### 4.1 Create and initialize Git locally
+### 4.1 Create and initialize Git locally
 
 From the terminal, make sure you are in your local workshop folder:
 
@@ -150,7 +150,7 @@ git config --global user.email "your.email@example.com"
 git config --global init.defaultBranch main
 ```
 
-#### 4.2 Create an empty GitHub repository
+### 4.2 Create an empty GitHub repository
 
 Before connecting your local folder to GitHub, create an empty repository in your GitHub account.
 
@@ -186,7 +186,7 @@ git remote add origin https://github.com/YOUR_USERNAME/workshop_ngs.git
 git remote -v
 ```
 
-#### 4.3 First Git commit
+### 4.3 First Git commit
 
 The first commit will be made after we create the project folders, the `.gitignore`, and a `README` file. This way Git starts by recording the intended repository structure rather than an empty folder.
 
@@ -313,7 +313,7 @@ Image tags are useful human-readable labels, but tags such as `latest` are mutab
 
 Before running analysis images, we will run a small Docker test again together. This assumes that your terminal is already in the `workshop_ngs` repository root.
 
-#### 5.1 Test Docker
+### 5.1 Test Docker
 
 Mount the whole repository into the container and write a test file back into the repository:
 
@@ -365,7 +365,7 @@ The reference genome FASTA defines the coordinate system. The annotation GFF3/GT
 
 This is why inputs/provenance are a separate reproducibility component: identical code, parameters, and container images can produce different coordinates and counts when the reference assembly or annotation changes.
 
-#### 6.1 Reference genome FASTA
+### 6.1 Reference genome FASTA
 
 A FASTA file is a plain text file. Each sequence starts with a header line beginning with `>`, followed by one or more lines of DNA sequence:
 
@@ -379,7 +379,7 @@ TTGACGATCGATCGATCGTAGCTAGCTAGCTAACGATCA...
 
 For a human reference genome, headers may look like `>chr1`, `>chr2`, `>chrX`, and so on. For a bacterial genome such as *H. pylori*, there may be one main chromosome sequence and sometimes plasmid sequences. The exact names must match the annotation file. In this workshop, the chromosome name is `NZ_AP026446.1`; any different sequence accession belongs to another coordinate system and must not be mixed into the workflow.
 
-#### 6.2 Annotation files: GFF3 and GTF
+### 6.2 Annotation files: GFF3 and GTF
 
 Annotation files are also plain text, but they are tab-separated tables. Each row describes one genomic feature on the FASTA coordinate system:
 
@@ -428,7 +428,7 @@ Annotation files can be complicated to handle by hand. In this workshop, we use 
 
 For this bacterial workshop, we use matched NCBI reference genome and annotation files stored under `reference_genome/`.
 
-#### 6.3 Download reference genome and annotation
+### 6.3 Download reference genome and annotation
 
 We will first browse the reference source together:
 
@@ -441,7 +441,7 @@ NCBI reports this complete CHC155 RefSeq assembly as `latest` and identifies it 
 All workshop counts, BAM files, bigWigs, peaks, motifs, and integration tables are regenerated after mapping the raw FASTQ files to `GCF_025998455.1`. Do not reuse processed coordinates or count tables produced with another assembly.
 :::
 
-##### What is a BED12 file?
+#### What is a BED12 file?
 
 BED is a tab-separated format for describing genomic intervals. The first six BED12 columns locate and identify a feature; the final six describe how that feature is drawn and how it is divided into blocks such as exons:
 
@@ -563,7 +563,7 @@ EOF
 echo "Reference bundle ready in ${out_dir}" | tee -a "${log_file}"
 ```
 
-#### 6.4 Read the first Bash script
+### 6.4 Read the first Bash script
 
 Bash is a command-line interpreter: it reads commands from the terminal or from a script file and runs them in order. This reference script shows one explicit download command for each source file: the genome FASTA, GFF3 annotation, and GTF annotation. Each compressed download is decompressed immediately. The script derives the BED12 gene model needed by RSeQC, records SHA-256 checksums and the UTC download time, and writes the assembly identity to `REFERENCE.md`.
 
@@ -592,7 +592,7 @@ curl --help
 gzip --help
 ```
 
-#### 6.5 Check the network and run the reference download
+### 6.5 Check the network and run the reference download
 
 Use the same Bash terminal for these commands on both supported platforms:
 
@@ -697,7 +697,7 @@ For each fragment, the R1 and R2 records should remain synchronized: record 1 in
 
 FASTQ files are often called "raw data" in public repositories, but they are already processed outputs of base calling and demultiplexing.
 
-#### 7.1 FASTQ structure and read identifiers
+### 7.1 FASTQ structure and read identifiers
 
 Each FASTQ read has four lines:
 
@@ -747,7 +747,7 @@ where \(p\) is the estimated probability of an incorrect base call. Q30 means an
 
 FASTQ files may be single-end or paired-end. Paired-end libraries have read 1 and read 2 files, usually named with `_R1` and `_R2` or `_1` and `_2`. Files are usually compressed as `.fastq.gz`.
 
-#### 7.2 Public archives we will browse together
+### 7.2 Public archives we will browse together
 
 There are several routes from a paper or accession to FASTQ files. We will look at these together in the browser:
 
@@ -767,7 +767,7 @@ The same biological run can often be reached through more than one archive. The 
 
 For the main workshop, we use the **ArrayExpress collection in BioStudies + ENA** route because it is easier to explain and easier to script.
 
-#### 7.3 ArrayExpress collection in BioStudies + ENA route
+### 7.3 ArrayExpress collection in BioStudies + ENA route
 
 For this workshop, BioStudies supplies the ArrayExpress study records and SDRF metadata; the linked ENA records supply the run accessions and FASTQ URLs that we need.
 
@@ -775,7 +775,7 @@ One script performs the complete retrieval step:
 
 ```text
 download original SDRFs
-  -> retain the WT samples
+  -> retain all samples in the experimental design
   -> add HTTPS_FASTQ_URI and FASTQ_NAME columns
   -> download and rename the FASTQ files
   -> write a metadata provenance record and log
@@ -783,7 +783,7 @@ download original SDRFs
 
 The two modified metadata tables are `RNAseq_metadata.txt` and `Chipseq_metadata.txt`. They contain the sample information and FASTQ filenames used throughout the rest of the workshop.
 
-##### Create the combined metadata and FASTQ script
+#### Create the combined metadata and FASTQ script
 
 Open the study pages together:
 
@@ -832,10 +832,9 @@ curl -fL \
   -o raw_data/metadata/E-MTAB-13025.sdrf.txt
 
 
-# Keep only WT samples
-grep -v "ΔHP1021" \
-  raw_data/metadata/E-MTAB-13025.sdrf.txt \
-  > raw_data/metadata/RNAseq_metadata.tmp
+# Keep the complete RNA-seq design, including ΔHP1021 samples
+cp raw_data/metadata/E-MTAB-13025.sdrf.txt \
+  raw_data/metadata/RNAseq_metadata.tmp
 
 
 # Add two new columns:
@@ -861,8 +860,11 @@ while IFS= read -r line; do
   mate="${filename%.fastq.gz}"
   mate="${mate##*_}"
 
-  # WT_1 + 1 -> WT_1_R1.fastq.gz
-  fastq_name="${sample}_R${mate}.fastq.gz"
+  # Retain the metadata sample name unchanged for downstream analyses.
+  simple_sample="${sample}"
+
+  # WT_1 + 1 -> WT_1_R1.fastq.gz; ΔHP1021_1 -> ΔHP1021_1_R1.fastq.gz
+  fastq_name="${simple_sample}_R${mate}.fastq.gz"
 
   printf '%s\t%s\t%s\n' \
     "${line}" \
@@ -886,10 +888,9 @@ curl -fL \
   -o raw_data/metadata/E-MTAB-13026.sdrf.txt
 
 
-# Keep only WT samples
-grep -v "ΔHP1021" \
-  raw_data/metadata/E-MTAB-13026.sdrf.txt \
-  > raw_data/metadata/Chipseq_metadata.tmp
+# Keep the complete ChIP-seq design, including ΔHP1021 samples
+cp raw_data/metadata/E-MTAB-13026.sdrf.txt \
+  raw_data/metadata/Chipseq_metadata.tmp
 
 
 # Add the HTTPS_FASTQ_URI and FASTQ_NAME columns
@@ -913,8 +914,11 @@ while IFS= read -r line; do
   mate="${filename%.fastq.gz}"
   mate="${mate##*_}"
 
-  # WT_1 + 1 -> WT_1_R1.fastq.gz
-  fastq_name="${sample}_R${mate}.fastq.gz"
+  # Retain the metadata sample name unchanged for downstream analyses.
+  simple_sample="${sample}"
+
+  # WT_1 + 1 -> WT_1_R1.fastq.gz; ΔHP1021_1 -> ΔHP1021_1_R1.fastq.gz
+  fastq_name="${simple_sample}_R${mate}.fastq.gz"
 
   printf '%s\t%s\t%s\n' \
     "${line}" \
@@ -986,7 +990,8 @@ https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/026/E-MTAB-13026/Files/E-MTAB-1302
 
 The metadata files were modified as follows:
 
-- Samples carrying the ΔHP1021 genotype were excluded.
+- All samples in the SDRFs were retained, including the ΔHP1021 genotype.
+- Local FASTQ filenames retain the sample names from the metadata, including `ΔHP1021` and `ΔHP1021S`.
 - ENA FASTQ addresses were converted from ftp:// to https://.
 - A new HTTPS_FASTQ_URI column was added.
 - A new FASTQ_NAME column was added.
@@ -1008,13 +1013,13 @@ EOF
 echo "Metadata processing and FASTQ download complete" | tee -a "${log_file}"
 ```
 
-##### What each block does
+#### What each block does
 
 | Script block | What it does |
 |---|---|
 | Setup | Creates the metadata, RNA-seq FASTQ, ChIP-seq FASTQ, and log folders, then starts a new log. |
-| RNA-seq metadata | Downloads the original SDRF, removes `ΔHP1021` rows, reads the FASTQ URL from column 32, and adds the HTTPS URL and simplified filename. |
-| ChIP-seq metadata | Performs the same operations using the FASTQ URL in column 31 of the ChIP-seq SDRF. |
+| RNA-seq metadata | Downloads the original SDRF, retains the complete design including `ΔHP1021`, reads the FASTQ URL from column 32, and adds the HTTPS URL and metadata-derived local filename. |
+| ChIP-seq metadata | Retains the complete design including `ΔHP1021` and performs the same operations using the FASTQ URL in column 31 of the ChIP-seq SDRF. |
 | FASTQ downloads | Each loop reads the final URL and filename columns, downloads the files, and saves them under their simplified names. |
 | Provenance | Writes `METADATA.md` and records progress in `metadata_fastq_download.log`. |
 
@@ -1096,7 +1101,7 @@ result   = WT_1_R1.fastq.gz
 
 The two FASTQ-download blocks then use the same logic: select the final URL and filename columns, skip the header, read one URL/name pair at a time, and let `curl` save each file under the chosen local name.
 
-##### Check the EBI connection and run the script
+#### Check the EBI connection and run the script
 
 The ArrayExpress/ENA route uses `curl` inside the `ngs-curl` image. The command is identical from macOS Bash and Ubuntu/WSL2 Bash.
 
@@ -1134,9 +1139,9 @@ ls -lh raw_data/fastq/chipseq/*.fastq.gz
 cat results/logs/day1/metadata_fastq_download.log
 ```
 
-The current WT metadata contain three biological replicates in each of two conditions. Each FASTQ folder should therefore contain twelve files: R1 and R2 for six samples. Keep the original SDRFs as downloaded provenance records; use `RNAseq_metadata.txt` and `Chipseq_metadata.txt` in the subsequent workshop steps.
+The metadata now retain the complete design. The WT/WTS and ΔHP1021/ΔHP1021S libraries are all downloaded, with R1 and R2 files for every biological replicate. Local filenames retain the sample names from the metadata. Keep the original SDRFs as downloaded provenance records; use `RNAseq_metadata.txt` and `Chipseq_metadata.txt` in the subsequent workshop steps.
 
-##### Inspect the downloaded FASTQ files
+#### Inspect the downloaded FASTQ files
 
 Look inside one compressed FASTQ file manually. Choose one RNA-seq R1 file that exists in your folder:
 
@@ -1166,7 +1171,7 @@ gzcat raw_data/fastq/rnaseq/WT_1_R2.fastq.gz | grep 'PASTE_READ_ID_HERE'
 
 If the pair is present, `grep` should print the matching R2 read header. This is a useful sanity check that the R1 and R2 files belong together. Read-identifier formats can differ between sequencing platforms and archive-processing routes.
 
-#### 7.4 Optional GEO/SRA route: retrieve the same data with `fasterq-dump`
+### 7.4 Optional GEO/SRA route: retrieve the same data with `fasterq-dump`
 
 The previous section retrieved metadata from the **ArrayExpress collection in BioStudies** and downloaded the linked FASTQ files directly from ENA URLs. Here we retrieve the same type of raw sequencing data through the **SRA Toolkit** instead.
 
@@ -1230,7 +1235,7 @@ raw_data_sra/
 
 If this were the only retrieval route used for the project, we could simply change `root="raw_data_sra"` to `root="raw_data"` and the downstream folder structure would be identical to Section 7.3.
 
-##### Create the SRA metadata and FASTQ script
+#### Create the SRA metadata and FASTQ script
 
 Create:
 
@@ -1274,10 +1279,10 @@ curl -fL \
   "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=${rnaseq_study}&result=read_run&fields=run_accession,sample_title,library_layout&format=tsv" \
   -o "${root}/metadata/RNAseq_metadata_all.tsv"
 
-# Keep WT_1-3 and WTS_1-3 and add the local FASTQ prefix
+# Keep every sample in the design and add the local FASTQ prefix
 awk -F $'\t' 'BEGIN {OFS="\t"}
 NR==1 {print $1,$2,$3,"FASTQ_PREFIX"; next}
-$2 ~ /^(WT|WTS)_[123]$/ {print $1,$2,$3,$2}
+{simple=$2; print $1,$2,$3,simple}
 ' "${root}/metadata/RNAseq_metadata_all.tsv" \
   > "${root}/metadata/RNAseq_metadata.txt"
 
@@ -1292,10 +1297,10 @@ curl -fL \
   "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=${chipseq_study}&result=read_run&fields=run_accession,sample_title,library_layout&format=tsv" \
   -o "${root}/metadata/Chipseq_metadata_all.tsv"
 
-# Keep WT_1-3 and WTS_1-3 and add the local FASTQ prefix
+# Keep every sample in the design and add the local FASTQ prefix
 awk -F $'\t' 'BEGIN {OFS="\t"}
 NR==1 {print $1,$2,$3,"FASTQ_PREFIX"; next}
-$2 ~ /^(WT|WTS)_[123]$/ {print $1,$2,$3,$2}
+{simple=$2; print $1,$2,$3,simple}
 ' "${root}/metadata/Chipseq_metadata_all.tsv" \
   > "${root}/metadata/Chipseq_metadata.txt"
 
@@ -1401,7 +1406,7 @@ The first two blocks do the same job for RNA-seq and ChIP-seq.
 | `BEGIN {OFS="\t"}` | Tell `awk` to also separate output columns with tabs. |
 | `NR==1 {...; next}` | Process the first row as the header, then move directly to the next row. |
 | `$1`, `$2`, `$3` | In `awk`, these mean column 1, column 2, and column 3. Here they correspond to run accession, sample title, and library layout. |
-| `$2 ~ /^(WT\|WTS)_[123]$/` | Keep only sample names `WT_1`-`WT_3` and `WTS_1`-`WTS_3`. |
+| `simple=$2` | Keep every sample and retain the metadata sample name in the local filename, including `ΔHP1021`/`ΔHP1021S`. |
 | `print $1,$2,$3,$2` | Write the three original columns plus the sample name again as `FASTQ_PREFIX`. This fourth column defines the filename we want locally. |
 | `>` | Write the command output to a new file. |
 :::
@@ -1448,7 +1453,7 @@ See the [SRA Toolkit documentation](https://github.com/ncbi/sra-tools/wiki/Home)
 :::
 :::
 
-##### Check EBI/NCBI and run the complete SRA route
+#### Check EBI/NCBI and run the complete SRA route
 
 This route separates retrieval from conversion:
 
@@ -1521,7 +1526,7 @@ A `curl: (6) Could not resolve host` message or an SRA Toolkit hostname-resoluti
 Use Docker Desktop's normal DNS forwarding first; **do not add a fixed `--dns` option to the workshop command**. If the macOS/WSL2 terminal can reach EBI/NCBI but the container cannot, restart Docker Desktop and check VPN/proxy/WSL integration as described in Section 6.5.
 :::
 
-##### Inspect the metadata
+#### Inspect the metadata
 
 ```bash
 head raw_data_sra/metadata/RNAseq_metadata_all.tsv
@@ -1531,7 +1536,7 @@ head raw_data_sra/metadata/Chipseq_metadata_all.tsv
 cat raw_data_sra/metadata/Chipseq_metadata.txt
 ```
 
-##### Inspect the downloaded FASTQ files
+#### Inspect the downloaded FASTQ files
 
 ```bash
 ls -lh raw_data_sra/fastq/rnaseq/
@@ -1586,7 +1591,7 @@ raw paired FASTQ -> fastp -> trimmed paired FASTQ + HTML/JSON report
 
 For each RNA-seq and ChIP-seq sample, `fastp` detects adapters, trims low-quality read tails, filters poor or very short reads, and compares the reads before and after filtering. We inspect the reports across replicates and then use the trimmed FASTQ files as the inputs for Days 2 and 3.
 
-#### 8.1 Run fastp
+### 8.1 Run fastp
 
 Create `scripts/day1/03_trim_fastq.sh`:
 
@@ -1648,7 +1653,7 @@ The script:
 - uses a four-base sliding window to trim a 3′ tail when its mean quality falls below Q20;
 - removes that sample's two raw FASTQ files only after `fastp` finishes successfully. Because `set -e` is active, a failed `fastp` command stops the script before `rm`.
 
-#### 8.2 Run the script in Docker
+### 8.2 Run the script in Docker
 
 From the project root, run the script inside the fastp image:
 
@@ -1673,7 +1678,7 @@ results/logs/day1/fastp/*.fastp.json
 
 The trimmed FASTQ files are large intermediate files. Keep them locally for Days 2 and 3, but do not commit them to GitHub. After each sample finishes successfully, its raw pair is removed automatically; rerun `02_download_ena_fastq.sh` if the raw files are needed again.
 
-#### 8.3 Open and interpret the fastp reports
+### 8.3 Open and interpret the fastp reports
 
 In the VS Code Explorer, open `results/logs/day1/fastp/`. Right-click a `*.fastp.html` file, reveal it in Finder or File Explorer, and double-click it to open it in your web browser.
 
@@ -1724,7 +1729,7 @@ Add something like this:
 ```markdown
 ## Day 1
 
-Day 1 created the reproducible project structure, downloaded the matched reference genome and annotation, converted the RNA-seq and ChIP-seq SDRFs into the two metadata tables used by the workshop, downloaded and renamed the WT FASTQ files, and used fastp to preprocess and assess the reads.
+Day 1 created the reproducible project structure, downloaded the matched reference genome and annotation, converted the RNA-seq and ChIP-seq SDRFs into the two metadata tables used by the workshop, downloaded and renamed the WT/WTS and ΔHP1021/ΔHP1021S FASTQ files, and used fastp to preprocess and assess the reads.
 
 After each sample was processed successfully, its raw FASTQ pair was removed to save space. Large files such as trimmed FASTQ files and reference sequence/annotation files are ignored by Git and are not pushed to GitHub. Small provenance records and quality reports are committed.
 ```
@@ -1746,7 +1751,7 @@ Add something like this:
 - Connected the local repository to GitHub.
 - Tested Docker with a mounted project folder.
 - Downloaded the matched `GCF_025998455.1` FASTA, GFF3, and GTF files for chromosome `NZ_AP026446.1` and derived the RSeQC BED12 gene model from the GFF3.
-- Ran `02_download_ena_fastq.sh` to download and filter the original SDRFs, create `RNAseq_metadata.txt` and `Chipseq_metadata.txt`, and retrieve the WT FASTQ files.
+- Ran `02_download_ena_fastq.sh` to download and filter the original SDRFs, create `RNAseq_metadata.txt` and `Chipseq_metadata.txt`, and retrieve all WT/WTS and ΔHP1021/ΔHP1021S FASTQ files.
 - Recorded the metadata sources and transformations in `raw_data/metadata/METADATA.md` and reviewed GEO/SRA as an optional route.
 - Ran fastp to trim adapters and low-quality tails, filter poor reads, and create trimmed FASTQ files.
 - Inspected the fastp HTML reports; raw pairs were removed automatically after successful processing.

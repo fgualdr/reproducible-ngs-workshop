@@ -276,20 +276,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
    
   <ul>
   <li><a href="#aim" id="toc-aim" class="nav-link active" data-scroll-target="#aim">1. Aim</a></li>
-  <li><a href="#input-files" id="toc-input-files" class="nav-link" data-scroll-target="#input-files">2. Input files</a></li>
+  <li><a href="#input-files-from-days-1-3" id="toc-input-files-from-days-1-3" class="nav-link" data-scroll-target="#input-files-from-days-1-3">2. Input files from Days 1-3</a></li>
   <li><a href="#the-four-object-types-used-today" id="toc-the-four-object-types-used-today" class="nav-link" data-scroll-target="#the-four-object-types-used-today">3. The four object types used today</a></li>
   <li><a href="#load-packages-and-define-paths" id="toc-load-packages-and-define-paths" class="nav-link" data-scroll-target="#load-packages-and-define-paths">4. Load packages and define paths</a></li>
-  <li><a href="#import-tables-intervals-and-the-indexed-genome" id="toc-import-tables-intervals-and-the-indexed-genome" class="nav-link" data-scroll-target="#import-tables-intervals-and-the-indexed-genome">5. Import tables, intervals and the indexed genome</a>
+  <li><a href="#import-untreated-rna-seq-statistics-wt-specific-peaks-orfs-and-the-indexed-genome" id="toc-import-untreated-rna-seq-statistics-wt-specific-peaks-orfs-and-the-indexed-genome" class="nav-link" data-scroll-target="#import-untreated-rna-seq-statistics-wt-specific-peaks-orfs-and-the-indexed-genome">5. Import untreated RNA-seq statistics, WT-specific peaks, ORFs and the indexed genome</a>
   <ul class="collapse">
-  <li><a href="#add-stable-peak-and-gene-identifiers" id="toc-add-stable-peak-and-gene-identifiers" class="nav-link" data-scroll-target="#add-stable-peak-and-gene-identifiers">5.1 Add stable peak and gene identifiers</a></li>
+  <li><a href="#prepare-the-untreated-rna-seq-result-and-define-degs" id="toc-prepare-the-untreated-rna-seq-result-and-define-degs" class="nav-link" data-scroll-target="#prepare-the-untreated-rna-seq-result-and-define-degs">5.1 Prepare the untreated RNA-seq result and define DEGs</a></li>
+  <li><a href="#add-stable-peak-and-orf-identifiers" id="toc-add-stable-peak-and-orf-identifiers" class="nav-link" data-scroll-target="#add-stable-peak-and-orf-identifiers">5.2 Add stable peak and ORF identifiers</a></li>
   </ul></li>
-  <li><a href="#nearest-gene-a-distance-question" id="toc-nearest-gene-a-distance-question" class="nav-link" data-scroll-target="#nearest-gene-a-distance-question">6. Nearest gene: a distance question</a></li>
-  <li><a href="#promoter-overlap-an-interval-overlap-question" id="toc-promoter-overlap-an-interval-overlap-question" class="nav-link" data-scroll-target="#promoter-overlap-an-interval-overlap-question">7. Promoter overlap: an interval-overlap question</a></li>
-  <li><a href="#join-promoter-associated-peaks-to-rna-seq-results" id="toc-join-promoter-associated-peaks-to-rna-seq-results" class="nav-link" data-scroll-target="#join-promoter-associated-peaks-to-rna-seq-results">8. Join promoter-associated peaks to RNA-seq results</a></li>
-  <li><a href="#optional-add-day-3-differential-peak-statistics" id="toc-optional-add-day-3-differential-peak-statistics" class="nav-link" data-scroll-target="#optional-add-day-3-differential-peak-statistics">9. Optional: add Day 3 differential-peak statistics</a></li>
-  <li><a href="#retrieve-peak-dna-from-the-fasta" id="toc-retrieve-peak-dna-from-the-fasta" class="nav-link" data-scroll-target="#retrieve-peak-dna-from-the-fasta">10. Retrieve peak DNA from the FASTA</a></li>
-  <li><a href="#calculate-gc-fraction-and-cpg-counts" id="toc-calculate-gc-fraction-and-cpg-counts" class="nav-link" data-scroll-target="#calculate-gc-fraction-and-cpg-counts">11. Calculate GC fraction and CpG counts</a></li>
-  <li><a href="#save-the-r-session-information" id="toc-save-the-r-session-information" class="nav-link" data-scroll-target="#save-the-r-session-information">12. Save the R session information</a></li>
+  <li><a href="#distance-from-each-wt-specific-peak-to-the-nearest-orf-and-nearest-deg" id="toc-distance-from-each-wt-specific-peak-to-the-nearest-orf-and-nearest-deg" class="nav-link" data-scroll-target="#distance-from-each-wt-specific-peak-to-the-nearest-orf-and-nearest-deg">6. Distance from each WT-specific peak to the nearest ORF and nearest DEG</a></li>
+  <li><a href="#orf-overlap-promoter-overlap-and-simple-genomic-context" id="toc-orf-overlap-promoter-overlap-and-simple-genomic-context" class="nav-link" data-scroll-target="#orf-overlap-promoter-overlap-and-simple-genomic-context">7. ORF overlap, promoter overlap and simple genomic context</a>
+  <ul class="collapse">
+  <li><a href="#explicit-peak-orf-and-peak-promoter-overlap-tables" id="toc-explicit-peak-orf-and-peak-promoter-overlap-tables" class="nav-link" data-scroll-target="#explicit-peak-orf-and-peak-promoter-overlap-tables">7.1 Explicit peak-ORF and peak-promoter overlap tables</a></li>
+  <li><a href="#a-simple-mutually-exclusive-context-for-visualization" id="toc-a-simple-mutually-exclusive-context-for-visualization" class="nav-link" data-scroll-target="#a-simple-mutually-exclusive-context-for-visualization">7.2 A simple mutually exclusive context for visualization</a></li>
+  </ul></li>
+  <li><a href="#promoter-associated-peaks-and-untreated-rna-seq-degs" id="toc-promoter-associated-peaks-and-untreated-rna-seq-degs" class="nav-link" data-scroll-target="#promoter-associated-peaks-and-untreated-rna-seq-degs">8. Promoter-associated peaks and untreated RNA-seq DEGs</a></li>
+  <li><a href="#add-the-matching-day-3-wt-versus-δhp1021-peak-statistics" id="toc-add-the-matching-day-3-wt-versus-δhp1021-peak-statistics" class="nav-link" data-scroll-target="#add-the-matching-day-3-wt-versus-δhp1021-peak-statistics">9. Add the matching Day 3 WT-versus-ΔHP1021 peak statistics</a></li>
+  <li><a href="#retrieve-wt-specific-peak-dna-from-the-fasta" id="toc-retrieve-wt-specific-peak-dna-from-the-fasta" class="nav-link" data-scroll-target="#retrieve-wt-specific-peak-dna-from-the-fasta">10. Retrieve WT-specific peak DNA from the FASTA</a></li>
+  <li><a href="#calculate-gc-fraction-and-cpg-counts-per-peak" id="toc-calculate-gc-fraction-and-cpg-counts-per-peak" class="nav-link" data-scroll-target="#calculate-gc-fraction-and-cpg-counts-per-peak">11. Calculate GC fraction and CpG counts per peak</a></li>
+  <li><a href="#save-the-r-session-and-run-the-complete-script" id="toc-save-the-r-session-and-run-the-complete-script" class="nav-link" data-scroll-target="#save-the-r-session-and-run-the-complete-script">12. Save the R session and run the complete script</a></li>
   <li><a href="#what-to-keep-from-this-optional-day" id="toc-what-to-keep-from-this-optional-day" class="nav-link" data-scroll-target="#what-to-keep-from-this-optional-day">13. What to keep from this optional day</a></li>
   <li><a href="#common-problems" id="toc-common-problems" class="nav-link" data-scroll-target="#common-problems">14. Common problems</a></li>
   <li><a href="#self-check-questions" id="toc-self-check-questions" class="nav-link" data-scroll-target="#self-check-questions">15. Self-check questions</a></li>
@@ -302,7 +307,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../days/day0_setup.html">Day-by-day lessons</a></li><li class="breadcrumb-item"><a href="../days/day4_integration.html">Day 4 - Integration</a></li></ol></nav>
 <div class="quarto-title">
 <h1 class="title">Optional Day 4 - Basic RNA-seq and ChIP-seq integration in R</h1>
-<p class="subtitle lead">GRanges, peak-to-gene links and sequence composition</p>
+<p class="subtitle lead">GRanges, untreated RNA-seq, WT-specific peaks and sequence composition</p>
 </div>
 
 
@@ -334,27 +339,44 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <section id="aim" class="level2">
 <h2 class="anchored" data-anchor-id="aim">1. Aim</h2>
-<p>The goal is not to build a complete regulatory-network pipeline. The goal is to understand a small set of reusable R/Bioconductor objects and operations:</p>
+<p>Day 4 uses one deliberately narrow case study so that students can integrate results even if they completed the <strong>older Day 2 RNA-seq analysis</strong>.</p>
+<p>We combine:</p>
+<ul>
+<li>the <strong>untreated RNA-seq WT versus ΔHP1021 contrast</strong> stored in the legacy <code>deseq2_results.tsv</code> file;</li>
+<li>the <strong>updated Day 3 ChIP-seq peaks already filtered as WT-specific versus ΔHP1021</strong>;</li>
+<li>the common GFF3 annotation and reference genome used throughout the workshop.</li>
+</ul>
+<p>The treated RNA-seq comparison is kept as a <strong>separate analysis</strong> and is not merged with the untreated results in this exercise.</p>
+<p>Day 4 therefore asks a focused question:</p>
+<blockquote class="blockquote">
+<p>Where are the WT-specific ChIP-seq peaks, which ORFs are closest to them, and which of those ORFs are differentially expressed in untreated WT versus ΔHP1021?</p>
+</blockquote>
 <div class="cell" data-layout-align="default">
 <div class="cell-output-display">
 <div>
 <p></p><figure class="figure"><p></p>
 <div>
 <pre class="mermaid mermaid-js">flowchart TD
-    inputs["Import DESeq2 results + consensus peaks + gene annotation"]
-    objects["Represent genomic intervals as GRanges"]
-    links["Find nearest genes + promoter overlaps"]
-    joined["Join peak-gene links with RNA-seq results"]
+    inputs["Untreated Day 2 DESeq2 + WT-specific Day 3 peaks + GFF3"]
+    objects["Represent ORFs and selected peaks as GRanges"]
+    rna["Define untreated WT-vs-ΔHP1021 DEGs"]
+    nearest["Nearest ORF + nearest DEG distances"]
+    context["ORF overlap + promoter overlap + genomic context"]
+    decorate["Decorate each peak with nearest-ORF RNA statistics"]
+    chip["Add matching WT-specific ChIP statistics"]
     fasta["Retrieve peak DNA from indexed FASTA"]
-    sequence["DNAStringSet peak sequences"]
-    composition["Calculate GC fraction + CpG counts"]
+    sequence["GC fraction + CpG counts per peak"]
 
     inputs --&gt; objects
-    objects --&gt; links
-    links --&gt; joined
-    joined --&gt; fasta
+    inputs --&gt; rna
+    objects --&gt; nearest
+    rna --&gt; nearest
+    nearest --&gt; decorate
+    objects --&gt; context
+    decorate --&gt; chip
+    context --&gt; chip
+    chip --&gt; fasta
     fasta --&gt; sequence
-    sequence --&gt; composition
 </pre>
 </div>
 <p></p></figure><p></p>
@@ -363,32 +385,52 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <p>By the end, you should be able to explain:</p>
 <ul>
-<li>why a regular table and a genomic interval object are different;</li>
-<li>how BED and GFF3 become <code>GRanges</code> objects;</li>
-<li>how <code>distanceToNearest()</code> and <code>findOverlaps()</code> answer different questions;</li>
-<li>how promoter windows depend on strand;</li>
-<li>how an indexed FASTA can supply peak DNA sequences;</li>
-<li>how to calculate GC fraction and CpG counts;</li>
-<li>why a peak near a differentially expressed gene is a candidate relationship, not proof of direct regulation.</li>
+<li>why <code>data.frame</code>, <code>GRanges</code>, <code>Hits</code>, <code>FaFile</code> and <code>DNAStringSet</code> represent different objects;</li>
+<li>how the Day 3 WT-specific BED and Day 1 GFF3 become interval-aware <code>GRanges</code> objects;</li>
+<li>how <code>distanceToNearest()</code> answers a different question from <code>findOverlaps()</code>;</li>
+<li>how to calculate the distance from each WT-specific peak to the nearest ORF and to the nearest untreated RNA-seq DEG;</li>
+<li>how to decorate a peak with the untreated RNA-seq statistics of its closest ORF;</li>
+<li>how ORF and promoter overlaps define a simple intragenic / promoter-proximal / intergenic summary;</li>
+<li>how to calculate GC fraction and CpG density for each selected peak;</li>
+<li>why ChIP-seq proximity plus differential expression remains a candidate regulatory relationship rather than proof of direct regulation.</li>
 </ul>
 </section>
-<section id="input-files" class="level2">
-<h2 class="anchored" data-anchor-id="input-files">2. Input files</h2>
-<p>Use the files generated in Days 1–3 or the matching checkpoints:</p>
+<section id="input-files-from-days-1-3" class="level2">
+<h2 class="anchored" data-anchor-id="input-files-from-days-1-3">2. Input files from Days 1-3</h2>
+<p>Use the files generated by the workshop or the matching checkpoints:</p>
 <pre class="text"><code>reference_genome/genome.fa
 reference_genome/genome.fa.fai
 reference_genome/annotation.gff3
+
 results/day2_rnaseq/deseq2/deseq2_results.tsv
-results/day3_chipseq/peaks/consensus/consensus_peaks.bed
-results/day3_chipseq/differential_peaks/differential_peak_results.tsv   # optional</code></pre>
-<p>All genomic files must use <code>GCF_025998455.1</code> and sequence name <code>NZ_AP026446.1</code>.</p>
+
+results/day3_chipseq/differential_peaks/WT_specific_vs_DeltaHP1021.bed
+results/day3_chipseq/differential_peaks/WT_specific_vs_DeltaHP1021.tsv</code></pre>
+<p>For Day 4, <code>deseq2_results.tsv</code> is treated as the <strong>untreated WT versus ΔHP1021 RNA-seq result</strong> produced by the older Day 2 workflow. Positive RNA-seq log2 fold change is therefore interpreted as higher expression in WT, assuming the original contrast was specified as WT over ΔHP1021.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Keep untreated and treated RNA-seq results separate">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Keep untreated and treated RNA-seq results separate
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This case study uses only the untreated comparison. Do <strong>not</strong> merge untreated and treated DESeq2 result tables. Students using the newer Day 2 workflow can point <code>rna_file</code> to the corresponding untreated <code>WT_vs_deltaHP1021.tsv</code> file instead, but the integration logic is unchanged. A treated comparison can be repeated later as a separate exercise.</p>
+</div>
+</div>
+<p>The ChIP-seq input is different: we do <strong>not</strong> start from every consensus region. Day 3 has already quantified the consensus peaks and filtered them for significantly stronger occupancy in WT versus ΔHP1021. Day 4 starts from that selected set:</p>
+<pre class="text"><code>WT_specific_vs_DeltaHP1021.bed</code></pre>
+<p>The matching TSV contains the Day 3 ChIP-seq statistics for the same selected peaks and is used later to decorate the genomic annotations.</p>
+<p>All genomic files must use <code>GCF_025998455.1</code> and the same sequence naming, including <code>NZ_AP026446.1</code>.</p>
 <p>Create folders:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> scripts/day4_optional</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> results/day4_optional/tables</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> results/day4_optional/plots</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> results/logs/day4</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Create one script and add the code blocks below in order:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nano</span> scripts/day4_optional/01_basic_integration.R</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> scripts/day4_optional</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> results/day4_optional/tables</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> results/day4_optional/plots</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> results/logs/day4</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Create one R script and add the code blocks below in order:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nano</span> scripts/day4_optional/01_basic_integration.R</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="the-four-object-types-used-today" class="level2">
 <h2 class="anchored" data-anchor-id="the-four-object-types-used-today">3. The four object types used today</h2>
@@ -409,12 +451,12 @@ results/day3_chipseq/differential_peaks/differential_peak_results.tsv   # option
 <tr class="odd">
 <td><code>data.frame</code></td>
 <td>rectangular statistics or metadata</td>
-<td>filter, sort, merge</td>
+<td>filter, sort, merge, match</td>
 </tr>
 <tr class="even">
 <td><code>GRanges</code></td>
 <td>genomic intervals plus metadata</td>
-<td>overlap, nearest, distance, resize</td>
+<td>overlap, nearest, distance, promoter windows</td>
 </tr>
 <tr class="odd">
 <td><code>Hits</code></td>
@@ -428,356 +470,511 @@ results/day3_chipseq/differential_peaks/differential_peak_results.tsv   # option
 </tr>
 </tbody>
 </table>
-<p>The distinction matters. A <code>data.frame</code> knows that a column is named <code>start</code>, but it does not know that <code>start</code>, <code>end</code>, chromosome and strand form a genomic interval. <code>GRanges</code> does.</p>
+<p>The distinction matters. A <code>data.frame</code> knows that a column is named <code>start</code>, but it does not know that chromosome, start, end and strand form a genomic interval. <code>GRanges</code> does.</p>
 </section>
 <section id="load-packages-and-define-paths" class="level2">
 <h2 class="anchored" data-anchor-id="load-packages-and-define-paths">4. Load packages and define paths</h2>
 <p>Add:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env Rscript</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(GenomicRanges)</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rtracklayer)</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(Rsamtools)</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(Biostrings)</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>rna_file <span class="ot">&lt;-</span> <span class="st">"results/day2_rnaseq/deseq2/deseq2_results.tsv"</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>peak_file <span class="ot">&lt;-</span> <span class="st">"results/day3_chipseq/peaks/consensus/consensus_peaks.bed"</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>peak_de_file <span class="ot">&lt;-</span> <span class="st">"results/day3_chipseq/differential_peaks/differential_peak_results.tsv"</span></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>annotation_file <span class="ot">&lt;-</span> <span class="st">"reference_genome/annotation.gff3"</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>genome_file <span class="ot">&lt;-</span> <span class="st">"reference_genome/genome.fa"</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>table_dir <span class="ot">&lt;-</span> <span class="st">"results/day4_optional/tables"</span></span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>plot_dir <span class="ot">&lt;-</span> <span class="st">"results/day4_optional/plots"</span></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(table_dir, <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(plot_dir, <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/usr/bin/env Rscript</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(GenomicRanges)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rtracklayer)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(Rsamtools)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(Biostrings)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>rna_file <span class="ot">&lt;-</span> <span class="st">"results/day2_rnaseq/deseq2/deseq2_results.tsv"</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>peak_file <span class="ot">&lt;-</span> <span class="st">"results/day3_chipseq/differential_peaks/WT_specific_vs_DeltaHP1021.bed"</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>peak_de_file <span class="ot">&lt;-</span> <span class="st">"results/day3_chipseq/differential_peaks/WT_specific_vs_DeltaHP1021.tsv"</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>annotation_file <span class="ot">&lt;-</span> <span class="st">"reference_genome/annotation.gff3"</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>genome_file <span class="ot">&lt;-</span> <span class="st">"reference_genome/genome.fa"</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>table_dir <span class="ot">&lt;-</span> <span class="st">"results/day4_optional/tables"</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>plot_dir <span class="ot">&lt;-</span> <span class="st">"results/day4_optional/plots"</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>alpha <span class="ot">&lt;-</span> <span class="fl">0.05</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>lfc_cutoff <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(table_dir, <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(plot_dir, <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="import-tables-intervals-and-the-indexed-genome" class="level2">
-<h2 class="anchored" data-anchor-id="import-tables-intervals-and-the-indexed-genome">5. Import tables, intervals and the indexed genome</h2>
+<section id="import-untreated-rna-seq-statistics-wt-specific-peaks-orfs-and-the-indexed-genome" class="level2">
+<h2 class="anchored" data-anchor-id="import-untreated-rna-seq-statistics-wt-specific-peaks-orfs-and-the-indexed-genome">5. Import untreated RNA-seq statistics, WT-specific peaks, ORFs and the indexed genome</h2>
 <p>Add:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>rna <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(rna_file, <span class="at">check.names =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>peaks <span class="ot">&lt;-</span> <span class="fu">import</span>(peak_file, <span class="at">format =</span> <span class="st">"BED"</span>)</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>annotation <span class="ot">&lt;-</span> <span class="fu">import</span>(annotation_file, <span class="at">format =</span> <span class="st">"GFF3"</span>)</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>genes <span class="ot">&lt;-</span> annotation[annotation<span class="sc">$</span>type <span class="sc">==</span> <span class="st">"gene"</span>]</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>genome <span class="ot">&lt;-</span> <span class="fu">FaFile</span>(genome_file)</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>genome_index <span class="ot">&lt;-</span> <span class="fu">scanFaIndex</span>(genome)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>rna <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(rna_file, <span class="at">check.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>peaks <span class="ot">&lt;-</span> <span class="fu">import</span>(peak_file, <span class="at">format =</span> <span class="st">"BED"</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>annotation <span class="ot">&lt;-</span> <span class="fu">import</span>(annotation_file, <span class="at">format =</span> <span class="st">"GFF3"</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>genes <span class="ot">&lt;-</span> annotation[annotation<span class="sc">$</span>type <span class="sc">==</span> <span class="st">"gene"</span>]</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>genome <span class="ot">&lt;-</span> <span class="fu">FaFile</span>(genome_file)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>genome_index <span class="ot">&lt;-</span> <span class="fu">scanFaIndex</span>(genome)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Inspect the objects:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(rna)</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(peaks)</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(genes)</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(genome)</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(genome_index)</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>rna[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, ]</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>peaks[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>]</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>genes[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>]</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>genome_index</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>What happened during import?</p>
-<ul>
-<li>the TSV remained a <code>data.frame</code>;</li>
-<li>the BED coordinates were converted into a <code>GRanges</code> object;</li>
-<li>the GFF3 gene features became another <code>GRanges</code> object;</li>
-<li><code>FaFile</code> points to the indexed FASTA without loading the whole genome as an ordinary character string;</li>
-<li><code>scanFaIndex()</code> returns the sequence ranges available in the FASTA index.</li>
-</ul>
-<section id="add-stable-peak-and-gene-identifiers" class="level3">
-<h3 class="anchored" data-anchor-id="add-stable-peak-and-gene-identifiers">5.1 Add stable peak and gene identifiers</h3>
-<p>BED column 4 is imported as the <code>name</code> metadata column. Add:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="st">"name"</span> <span class="sc">%in%</span> <span class="fu">names</span>(<span class="fu">mcols</span>(peaks))) {</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">"Consensus BED must contain peak IDs in column 4"</span>)</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>peaks<span class="sc">$</span>peak_id <span class="ot">&lt;-</span> <span class="fu">as.character</span>(peaks<span class="sc">$</span>name)</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(peaks) <span class="ot">&lt;-</span> peaks<span class="sc">$</span>peak_id</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>GFF3 attribute names vary. Select the first suitable gene-identifier field:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>candidate_id_columns <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"ID"</span>, <span class="st">"gene_id"</span>, <span class="st">"locus_tag"</span>, <span class="st">"Name"</span>)</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>gene_id_column <span class="ot">&lt;-</span> <span class="fu">intersect</span>(candidate_id_columns, <span class="fu">names</span>(<span class="fu">mcols</span>(genes)))[<span class="dv">1</span>]</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">is.na</span>(gene_id_column)) {</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">"No suitable gene identifier found in the GFF3 gene features"</span>)</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>genes<span class="sc">$</span>gene_id <span class="ot">&lt;-</span> <span class="fu">as.character</span>(<span class="fu">mcols</span>(genes)[[gene_id_column]])</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(genes) <span class="ot">&lt;-</span> genes<span class="sc">$</span>gene_id</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Set chromosome lengths from the FASTA index so that interval trimming is explicit:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>genome_lengths <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">width</span>(genome_index), <span class="fu">as.character</span>(<span class="fu">seqnames</span>(genome_index)))</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>common_seqlevels <span class="ot">&lt;-</span> <span class="fu">intersect</span>(<span class="fu">names</span>(genome_lengths), <span class="fu">union</span>(<span class="fu">seqlevels</span>(peaks), <span class="fu">seqlevels</span>(genes)))</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="fu">seqlengths</span>(peaks)[common_seqlevels] <span class="ot">&lt;-</span> genome_lengths[common_seqlevels]</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="fu">seqlengths</span>(genes)[common_seqlevels] <span class="ot">&lt;-</span> genome_lengths[common_seqlevels]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Check that peaks and genes share sequence names:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>shared_sequences <span class="ot">&lt;-</span> <span class="fu">intersect</span>(<span class="fu">seqlevelsInUse</span>(peaks), <span class="fu">seqlevelsInUse</span>(genes))</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(shared_sequences) <span class="sc">==</span> <span class="dv">0</span>) {</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">"Peaks and genes do not share chromosome names"</span>)</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>shared_sequences</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</section>
-</section>
-<section id="nearest-gene-a-distance-question" class="level2">
-<h2 class="anchored" data-anchor-id="nearest-gene-a-distance-question">6. Nearest gene: a distance question</h2>
-<p><code>distanceToNearest()</code> returns a <code>Hits</code> object. Each hit connects one query peak to one nearest subject gene and stores the distance.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(rna)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(peaks)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(genes)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(genome)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(genome_index)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>rna[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>, ]</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>peaks[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>]</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>genes[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>]</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>genome_index</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The RNA-seq result remains an ordinary <code>data.frame</code>. The BED and GFF3 become <code>GRanges</code>; <code>FaFile</code> points to the indexed FASTA without reading the whole genome into an ordinary character vector.</p>
+<section id="prepare-the-untreated-rna-seq-result-and-define-degs" class="level3">
+<h3 class="anchored" data-anchor-id="prepare-the-untreated-rna-seq-result-and-define-degs">5.1 Prepare the untreated RNA-seq result and define DEGs</h3>
+<p>The legacy <code>deseq2_results.tsv</code> is used as a <strong>single contrast table</strong>. We do not merge it with the treated RNA-seq result.</p>
 <p>Add:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>nearest_hits <span class="ot">&lt;-</span> <span class="fu">distanceToNearest</span>(peaks, genes, <span class="at">ignore.strand =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(nearest_hits)</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>nearest_hits</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Convert the index pairs into a readable table:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>nearest_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">peak_id =</span> peaks<span class="sc">$</span>peak_id[<span class="fu">queryHits</span>(nearest_hits)],</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">peak_chrom =</span> <span class="fu">as.character</span>(<span class="fu">seqnames</span>(peaks))[<span class="fu">queryHits</span>(nearest_hits)],</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">peak_start =</span> <span class="fu">start</span>(peaks)[<span class="fu">queryHits</span>(nearest_hits)],</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">peak_end =</span> <span class="fu">end</span>(peaks)[<span class="fu">queryHits</span>(nearest_hits)],</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">gene_id =</span> genes<span class="sc">$</span>gene_id[<span class="fu">subjectHits</span>(nearest_hits)],</span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">gene_strand =</span> <span class="fu">as.character</span>(<span class="fu">strand</span>(genes))[<span class="fu">subjectHits</span>(nearest_hits)],</span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">distance_to_gene =</span> <span class="fu">mcols</span>(nearest_hits)<span class="sc">$</span>distance</span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="fu">write.table</span>(</span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>  nearest_table,</span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(table_dir, <span class="st">"peak_nearest_gene.tsv"</span>),</span>
-<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">quote =</span> <span class="cn">FALSE</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span></span>
-<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="st">"gene_id"</span> <span class="sc">%in%</span> <span class="fu">names</span>(rna)) {</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(rna)[<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="st">"gene_id"</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>required_rna_columns <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"gene_id"</span>, <span class="st">"log2FoldChange"</span>, <span class="st">"padj"</span>)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>missing_rna_columns <span class="ot">&lt;-</span> <span class="fu">setdiff</span>(required_rna_columns, <span class="fu">names</span>(rna))</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(missing_rna_columns) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"RNA-seq result is missing required columns: "</span>,</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste</span>(missing_rna_columns, <span class="at">collapse =</span> <span class="st">", "</span>)</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>rna<span class="sc">$</span>gene_id <span class="ot">&lt;-</span> <span class="fu">as.character</span>(rna<span class="sc">$</span>gene_id)</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>rna<span class="sc">$</span>is_de <span class="ot">&lt;-</span> <span class="sc">!</span><span class="fu">is.na</span>(rna<span class="sc">$</span>padj) <span class="sc">&amp;</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>  <span class="sc">!</span><span class="fu">is.na</span>(rna<span class="sc">$</span>log2FoldChange) <span class="sc">&amp;</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>  rna<span class="sc">$</span>padj <span class="sc">&lt;</span> alpha <span class="sc">&amp;</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">abs</span>(rna<span class="sc">$</span>log2FoldChange) <span class="sc">&gt;=</span> lfc_cutoff</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a><span class="fu">write.table</span>(</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>  rna,</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(table_dir, <span class="st">"rna_untreated_WT_vs_DeltaHP1021.tsv"</span>),</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">quote =</span> <span class="cn">FALSE</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span></span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Untreated RNA-seq genes:"</span>, <span class="fu">nrow</span>(rna), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Untreated RNA-seq DEGs:"</span>, <span class="fu">sum</span>(rna<span class="sc">$</span>is_de), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="callout callout-style-default callout-important callout-titled" title="Check the contrast orientation">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Check the contrast orientation
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This exercise assumes that the legacy <code>deseq2_results.tsv</code> represents <strong>WT versus ΔHP1021 in untreated samples</strong>, so positive <code>log2FoldChange</code> means higher expression in WT. If an older result file was generated with the opposite DESeq2 contrast, the signs must be interpreted in the opposite direction.</p>
+</div>
+</div>
+</section>
+<section id="add-stable-peak-and-orf-identifiers" class="level3">
+<h3 class="anchored" data-anchor-id="add-stable-peak-and-orf-identifiers">5.2 Add stable peak and ORF identifiers</h3>
+<p>The updated Day 3 <code>WT_specific_vs_DeltaHP1021.bed</code> is a three-column BED. Reconstruct the same coordinate-based <code>peak_id</code> used in the matching Day 3 differential-peak TSV:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>peaks<span class="sc">$</span>peak_id <span class="ot">&lt;-</span> <span class="fu">paste0</span>(</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.character</span>(<span class="fu">seqnames</span>(peaks)), <span class="st">":"</span>, <span class="fu">start</span>(peaks) <span class="sc">-</span> <span class="dv">1</span>, <span class="st">"-"</span>, <span class="fu">end</span>(peaks)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(peaks) <span class="ot">&lt;-</span> peaks<span class="sc">$</span>peak_id</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>For this basic workshop exercise we use GFF3 <code>gene</code> features as the annotated gene/ORF set. If a project requires protein-coding ORFs only, subset the annotation by the appropriate biotype before this step. Select a stable identifier from the GFF3:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>candidate_id_columns <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"ID"</span>, <span class="st">"gene_id"</span>, <span class="st">"locus_tag"</span>, <span class="st">"Name"</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>gene_id_column <span class="ot">&lt;-</span> <span class="fu">intersect</span>(candidate_id_columns, <span class="fu">names</span>(<span class="fu">mcols</span>(genes)))[<span class="dv">1</span>]</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">is.na</span>(gene_id_column)) {</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">"No suitable gene identifier found in the GFF3 gene features"</span>)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>genes<span class="sc">$</span>gene_id <span class="ot">&lt;-</span> <span class="fu">as.character</span>(<span class="fu">mcols</span>(genes)[[gene_id_column]])</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(genes) <span class="ot">&lt;-</span> genes<span class="sc">$</span>gene_id</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Set chromosome lengths from the FASTA index and verify that the interval objects share sequence names:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>genome_lengths <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">width</span>(genome_index), <span class="fu">as.character</span>(<span class="fu">seqnames</span>(genome_index)))</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>common_seqlevels <span class="ot">&lt;-</span> <span class="fu">intersect</span>(<span class="fu">names</span>(genome_lengths), <span class="fu">union</span>(<span class="fu">seqlevels</span>(peaks), <span class="fu">seqlevels</span>(genes)))</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="fu">seqlengths</span>(peaks)[common_seqlevels] <span class="ot">&lt;-</span> genome_lengths[common_seqlevels]</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="fu">seqlengths</span>(genes)[common_seqlevels] <span class="ot">&lt;-</span> genome_lengths[common_seqlevels]</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>shared_sequences <span class="ot">&lt;-</span> <span class="fu">intersect</span>(<span class="fu">seqlevelsInUse</span>(peaks), <span class="fu">seqlevelsInUse</span>(genes))</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(shared_sequences) <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">"Peaks and genes do not share chromosome names"</span>)</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Define the annotated ORFs that are differentially expressed in the untreated RNA-seq comparison:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>deg_ids <span class="ot">&lt;-</span> rna<span class="sc">$</span>gene_id[rna<span class="sc">$</span>is_de]</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>deg_genes <span class="ot">&lt;-</span> genes[genes<span class="sc">$</span>gene_id <span class="sc">%in%</span> deg_ids]</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"WT-specific ChIP-seq peaks:"</span>, <span class="fu">length</span>(peaks), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Annotated ORFs:"</span>, <span class="fu">length</span>(genes), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Untreated RNA-seq DEGs used for nearest-DEG queries:"</span>, <span class="fu">length</span>(deg_genes), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="distance-from-each-wt-specific-peak-to-the-nearest-orf-and-nearest-deg" class="level2">
+<h2 class="anchored" data-anchor-id="distance-from-each-wt-specific-peak-to-the-nearest-orf-and-nearest-deg">6. Distance from each WT-specific peak to the nearest ORF and nearest DEG</h2>
+<p><code>distanceToNearest()</code> answers a geometric question: for every query peak, which subject interval is closest and how far away is it? We first query all annotated ORFs, then repeat the same operation after subsetting the ORFs to <strong>untreated RNA-seq DEGs</strong>.</p>
+<p>Add:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>nearest_gene_hits <span class="ot">&lt;-</span> <span class="fu">distanceToNearest</span>(peaks, genes, <span class="at">ignore.strand =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>peak_annotation <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">peak_id =</span> peaks<span class="sc">$</span>peak_id,</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">peak_chrom =</span> <span class="fu">as.character</span>(<span class="fu">seqnames</span>(peaks)),</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">peak_start =</span> <span class="fu">start</span>(peaks) <span class="sc">-</span> <span class="dv">1</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">peak_end =</span> <span class="fu">end</span>(peaks),</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">nearest_gene_id =</span> <span class="cn">NA_character_</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">nearest_gene_strand =</span> <span class="cn">NA_character_</span>,</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">distance_to_nearest_gene =</span> <span class="cn">NA_integer_</span>,</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>q <span class="ot">&lt;-</span> <span class="fu">queryHits</span>(nearest_gene_hits)</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>s <span class="ot">&lt;-</span> <span class="fu">subjectHits</span>(nearest_gene_hits)</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>peak_annotation<span class="sc">$</span>nearest_gene_id[q] <span class="ot">&lt;-</span> genes<span class="sc">$</span>gene_id[s]</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>peak_annotation<span class="sc">$</span>nearest_gene_strand[q] <span class="ot">&lt;-</span> <span class="fu">as.character</span>(<span class="fu">strand</span>(genes))[s]</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>peak_annotation<span class="sc">$</span>distance_to_nearest_gene[q] <span class="ot">&lt;-</span> <span class="fu">mcols</span>(nearest_gene_hits)<span class="sc">$</span>distance</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Decorate the closest ORF with the <strong>untreated WT-versus-ΔHP1021 RNA-seq statistics</strong>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>rna_idx <span class="ot">&lt;-</span> <span class="fu">match</span>(peak_annotation<span class="sc">$</span>nearest_gene_id, rna<span class="sc">$</span>gene_id)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>peak_annotation<span class="sc">$</span>rna_WT_vs_Delta_log2FC <span class="ot">&lt;-</span> rna<span class="sc">$</span>log2FoldChange[rna_idx]</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>peak_annotation<span class="sc">$</span>rna_WT_vs_Delta_padj <span class="ot">&lt;-</span> rna<span class="sc">$</span>padj[rna_idx]</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>peak_annotation<span class="sc">$</span>nearest_gene_is_de <span class="ot">&lt;-</span> rna<span class="sc">$</span>is_de[rna_idx]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Now calculate the nearest untreated DEG directly. This is different from asking whether the nearest ORF happens to be DE: a non-DE ORF can be closest while the closest DEG lies farther away.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>peak_annotation<span class="sc">$</span>nearest_deg_id <span class="ot">&lt;-</span> <span class="cn">NA_character_</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>peak_annotation<span class="sc">$</span>distance_to_nearest_deg <span class="ot">&lt;-</span> <span class="cn">NA_integer_</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(deg_genes) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  nearest_deg_hits <span class="ot">&lt;-</span> <span class="fu">distanceToNearest</span>(peaks, deg_genes, <span class="at">ignore.strand =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  q <span class="ot">&lt;-</span> <span class="fu">queryHits</span>(nearest_deg_hits)</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  s <span class="ot">&lt;-</span> <span class="fu">subjectHits</span>(nearest_deg_hits)</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  peak_annotation<span class="sc">$</span>nearest_deg_id[q] <span class="ot">&lt;-</span> deg_genes<span class="sc">$</span>gene_id[s]</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  peak_annotation<span class="sc">$</span>distance_to_nearest_deg[q] <span class="ot">&lt;-</span> <span class="fu">mcols</span>(nearest_deg_hits)<span class="sc">$</span>distance</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a><span class="fu">write.table</span>(</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>  peak_annotation,</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(table_dir, <span class="st">"peak_nearest_orf_and_deg.tsv"</span>),</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">quote =</span> <span class="cn">FALSE</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Interpretation:</p>
 <ul>
-<li>distance <code>0</code> means that the peak overlaps the gene interval;</li>
-<li>a positive distance means that the peak is outside the gene body;</li>
-<li>“nearest” does not mean “regulated.” It is a geometric annotation rule.</li>
+<li>distance <code>0</code> means that the peak overlaps the queried ORF/DEG interval;</li>
+<li>a positive distance means the peak lies outside that interval;</li>
+<li>nearest ORF and nearest DEG answer different questions;</li>
+<li>“nearest” does <strong>not</strong> mean “regulated.” It is a geometric annotation rule.</li>
 </ul>
-<p>Plot the distance distribution:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>distance_plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(nearest_table, <span class="fu">aes</span>(distance_to_gene)) <span class="sc">+</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">bins =</span> <span class="dv">40</span>) <span class="sc">+</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Distance from peak to nearest annotated gene (bp)"</span>,</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Number of peaks"</span></span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(</span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(plot_dir, <span class="st">"peak_to_nearest_gene_distance.pdf"</span>),</span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  distance_plot,</span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">width =</span> <span class="dv">7</span>, <span class="at">height =</span> <span class="dv">5</span></span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Plot the distance distributions:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>distance_orf_plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(peak_annotation, <span class="fu">aes</span>(distance_to_nearest_gene)) <span class="sc">+</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">bins =</span> <span class="dv">40</span>) <span class="sc">+</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Distance from peak to nearest ORF (bp)"</span>, <span class="at">y =</span> <span class="st">"Number of peaks"</span>)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(plot_dir, <span class="st">"peak_to_nearest_ORF_distance.pdf"</span>),</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  distance_orf_plot, <span class="at">width =</span> <span class="dv">7</span>, <span class="at">height =</span> <span class="dv">5</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">any</span>(<span class="sc">!</span><span class="fu">is.na</span>(peak_annotation<span class="sc">$</span>distance_to_nearest_deg))) {</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>  distance_deg_plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    peak_annotation[<span class="sc">!</span><span class="fu">is.na</span>(peak_annotation<span class="sc">$</span>distance_to_nearest_deg), ],</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(distance_to_nearest_deg)</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_histogram</span>(<span class="at">bins =</span> <span class="dv">40</span>) <span class="sc">+</span></span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Distance from peak to nearest untreated RNA-seq DEG (bp)"</span>, <span class="at">y =</span> <span class="st">"Number of peaks"</span>)</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggsave</span>(</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">file.path</span>(plot_dir, <span class="st">"peak_to_nearest_DEG_distance.pdf"</span>),</span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>    distance_deg_plot, <span class="at">width =</span> <span class="dv">7</span>, <span class="at">height =</span> <span class="dv">5</span></span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="promoter-overlap-an-interval-overlap-question" class="level2">
-<h2 class="anchored" data-anchor-id="promoter-overlap-an-interval-overlap-question">7. Promoter overlap: an interval-overlap question</h2>
-<p>For this optional exercise, define a strand-aware promoter as 500 bp upstream and 100 bp downstream of the annotated gene start.</p>
-<p><code>promoters()</code> understands gene strand:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>promoter_ranges <span class="ot">&lt;-</span> <span class="fu">promoters</span>(genes, <span class="at">upstream =</span> <span class="dv">500</span>, <span class="at">downstream =</span> <span class="dv">101</span>)</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>promoter_ranges <span class="ot">&lt;-</span> <span class="fu">trim</span>(promoter_ranges)</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>promoter_ranges<span class="sc">$</span>gene_id <span class="ot">&lt;-</span> genes<span class="sc">$</span>gene_id</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>For a <code>+</code>-strand gene, the promoter extends toward smaller coordinates. For a <code>-</code>-strand gene, upstream extends toward larger coordinates.</p>
-<p>Find peak-promoter overlaps:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>promoter_hits <span class="ot">&lt;-</span> <span class="fu">findOverlaps</span>(peaks, promoter_ranges, <span class="at">ignore.strand =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(promoter_hits)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Build a table:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>promoter_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">peak_id =</span> peaks<span class="sc">$</span>peak_id[<span class="fu">queryHits</span>(promoter_hits)],</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">peak_chrom =</span> <span class="fu">as.character</span>(<span class="fu">seqnames</span>(peaks))[<span class="fu">queryHits</span>(promoter_hits)],</span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">peak_start =</span> <span class="fu">start</span>(peaks)[<span class="fu">queryHits</span>(promoter_hits)],</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">peak_end =</span> <span class="fu">end</span>(peaks)[<span class="fu">queryHits</span>(promoter_hits)],</span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">gene_id =</span> promoter_ranges<span class="sc">$</span>gene_id[<span class="fu">subjectHits</span>(promoter_hits)],</span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">promoter_start =</span> <span class="fu">start</span>(promoter_ranges)[<span class="fu">subjectHits</span>(promoter_hits)],</span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">promoter_end =</span> <span class="fu">end</span>(promoter_ranges)[<span class="fu">subjectHits</span>(promoter_hits)],</span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">gene_strand =</span> <span class="fu">as.character</span>(<span class="fu">strand</span>(promoter_ranges))[<span class="fu">subjectHits</span>(promoter_hits)]</span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a><span class="fu">write.table</span>(</span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>  promoter_table,</span>
-<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(table_dir, <span class="st">"peak_promoter_overlaps.tsv"</span>),</span>
-<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">quote =</span> <span class="cn">FALSE</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span></span>
-<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>One peak can overlap more than one promoter, especially in a compact bacterial genome with divergent or closely spaced genes. That is a biological ambiguity, not a software error.</p>
-</section>
-<section id="join-promoter-associated-peaks-to-rna-seq-results" class="level2">
-<h2 class="anchored" data-anchor-id="join-promoter-associated-peaks-to-rna-seq-results">8. Join promoter-associated peaks to RNA-seq results</h2>
-<p>The interval operation produced a regular table. We can now merge it with the DESeq2 result table by gene identifier.</p>
-<p>First confirm the RNA-seq identifier column:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="st">"gene_id"</span> <span class="sc">%in%</span> <span class="fu">names</span>(rna)) {</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(rna)[<span class="dv">1</span>] <span class="ot">&lt;-</span> <span class="st">"gene_id"</span></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>rna<span class="sc">$</span>gene_id <span class="ot">&lt;-</span> <span class="fu">as.character</span>(rna<span class="sc">$</span>gene_id)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Join and classify candidate relationships:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>integrated <span class="ot">&lt;-</span> <span class="fu">merge</span>(promoter_table, rna, <span class="at">by =</span> <span class="st">"gene_id"</span>, <span class="at">all.x =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>integrated<span class="sc">$</span>is_de <span class="ot">&lt;-</span> <span class="sc">!</span><span class="fu">is.na</span>(integrated<span class="sc">$</span>padj) <span class="sc">&amp;</span></span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  integrated<span class="sc">$</span>padj <span class="sc">&lt;</span> <span class="fl">0.05</span> <span class="sc">&amp;</span></span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">abs</span>(integrated<span class="sc">$</span>log2FoldChange) <span class="sc">&gt;=</span> <span class="dv">1</span></span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>integrated<span class="sc">$</span>candidate_class <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(</span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  integrated<span class="sc">$</span>is_de,</span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"DE gene with promoter-overlapping peak"</span>,</span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"promoter-overlapping peak without DE evidence"</span></span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="fu">write.table</span>(</span>
-<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>  integrated,</span>
-<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(table_dir, <span class="st">"promoter_peak_rnaseq_integration.tsv"</span>),</span>
-<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">quote =</span> <span class="cn">FALSE</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span></span>
-<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>candidate_targets <span class="ot">&lt;-</span> integrated[integrated<span class="sc">$</span>is_de, , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
-<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>candidate_targets <span class="ot">&lt;-</span> candidate_targets[<span class="fu">order</span>(candidate_targets<span class="sc">$</span>padj), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
-<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a><span class="fu">write.table</span>(</span>
-<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>  candidate_targets,</span>
-<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(table_dir, <span class="st">"candidate_regulatory_relationships.tsv"</span>),</span>
-<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">quote =</span> <span class="cn">FALSE</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span></span>
-<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The phrase <strong>candidate regulatory relationship</strong> is deliberate. Promoter-proximal occupancy plus differential expression is stronger combined evidence than either result alone, but it does not establish causality or distinguish direct from indirect effects without additional evidence.</p>
-</section>
-<section id="optional-add-day-3-differential-peak-statistics" class="level2">
-<h2 class="anchored" data-anchor-id="optional-add-day-3-differential-peak-statistics">9. Optional: add Day 3 differential-peak statistics</h2>
-<p>When the Day 3 differential-peak table exists, join ChIP-seq and RNA-seq effect estimates by <code>peak_id</code> and <code>gene_id</code>.</p>
+<section id="orf-overlap-promoter-overlap-and-simple-genomic-context" class="level2">
+<h2 class="anchored" data-anchor-id="orf-overlap-promoter-overlap-and-simple-genomic-context">7. ORF overlap, promoter overlap and simple genomic context</h2>
+<p>Nearest-neighbour queries always return a closest feature when one exists. Overlap queries answer a different question: does the peak actually intersect an ORF body or a promoter window?</p>
+<p>For this exercise, define a strand-aware promoter as 500 bp upstream and 100 bp downstream of the annotated gene start:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>promoter_ranges <span class="ot">&lt;-</span> <span class="fu">promoters</span>(genes, <span class="at">upstream =</span> <span class="dv">500</span>, <span class="at">downstream =</span> <span class="dv">101</span>)</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>promoter_ranges <span class="ot">&lt;-</span> <span class="fu">trim</span>(promoter_ranges)</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>promoter_ranges<span class="sc">$</span>gene_id <span class="ot">&lt;-</span> genes<span class="sc">$</span>gene_id</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>For a <code>+</code>-strand gene, upstream extends toward smaller coordinates. For a <code>-</code>-strand gene, upstream extends toward larger coordinates.</p>
+<section id="explicit-peak-orf-and-peak-promoter-overlap-tables" class="level3">
+<h3 class="anchored" data-anchor-id="explicit-peak-orf-and-peak-promoter-overlap-tables">7.1 Explicit peak-ORF and peak-promoter overlap tables</h3>
 <p>Add:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">file.exists</span>(peak_de_file)) {</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  peak_de <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(peak_de_file, <span class="at">check.names =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  peak_de_small <span class="ot">&lt;-</span> peak_de[, <span class="fu">c</span>(</span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"peak_id"</span>, <span class="st">"log2FoldChange"</span>, <span class="st">"padj"</span>, <span class="st">"significant"</span></span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  )]</span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(peak_de_small)[<span class="fu">names</span>(peak_de_small) <span class="sc">==</span> <span class="st">"log2FoldChange"</span>] <span class="ot">&lt;-</span> <span class="st">"chip_log2FoldChange"</span></span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(peak_de_small)[<span class="fu">names</span>(peak_de_small) <span class="sc">==</span> <span class="st">"padj"</span>] <span class="ot">&lt;-</span> <span class="st">"chip_padj"</span></span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(peak_de_small)[<span class="fu">names</span>(peak_de_small) <span class="sc">==</span> <span class="st">"significant"</span>] <span class="ot">&lt;-</span> <span class="st">"chip_significant"</span></span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>  rna_chip <span class="ot">&lt;-</span> <span class="fu">merge</span>(integrated, peak_de_small, <span class="at">by =</span> <span class="st">"peak_id"</span>, <span class="at">all.x =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(rna_chip)[<span class="fu">names</span>(rna_chip) <span class="sc">==</span> <span class="st">"log2FoldChange"</span>] <span class="ot">&lt;-</span> <span class="st">"rna_log2FoldChange"</span></span>
-<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(rna_chip)[<span class="fu">names</span>(rna_chip) <span class="sc">==</span> <span class="st">"padj"</span>] <span class="ot">&lt;-</span> <span class="st">"rna_padj"</span></span>
-<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write.table</span>(</span>
-<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>    rna_chip,</span>
-<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">file.path</span>(table_dir, <span class="st">"rna_chip_peak_integration.tsv"</span>),</span>
-<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">quote =</span> <span class="cn">FALSE</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span></span>
-<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a>  plot_dt <span class="ot">&lt;-</span> rna_chip[</span>
-<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">is.finite</span>(rna_chip<span class="sc">$</span>rna_log2FoldChange) <span class="sc">&amp;</span></span>
-<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a>      <span class="fu">is.finite</span>(rna_chip<span class="sc">$</span>chip_log2FoldChange),</span>
-<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>    , drop <span class="ot">=</span> <span class="cn">FALSE</span></span>
-<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>  ]</span>
-<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(plot_dt) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
-<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a>    effect_plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(plot_dt, <span class="fu">aes</span>(chip_log2FoldChange, rna_log2FoldChange)) <span class="sc">+</span></span>
-<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a>      <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
-<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a>      <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
-<span id="cb19-32"><a href="#cb19-32" aria-hidden="true" tabindex="-1"></a>      <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.7</span>) <span class="sc">+</span></span>
-<span id="cb19-33"><a href="#cb19-33" aria-hidden="true" tabindex="-1"></a>      <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
-<span id="cb19-34"><a href="#cb19-34" aria-hidden="true" tabindex="-1"></a>      <span class="fu">labs</span>(</span>
-<span id="cb19-35"><a href="#cb19-35" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="st">"ChIP-seq peak log2 fold change"</span>,</span>
-<span id="cb19-36"><a href="#cb19-36" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> <span class="st">"RNA-seq gene log2 fold change"</span></span>
-<span id="cb19-37"><a href="#cb19-37" aria-hidden="true" tabindex="-1"></a>      )</span>
-<span id="cb19-38"><a href="#cb19-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-39"><a href="#cb19-39" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggsave</span>(</span>
-<span id="cb19-40"><a href="#cb19-40" aria-hidden="true" tabindex="-1"></a>      <span class="fu">file.path</span>(plot_dir, <span class="st">"rna_vs_chip_log2foldchange.pdf"</span>),</span>
-<span id="cb19-41"><a href="#cb19-41" aria-hidden="true" tabindex="-1"></a>      effect_plot,</span>
-<span id="cb19-42"><a href="#cb19-42" aria-hidden="true" tabindex="-1"></a>      <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">5</span></span>
-<span id="cb19-43"><a href="#cb19-43" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb19-44"><a href="#cb19-44" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb19-45"><a href="#cb19-45" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The four quadrants are descriptive, not automatically activating/repressing mechanisms. Condition-dependent occupancy and expression can be related through many direct and indirect processes.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>orf_hits <span class="ot">&lt;-</span> <span class="fu">findOverlaps</span>(peaks, genes, <span class="at">ignore.strand =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>orf_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">peak_id =</span> peaks<span class="sc">$</span>peak_id[<span class="fu">queryHits</span>(orf_hits)],</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">gene_id =</span> genes<span class="sc">$</span>gene_id[<span class="fu">subjectHits</span>(orf_hits)],</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">gene_strand =</span> <span class="fu">as.character</span>(<span class="fu">strand</span>(genes))[<span class="fu">subjectHits</span>(orf_hits)]</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="fu">write.table</span>(</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>  orf_table,</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(table_dir, <span class="st">"peak_ORF_overlaps.tsv"</span>),</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">quote =</span> <span class="cn">FALSE</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>promoter_hits <span class="ot">&lt;-</span> <span class="fu">findOverlaps</span>(peaks, promoter_ranges, <span class="at">ignore.strand =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>promoter_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">peak_id =</span> peaks<span class="sc">$</span>peak_id[<span class="fu">queryHits</span>(promoter_hits)],</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">peak_chrom =</span> <span class="fu">as.character</span>(<span class="fu">seqnames</span>(peaks))[<span class="fu">queryHits</span>(promoter_hits)],</span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">peak_start =</span> <span class="fu">start</span>(peaks)[<span class="fu">queryHits</span>(promoter_hits)] <span class="sc">-</span> <span class="dv">1</span>,</span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">peak_end =</span> <span class="fu">end</span>(peaks)[<span class="fu">queryHits</span>(promoter_hits)],</span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">gene_id =</span> promoter_ranges<span class="sc">$</span>gene_id[<span class="fu">subjectHits</span>(promoter_hits)],</span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">promoter_start =</span> <span class="fu">start</span>(promoter_ranges)[<span class="fu">subjectHits</span>(promoter_hits)] <span class="sc">-</span> <span class="dv">1</span>,</span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">promoter_end =</span> <span class="fu">end</span>(promoter_ranges)[<span class="fu">subjectHits</span>(promoter_hits)],</span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">gene_strand =</span> <span class="fu">as.character</span>(<span class="fu">strand</span>(promoter_ranges))[<span class="fu">subjectHits</span>(promoter_hits)]</span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a><span class="fu">write.table</span>(</span>
+<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a>  promoter_table,</span>
+<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(table_dir, <span class="st">"peak_promoter_overlaps.tsv"</span>),</span>
+<span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a>  <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">quote =</span> <span class="cn">FALSE</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span></span>
+<span id="cb18-32"><a href="#cb18-32" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>A peak can overlap more than one promoter or ORF in a compact bacterial genome. Keep those one-to-many relationships rather than forcing one annotation prematurely.</p>
 </section>
-<section id="retrieve-peak-dna-from-the-fasta" class="level2">
-<h2 class="anchored" data-anchor-id="retrieve-peak-dna-from-the-fasta">10. Retrieve peak DNA from the FASTA</h2>
+<section id="a-simple-mutually-exclusive-context-for-visualization" class="level3">
+<h3 class="anchored" data-anchor-id="a-simple-mutually-exclusive-context-for-visualization">7.2 A simple mutually exclusive context for visualization</h3>
+<p>For a compact summary, classify every WT-specific peak using this priority:</p>
+<ol type="1">
+<li><strong>intragenic</strong> if it overlaps at least one annotated ORF;</li>
+<li><strong>promoter-proximal</strong> if it does not overlap an ORF but overlaps at least one promoter window;</li>
+<li><strong>intergenic</strong> otherwise.</li>
+</ol>
+<p>The raw overlap flags are retained, so the pie chart does not replace the more detailed overlap tables.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>peak_annotation<span class="sc">$</span>overlaps_orf <span class="ot">&lt;-</span> <span class="fu">countOverlaps</span>(peaks, genes, <span class="at">ignore.strand =</span> <span class="cn">TRUE</span>) <span class="sc">&gt;</span> <span class="dv">0</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>peak_annotation<span class="sc">$</span>overlaps_promoter <span class="ot">&lt;-</span> <span class="fu">countOverlaps</span>(</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  peaks, promoter_ranges, <span class="at">ignore.strand =</span> <span class="cn">TRUE</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>) <span class="sc">&gt;</span> <span class="dv">0</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>peak_annotation<span class="sc">$</span>genomic_context <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  peak_annotation<span class="sc">$</span>overlaps_orf,</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"intragenic"</span>,</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ifelse</span>(peak_annotation<span class="sc">$</span>overlaps_promoter, <span class="st">"promoter-proximal"</span>, <span class="st">"intergenic"</span>)</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="fu">write.table</span>(</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>  peak_annotation,</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(table_dir, <span class="st">"peak_annotation.tsv"</span>),</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">quote =</span> <span class="cn">FALSE</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span></span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>context_counts <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">table</span>(peak_annotation<span class="sc">$</span>genomic_context))</span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(context_counts) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"context"</span>, <span class="st">"n_peaks"</span>)</span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>context_counts<span class="sc">$</span>fraction <span class="ot">&lt;-</span> context_counts<span class="sc">$</span>n_peaks <span class="sc">/</span> <span class="fu">sum</span>(context_counts<span class="sc">$</span>n_peaks)</span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a><span class="fu">write.table</span>(</span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a>  context_counts,</span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(table_dir, <span class="st">"peak_genomic_context_counts.tsv"</span>),</span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">quote =</span> <span class="cn">FALSE</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span></span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a>context_plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(context_counts, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">""</span>, <span class="at">y =</span> n_peaks, <span class="at">fill =</span> context)) <span class="sc">+</span></span>
+<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">width =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_polar</span>(<span class="at">theta =</span> <span class="st">"y"</span>) <span class="sc">+</span></span>
+<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_void</span>() <span class="sc">+</span></span>
+<span id="cb19-32"><a href="#cb19-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">fill =</span> <span class="st">"Peak context"</span>)</span>
+<span id="cb19-33"><a href="#cb19-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-34"><a href="#cb19-34" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(</span>
+<span id="cb19-35"><a href="#cb19-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(plot_dir, <span class="st">"peak_genomic_context_pie.pdf"</span>),</span>
+<span id="cb19-36"><a href="#cb19-36" aria-hidden="true" tabindex="-1"></a>  context_plot, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">5</span></span>
+<span id="cb19-37"><a href="#cb19-37" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="promoter-associated-peaks-and-untreated-rna-seq-degs" class="level2">
+<h2 class="anchored" data-anchor-id="promoter-associated-peaks-and-untreated-rna-seq-degs">8. Promoter-associated peaks and untreated RNA-seq DEGs</h2>
+<p>The promoter overlap produces explicit peak-to-ORF relationships. Join those relationships to the <strong>untreated WT-versus-ΔHP1021</strong> RNA-seq statistics by <code>gene_id</code>.</p>
+<p>Add:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>integrated <span class="ot">&lt;-</span> <span class="fu">merge</span>(promoter_table, rna, <span class="at">by =</span> <span class="st">"gene_id"</span>, <span class="at">all.x =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>integrated<span class="sc">$</span>candidate_class <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="sc">!</span><span class="fu">is.na</span>(integrated<span class="sc">$</span>is_de) <span class="sc">&amp;</span> integrated<span class="sc">$</span>is_de,</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"untreated DE gene with WT-specific promoter-overlapping peak"</span>,</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"WT-specific promoter-overlapping peak without untreated DEG evidence"</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="fu">write.table</span>(</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>  integrated,</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(table_dir, <span class="st">"promoter_peak_rnaseq_integration.tsv"</span>),</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">quote =</span> <span class="cn">FALSE</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>candidate_targets <span class="ot">&lt;-</span> integrated[</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>  <span class="sc">!</span><span class="fu">is.na</span>(integrated<span class="sc">$</span>is_de) <span class="sc">&amp;</span> integrated<span class="sc">$</span>is_de,</span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>  , drop <span class="ot">=</span> <span class="cn">FALSE</span></span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>candidate_targets <span class="ot">&lt;-</span> candidate_targets[<span class="fu">order</span>(candidate_targets<span class="sc">$</span>padj), , drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a><span class="fu">write.table</span>(</span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>  candidate_targets,</span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(table_dir, <span class="st">"candidate_regulatory_relationships.tsv"</span>),</span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">quote =</span> <span class="cn">FALSE</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span></span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The phrase <strong>candidate regulatory relationship</strong> is deliberate. WT-specific promoter-proximal occupancy plus differential expression in the untreated WT-versus-ΔHP1021 comparison is stronger combined evidence than either result alone, but it does not establish causality or distinguish direct from indirect effects.</p>
+</section>
+<section id="add-the-matching-day-3-wt-versus-δhp1021-peak-statistics" class="level2">
+<h2 class="anchored" data-anchor-id="add-the-matching-day-3-wt-versus-δhp1021-peak-statistics">9. Add the matching Day 3 WT-versus-ΔHP1021 peak statistics</h2>
+<p>The BED used in this Day 4 exercise already contains only peaks that passed the Day 3 WT-specific filter. The matching <code>WT_specific_vs_DeltaHP1021.tsv</code> contains the ChIP-seq <code>log2FoldChange</code> and adjusted p-value for those same intervals.</p>
+<p>Because the BED is three-column, we reconstructed its coordinate <code>peak_id</code> in Section 5.2. That identifier matches the <code>peak_id</code> stored in the TSV.</p>
+<p>Add:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">file.exists</span>(peak_de_file)) {</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  peak_de <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(peak_de_file, <span class="at">check.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  peak_de_small <span class="ot">&lt;-</span> peak_de[, <span class="fu">c</span>(<span class="st">"peak_id"</span>, <span class="st">"log2FoldChange"</span>, <span class="st">"padj"</span>)]</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(peak_de_small)[<span class="dv">2</span><span class="sc">:</span><span class="dv">3</span>] <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"chip_WT_vs_Delta_log2FC"</span>, <span class="st">"chip_WT_vs_Delta_padj"</span>)</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>  peak_annotation_chip <span class="ot">&lt;-</span> <span class="fu">merge</span>(</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>    peak_annotation,</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>    peak_de_small,</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="st">"peak_id"</span>,</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">all.x =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">sort =</span> <span class="cn">FALSE</span></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write.table</span>(</span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>    peak_annotation_chip,</span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">file.path</span>(table_dir, <span class="st">"peak_annotation_with_chip_statistics.tsv"</span>),</span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">quote =</span> <span class="cn">FALSE</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span></span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a>  plot_dt <span class="ot">&lt;-</span> peak_annotation_chip[</span>
+<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">is.finite</span>(peak_annotation_chip<span class="sc">$</span>rna_WT_vs_Delta_log2FC) <span class="sc">&amp;</span></span>
+<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a>      <span class="fu">is.finite</span>(peak_annotation_chip<span class="sc">$</span>chip_WT_vs_Delta_log2FC),</span>
+<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a>    , drop <span class="ot">=</span> <span class="cn">FALSE</span></span>
+<span id="cb21-25"><a href="#cb21-25" aria-hidden="true" tabindex="-1"></a>  ]</span>
+<span id="cb21-26"><a href="#cb21-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-27"><a href="#cb21-27" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(plot_dt) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb21-28"><a href="#cb21-28" aria-hidden="true" tabindex="-1"></a>    effect_plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(</span>
+<span id="cb21-29"><a href="#cb21-29" aria-hidden="true" tabindex="-1"></a>      plot_dt,</span>
+<span id="cb21-30"><a href="#cb21-30" aria-hidden="true" tabindex="-1"></a>      <span class="fu">aes</span>(chip_WT_vs_Delta_log2FC, rna_WT_vs_Delta_log2FC)</span>
+<span id="cb21-31"><a href="#cb21-31" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
+<span id="cb21-32"><a href="#cb21-32" aria-hidden="true" tabindex="-1"></a>      <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb21-33"><a href="#cb21-33" aria-hidden="true" tabindex="-1"></a>      <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb21-34"><a href="#cb21-34" aria-hidden="true" tabindex="-1"></a>      <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.7</span>) <span class="sc">+</span></span>
+<span id="cb21-35"><a href="#cb21-35" aria-hidden="true" tabindex="-1"></a>      <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
+<span id="cb21-36"><a href="#cb21-36" aria-hidden="true" tabindex="-1"></a>      <span class="fu">labs</span>(</span>
+<span id="cb21-37"><a href="#cb21-37" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="st">"ChIP-seq log2 fold change (WT / ΔHP1021)"</span>,</span>
+<span id="cb21-38"><a href="#cb21-38" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> <span class="st">"Nearest-ORF RNA-seq log2 fold change (WT / ΔHP1021, untreated)"</span></span>
+<span id="cb21-39"><a href="#cb21-39" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb21-40"><a href="#cb21-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-41"><a href="#cb21-41" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggsave</span>(</span>
+<span id="cb21-42"><a href="#cb21-42" aria-hidden="true" tabindex="-1"></a>      <span class="fu">file.path</span>(plot_dir, <span class="st">"nearest_ORF_RNA_vs_ChIP_log2foldchange.pdf"</span>),</span>
+<span id="cb21-43"><a href="#cb21-43" aria-hidden="true" tabindex="-1"></a>      effect_plot, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">5</span></span>
+<span id="cb21-44"><a href="#cb21-44" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb21-45"><a href="#cb21-45" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb21-46"><a href="#cb21-46" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The four quadrants are descriptive. A WT-specific ChIP peak near an ORF whose expression changes between WT and ΔHP1021 is a useful regulatory hypothesis, but binding and expression can still be related through direct activation, repression, indirect regulatory cascades, or no causal relationship at all.</p>
+</section>
+<section id="retrieve-wt-specific-peak-dna-from-the-fasta" class="level2">
+<h2 class="anchored" data-anchor-id="retrieve-wt-specific-peak-dna-from-the-fasta">10. Retrieve WT-specific peak DNA from the FASTA</h2>
 <p><code>FaFile</code> keeps the genome on disk. <code>scanFa()</code> retrieves only the requested <code>GRanges</code> intervals and returns a <code>DNAStringSet</code>.</p>
 <p>Add:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">open</span>(genome)</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>peak_sequences <span class="ot">&lt;-</span> <span class="fu">scanFa</span>(genome, <span class="at">param =</span> peaks)</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="fu">close</span>(genome)</span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(peak_sequences) <span class="ot">&lt;-</span> peaks<span class="sc">$</span>peak_id</span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(peak_sequences)</span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>peak_sequences[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">open</span>(genome)</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>peak_sequences <span class="ot">&lt;-</span> <span class="fu">scanFa</span>(genome, <span class="at">param =</span> peaks)</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="fu">close</span>(genome)</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(peak_sequences) <span class="ot">&lt;-</span> peaks<span class="sc">$</span>peak_id</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(peak_sequences)</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>peak_sequences[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The objects now have complementary roles:</p>
 <pre class="text"><code>peaks          = where the intervals are
 peak_sequences = which DNA bases occur in those intervals</code></pre>
 </section>
-<section id="calculate-gc-fraction-and-cpg-counts" class="level2">
-<h2 class="anchored" data-anchor-id="calculate-gc-fraction-and-cpg-counts">11. Calculate GC fraction and CpG counts</h2>
+<section id="calculate-gc-fraction-and-cpg-counts-per-peak" class="level2">
+<h2 class="anchored" data-anchor-id="calculate-gc-fraction-and-cpg-counts-per-peak">11. Calculate GC fraction and CpG counts per peak</h2>
 <p>GC fraction is the proportion of bases that are <code>G</code> or <code>C</code>. CpG count is the number of exact <code>CG</code> dinucleotides.</p>
 <p>Add:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>base_counts <span class="ot">&lt;-</span> <span class="fu">letterFrequency</span>(</span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  peak_sequences,</span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">letters =</span> <span class="fu">c</span>(<span class="st">"A"</span>, <span class="st">"C"</span>, <span class="st">"G"</span>, <span class="st">"T"</span>),</span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">as.prob =</span> <span class="cn">FALSE</span></span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>sequence_width <span class="ot">&lt;-</span> <span class="fu">width</span>(peak_sequences)</span>
-<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>gc_fraction <span class="ot">&lt;-</span> (base_counts[, <span class="st">"G"</span>] <span class="sc">+</span> base_counts[, <span class="st">"C"</span>]) <span class="sc">/</span> sequence_width</span>
-<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>cpg_count <span class="ot">&lt;-</span> <span class="fu">vcountPattern</span>(<span class="st">"CG"</span>, peak_sequences, <span class="at">fixed =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>sequence_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">peak_id =</span> <span class="fu">names</span>(peak_sequences),</span>
-<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">width =</span> sequence_width,</span>
-<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">A =</span> base_counts[, <span class="st">"A"</span>],</span>
-<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">C =</span> base_counts[, <span class="st">"C"</span>],</span>
-<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">G =</span> base_counts[, <span class="st">"G"</span>],</span>
-<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">T =</span> base_counts[, <span class="st">"T"</span>],</span>
-<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">GC_fraction =</span> gc_fraction,</span>
-<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">CpG_count =</span> cpg_count,</span>
-<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">CpG_per_100bp =</span> <span class="dv">100</span> <span class="sc">*</span> cpg_count <span class="sc">/</span> sequence_width</span>
-<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a><span class="fu">write.table</span>(</span>
-<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a>  sequence_table,</span>
-<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(table_dir, <span class="st">"peak_sequence_composition.tsv"</span>),</span>
-<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">quote =</span> <span class="cn">FALSE</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span></span>
-<span id="cb22-27"><a href="#cb22-27" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>base_counts <span class="ot">&lt;-</span> <span class="fu">letterFrequency</span>(</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  peak_sequences,</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">letters =</span> <span class="fu">c</span>(<span class="st">"A"</span>, <span class="st">"C"</span>, <span class="st">"G"</span>, <span class="st">"T"</span>),</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">as.prob =</span> <span class="cn">FALSE</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>sequence_width <span class="ot">&lt;-</span> <span class="fu">width</span>(peak_sequences)</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>gc_fraction <span class="ot">&lt;-</span> (base_counts[, <span class="st">"G"</span>] <span class="sc">+</span> base_counts[, <span class="st">"C"</span>]) <span class="sc">/</span> sequence_width</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>cpg_count <span class="ot">&lt;-</span> <span class="fu">vcountPattern</span>(<span class="st">"CG"</span>, peak_sequences, <span class="at">fixed =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>sequence_table <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">peak_id =</span> <span class="fu">names</span>(peak_sequences),</span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">width =</span> sequence_width,</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">A =</span> base_counts[, <span class="st">"A"</span>],</span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">C =</span> base_counts[, <span class="st">"C"</span>],</span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">G =</span> base_counts[, <span class="st">"G"</span>],</span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">T =</span> base_counts[, <span class="st">"T"</span>],</span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">GC_fraction =</span> gc_fraction,</span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">CpG_count =</span> cpg_count,</span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">CpG_per_100bp =</span> <span class="dv">100</span> <span class="sc">*</span> cpg_count <span class="sc">/</span> sequence_width</span>
+<span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-23"><a href="#cb24-23" aria-hidden="true" tabindex="-1"></a>sequence_table<span class="sc">$</span>genomic_context <span class="ot">&lt;-</span> peak_annotation<span class="sc">$</span>genomic_context[</span>
+<span id="cb24-24"><a href="#cb24-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">match</span>(sequence_table<span class="sc">$</span>peak_id, peak_annotation<span class="sc">$</span>peak_id)</span>
+<span id="cb24-25"><a href="#cb24-25" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb24-26"><a href="#cb24-26" aria-hidden="true" tabindex="-1"></a>sequence_table<span class="sc">$</span>nearest_gene_id <span class="ot">&lt;-</span> peak_annotation<span class="sc">$</span>nearest_gene_id[</span>
+<span id="cb24-27"><a href="#cb24-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">match</span>(sequence_table<span class="sc">$</span>peak_id, peak_annotation<span class="sc">$</span>peak_id)</span>
+<span id="cb24-28"><a href="#cb24-28" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb24-29"><a href="#cb24-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-30"><a href="#cb24-30" aria-hidden="true" tabindex="-1"></a><span class="fu">write.table</span>(</span>
+<span id="cb24-31"><a href="#cb24-31" aria-hidden="true" tabindex="-1"></a>  sequence_table,</span>
+<span id="cb24-32"><a href="#cb24-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(table_dir, <span class="st">"peak_sequence_composition.tsv"</span>),</span>
+<span id="cb24-33"><a href="#cb24-33" aria-hidden="true" tabindex="-1"></a>  <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">quote =</span> <span class="cn">FALSE</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span></span>
+<span id="cb24-34"><a href="#cb24-34" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Plot simple distributions:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>gc_plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(sequence_table, <span class="fu">aes</span>(GC_fraction)) <span class="sc">+</span></span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">bins =</span> <span class="dv">30</span>) <span class="sc">+</span></span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"GC fraction"</span>, <span class="at">y =</span> <span class="st">"Number of peaks"</span>)</span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(</span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(plot_dir, <span class="st">"peak_GC_fraction.pdf"</span>),</span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>  gc_plot,</span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">4</span></span>
-<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>cpg_plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(sequence_table, <span class="fu">aes</span>(CpG_per_100bp)) <span class="sc">+</span></span>
-<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">bins =</span> <span class="dv">30</span>) <span class="sc">+</span></span>
-<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
-<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"CpG dinucleotides per 100 bp"</span>, <span class="at">y =</span> <span class="st">"Number of peaks"</span>)</span>
-<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(</span>
-<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(plot_dir, <span class="st">"peak_CpG_density.pdf"</span>),</span>
-<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>  cpg_plot,</span>
-<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">4</span></span>
-<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>gc_plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(sequence_table, <span class="fu">aes</span>(GC_fraction)) <span class="sc">+</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">bins =</span> <span class="dv">30</span>) <span class="sc">+</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"GC fraction"</span>, <span class="at">y =</span> <span class="st">"Number of peaks"</span>)</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(plot_dir, <span class="st">"peak_GC_fraction.pdf"</span>),</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>  gc_plot, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">4</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>cpg_plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(sequence_table, <span class="fu">aes</span>(CpG_per_100bp)) <span class="sc">+</span></span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">bins =</span> <span class="dv">30</span>) <span class="sc">+</span></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"CpG dinucleotides per 100 bp"</span>, <span class="at">y =</span> <span class="st">"Number of peaks"</span>)</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(</span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(plot_dir, <span class="st">"peak_CpG_density.pdf"</span>),</span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>  cpg_plot, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">4</span></span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Sequence composition can help diagnose motif and background effects. It does not by itself show protein binding or regulatory function.</p>
 </section>
-<section id="save-the-r-session-information" class="level2">
-<h2 class="anchored" data-anchor-id="save-the-r-session-information">12. Save the R session information</h2>
+<section id="save-the-r-session-and-run-the-complete-script" class="level2">
+<h2 class="anchored" data-anchor-id="save-the-r-session-and-run-the-complete-script">12. Save the R session and run the complete script</h2>
 <p>Add at the end of the script:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">writeLines</span>(</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">capture.output</span>(<span class="fu">sessionInfo</span>()),</span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(table_dir, <span class="st">"sessionInfo.txt"</span>)</span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Run the complete script:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--user</span> <span class="st">"</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-u</span><span class="va">)</span><span class="st">:</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-g</span><span class="va">)</span><span class="st">"</span> <span class="dt">\</span></span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  docker.io/fgualdr/ngs-r-bioc <span class="dt">\</span></span>
-<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  Rscript scripts/day4_optional/01_basic_integration.R <span class="dt">\</span></span>
-<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span> <span class="kw">|</span> <span class="fu">tee</span> results/logs/day4/01_basic_integration.log</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">writeLines</span>(</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">capture.output</span>(<span class="fu">sessionInfo</span>()),</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(table_dir, <span class="st">"sessionInfo.txt"</span>)</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Run the complete saved script in the same Bioconductor image used elsewhere in the workshop:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--user</span> <span class="st">"</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-u</span><span class="va">)</span><span class="st">:</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-g</span><span class="va">)</span><span class="st">"</span> <span class="dt">\</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-v</span> <span class="st">"</span><span class="va">$PWD</span><span class="st">:/work"</span> <span class="dt">\</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-w</span> /work <span class="dt">\</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>  docker.io/fgualdr/ngs-r-bioc <span class="dt">\</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>  Rscript scripts/day4_optional/01_basic_integration.R <span class="dt">\</span></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>  <span class="dv">2</span><span class="op">&gt;&amp;</span><span class="dv">1</span> <span class="kw">|</span> <span class="fu">tee</span> results/logs/day4/01_basic_integration.log</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Inspect:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-lh</span> results/day4_optional/tables</span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-lh</span> results/day4_optional/plots</span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span> results/day4_optional/tables/peak_nearest_gene.tsv</span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span> results/day4_optional/tables/peak_promoter_overlaps.tsv</span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span> results/day4_optional/tables/peak_sequence_composition.tsv</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-lh</span> results/day4_optional/tables</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-lh</span> results/day4_optional/plots</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span> results/day4_optional/tables/peak_nearest_orf_and_deg.tsv</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span> results/day4_optional/tables/peak_annotation.tsv</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span> results/day4_optional/tables/candidate_regulatory_relationships.tsv</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span> results/day4_optional/tables/peak_sequence_composition.tsv</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="what-to-keep-from-this-optional-day" class="level2">
 <h2 class="anchored" data-anchor-id="what-to-keep-from-this-optional-day">13. What to keep from this optional day</h2>
 <p>The transferable ideas are more important than the exact thresholds:</p>
 <ul>
+<li>Day 4 deliberately integrates <strong>one RNA-seq contrast at a time</strong>; untreated and treated DESeq2 results are not merged into one table;</li>
+<li>this case study uses the untreated WT-versus-ΔHP1021 RNA-seq result together with Day 3 peaks already selected as WT-specific versus ΔHP1021;</li>
+<li>Day 2 and Day 3 results can only be integrated safely when they use the same reference and compatible identifiers;</li>
 <li>genomic interval operations should be done with interval-aware objects;</li>
-<li>nearest-gene and promoter-overlap annotations answer different questions;</li>
+<li>nearest ORF, nearest DEG, ORF overlap and promoter overlap answer different questions;</li>
 <li>strand changes the location of an upstream promoter window;</li>
 <li>a <code>Hits</code> object stores relationships between interval sets;</li>
+<li>a peak can be decorated with the statistics of its closest ORF without implying causality;</li>
+<li>intragenic / promoter-proximal / intergenic is a useful summary, but detailed one-to-many overlaps should still be retained;</li>
 <li>an indexed FASTA can return only the requested sequences;</li>
-<li>DNA sequence composition is a property of the intervals, not evidence of regulation;</li>
-<li>ChIP-seq binding plus RNA-seq change generates a hypothesis, not a proof.</li>
+<li>GC and CpG content are properties of the peak sequences, not evidence of regulation;</li>
+<li>WT-specific ChIP-seq binding plus untreated RNA-seq change generates a hypothesis, not a proof.</li>
 </ul>
 </section>
 <section id="common-problems" class="level2">
@@ -802,9 +999,19 @@ peak_sequences = which DNA bases occur in those intervals</code></pre>
 <td>GFF3 column 1, BED column 1 and FASTA headers</td>
 </tr>
 <tr class="even">
-<td>Most RNA-seq values are missing after the join</td>
-<td>annotation gene IDs differ from featureCounts/DESeq2 IDs</td>
-<td>selected GFF3 identifier and first RNA result column</td>
+<td>Most RNA-seq values are missing after matching ORFs</td>
+<td>annotation gene IDs differ from the legacy DESeq2 identifiers</td>
+<td>GFF3 <code>ID</code> attribute and the first / <code>gene_id</code> column of <code>deseq2_results.tsv</code></td>
+</tr>
+<tr class="odd">
+<td>RNA-seq effect signs look reversed</td>
+<td>the legacy table was generated with the opposite DESeq2 contrast</td>
+<td>confirm whether positive log2FC means WT over ΔHP1021</td>
+</tr>
+<tr class="even">
+<td>Day 3 peak statistics do not join</td>
+<td>coordinate-derived BED IDs do not match the Day 3 <code>peak_id</code></td>
+<td><code>WT_specific_vs_DeltaHP1021.bed</code> coordinates and matching TSV <code>peak_id</code></td>
 </tr>
 <tr class="odd">
 <td>Promoter ranges extend outside the chromosome</td>
@@ -817,14 +1024,14 @@ peak_sequences = which DNA bases occur in those intervals</code></pre>
 <td><code>genome.fa.fai</code> and <code>seqlevelsInUse(peaks)</code></td>
 </tr>
 <tr class="odd">
-<td>A peak maps to two promoters</td>
+<td>A peak maps to two promoters or ORFs</td>
 <td>compact/divergent bacterial gene organization</td>
 <td>retain both links and interpret biologically</td>
 </tr>
 <tr class="even">
 <td>No RNA-versus-ChIP plot</td>
-<td>no matched finite effect estimates</td>
-<td>joined table and Day 3 differential-peak output</td>
+<td>no matched finite nearest-ORF RNA and peak ChIP effect estimates</td>
+<td>decorated peak table and matching Day 3 WT-specific TSV</td>
 </tr>
 </tbody>
 </table>
@@ -832,13 +1039,15 @@ peak_sequences = which DNA bases occur in those intervals</code></pre>
 <section id="self-check-questions" class="level2">
 <h2 class="anchored" data-anchor-id="self-check-questions">15. Self-check questions</h2>
 <ol type="1">
+<li>Why does this Day 4 case study keep untreated and treated RNA-seq results separate?</li>
 <li>What information does <code>GRanges</code> understand that a <code>data.frame</code> does not?</li>
 <li>What is stored in a <code>Hits</code> object?</li>
-<li>Why are nearest-gene and promoter-overlap annotations not interchangeable?</li>
+<li>Why are nearest-ORF, nearest-DEG and promoter-overlap annotations not interchangeable?</li>
 <li>How does strand alter a promoter window?</li>
-<li>Why is <code>FaFile</code> useful for a large reference genome?</li>
+<li>Why can the nearest ORF be non-DE while the nearest DEG is farther away?</li>
+<li>Why is the intragenic / promoter-proximal / intergenic pie chart only a summary of richer overlap information?</li>
 <li>How are <code>DNAStringSet</code>, GC fraction and CpG counts related?</li>
-<li>Why is promoter binding plus differential expression still only a candidate regulatory relationship?</li>
+<li>Why is a WT-specific promoter peak near an untreated DEG still only a candidate regulatory relationship?</li>
 </ol>
 
 

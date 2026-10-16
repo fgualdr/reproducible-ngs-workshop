@@ -41,53 +41,52 @@ flowchart TD
     fastq["Trimmed paired-end ChIP-seq FASTQ"]
     mapping["Bowtie2 mapping"]
     bam["Sorted + filtered BAM"]
-    strandqc["Strand cross-correlation QC"]
+    alignqc["Multi-mapping + duplicate QC"]
+    strandqc["Cross-correlation + paired-end fragment size"]
     bigwig["CPM fragment-coverage bigWig tracks"]
-    macs3["MACS3 peak calling: no input"]
-    macs3ko["Optional MACS3: WT with Delta negative control"]
+    macs3["Comparison route: MACS3 without control"]
+    macs3ko["Primary route: WT/WTS vs matched ΔHP1021 control"]
     idr["IDR: peak reproducibility"]
     cor["Replicate signal correlation"]
     frip["FRiP: fraction of fragments in peaks"]
-    peaks["Filter peak q-scores and merge with bedtools"]
-    counts["Count reads in common peaks"]
-    pca["PCA of common peak counts"]
-    deseq2["DESeq2 differential-peak analysis"]
+    peaks["FDR-filter peak calls + merge consensus"]
+    counts["Count all 12 libraries in common peaks"]
+    deseq2["DESeq2 peak-count analysis"]
     plots["genomation metaplots + heatmaps"]
-    fasta["Extract peak DNA"]
+    fasta["Extract two selected peak sets"]
     streme["STREME de novo motifs"]
 
     fastq --> mapping
     mapping --> bam
-    bam --> strandqc
+    bam --> alignqc
+    alignqc --> strandqc
     strandqc --> bigwig
-    bigwig --> macs3
-    bigwig -.-> macs3ko
-    macs3 --> idr
+    bigwig --> macs3ko
+    bigwig -.-> macs3
+    macs3ko --> idr
     idr --> cor
     cor --> frip
     frip --> peaks
     peaks --> counts
-    counts --> pca
-    pca --> deseq2
+    counts --> deseq2
     deseq2 --> plots
-
-    peaks --> fasta
+    deseq2 --> fasta
     fasta --> streme
 ```
 
 The teaching sequence is therefore:
 
 1. map and filter reads;
-2. assess mapped-library quality with strand cross-correlation;
-3. make fragment-coverage tracks;
-4. call peaks with MACS3 without input and optionally with matched ΔHP1021 ChIP as a target-negative control;
-5. perform three complementary post-peak QC checks: IDR, replicate signal correlation and FRiP;
-6. merge significant peaks into one common peak set;
-7. count the six selected WT/WTS samples over the same genomic intervals;
-8. inspect the common count matrix with PCA;
-9. test differential peak occupancy with DESeq2;
+2. assess mapping ambiguity and coordinate duplication;
+3. assess ChIP fragment structure with strand cross-correlation and paired-end fragment lengths;
+4. make fragment-coverage tracks;
+5. call peaks through two MACS3 routes: a no-control comparison and the primary matched ΔHP1021 target-negative-control route;
+6. perform three complementary post-peak QC checks: IDR, replicate signal correlation and FRiP;
+7. merge significant matched-control peaks into one common peak set;
+8. count all twelve WT/WTS/ΔHP1021/ΔHP1021S samples over the same genomic intervals;
+9. in one R script, inspect pair-wise normalized counts and PCA, fit DESeq2 models, inspect dispersion/MA plots, and save the WT-specific and treatment-responsive peak sets;
 10. visualize ChIP-seq signal around peaks;
-11. extract peak sequences and perform de novo motif discovery with STREME.
+11. extract the two selected peak sets and perform de novo motif discovery with STREME.
 
 This order separates distinct QC questions:
 
@@ -101,7 +100,7 @@ Which common peaks change by condition?                                 -> DESeq
 ```
 
 ::: {.callout-warning title="Workshop analysis, not a reproduction of the paper"}
-The publication and this workshop do not use the same reference, sample set or statistical workflow. All available ChIP-seq libraries are mapped to `GCF_025998455.1`. The core exercise calls peaks without an external control and compares only WT and WTS for the downstream occupancy analysis; an additional, separate exercise uses ΔHP1021 ChIP as a target-negative MACS3 control for WT, if the immunoprecipitated target is HP1021. These are teaching analyses, not a reproduction of the published peak coordinates or biological conclusions.
+The publication and this workshop do not use the same reference or statistical workflow. All available ChIP-seq libraries are mapped to `GCF_025998455.1`. We now carry two peak-calling routes in parallel: (1) no external control and (2) WT/WTS treatment libraries called against their matched ΔHP1021/ΔHP1021S target-negative ChIP controls. These are teaching analyses, not a reproduction of the published peak coordinates or biological conclusions.
 :::
 
 Prepare the folders:
@@ -109,7 +108,10 @@ Prepare the folders:
 ```bash
 mkdir -p scripts/day3_chipseq
 mkdir -p results/day3_chipseq/bam
+mkdir -p results/day3_chipseq/qc/duplicates
 mkdir -p results/day3_chipseq/qc/phantom_peak
+mkdir -p results/day3_chipseq/qc/fragment_size
+mkdir -p results/day3_chipseq/qc/idr/wt_vs_delta
 mkdir -p results/day3_chipseq/qc/replicate_correlation
 mkdir -p results/day3_chipseq/qc/frip
 mkdir -p results/day3_chipseq/qc/peak_counts
@@ -118,7 +120,6 @@ mkdir -p results/day3_chipseq/peaks/no_input
 mkdir -p results/day3_chipseq/peaks/wt_vs_delta/untreated
 mkdir -p results/day3_chipseq/peaks/wt_vs_delta/treated
 mkdir -p results/day3_chipseq/peaks/consensus
-mkdir -p results/day3_chipseq/idr
 mkdir -p results/day3_chipseq/counts
 mkdir -p results/day3_chipseq/differential_peaks
 mkdir -p results/day3_chipseq/genomation
@@ -244,7 +245,7 @@ samtools view -b -q 10 -f 2 -F 2828
 
 `samtools sort` accepts SAM directly and writes coordinate-sorted BAM; `-O BAM` simply makes the output format explicit. The `-b` option belongs to `samtools view`, not to `samtools sort`.
 
-Duplicates are retained in this workshop. A pileup of identical coordinates may reflect PCR amplification, but a strong narrow binding event can also generate repeated fragment coordinates. A research analysis should decide how to handle duplicates after inspecting library complexity and peak behaviour rather than applying one rule mechanically.
+The filter does **not** remove duplicate-marked reads (`0x400`). It also does not define unique mapping by SAM FLAG alone: Bowtie2 can report one primary placement for an ambiguous read and represent confidence through MAPQ. We therefore treat **duplication and multi-mapping as explicit ChIP-seq QC questions** before peak calling.
 
 ## 4. Quality control of mapped ChIP-seq libraries
 
@@ -253,6 +254,8 @@ ChIP-seq QC is not one number. We combine several pieces of evidence:
 | Question | Evidence |
 |---|---|
 | Did the reads map to the intended reference? | Bowtie2 log and `samtools flagstat` |
+| How much alignment ambiguity remains? | Bowtie2 multi-mapping summary + MAPQ filtering |
+| Is coordinate duplication unusually high? | `samtools markdup` duplicate summary |
 | Are the paired fragments plausible? | proper-pair rate and fragment-size summaries |
 | Does the library contain strand-shift enrichment structure? | strand cross-correlation |
 | Is enrichment visible as genomic signal? | CPM bigWig tracks |
@@ -260,7 +263,161 @@ ChIP-seq QC is not one number. We combine several pieces of evidence:
 | Do replicate signal profiles agree genome-wide? | deepTools replicate correlation after peak calling |
 | Is ChIP signal concentrated in called peaks? | FRiP after peak calling |
 
-### 4.1 Strand cross-correlation: the idea
+### 4.1 ChIP-seq-specific QC: multi-mapping and duplication
+
+The same BAM concepts used for RNA-seq apply here, but their **biological consequences are different**. In ChIP-seq, local read pileups are themselves the signal used for peak calling. Repetitive alignments or PCR-amplified fragments can therefore create or exaggerate apparent enrichment.
+
+We ask two questions before peak calling:
+
+1. **How much alignment ambiguity is present?** Repetitive reads can map to several genomic positions and can create misleading signal in repetitive regions.
+2. **How much coordinate duplication is present?** Excessive PCR duplication can artificially increase a local ChIP pileup.
+
+Neither measurement should be interpreted in isolation. Genuine strong binding events can also produce many overlapping fragments, particularly in a small bacterial genome.
+
+#### Multi-mapping with Bowtie2
+
+Bowtie2 reports paired-end mapping categories in the log generated during Section 3.1. In particular:
+
+```text
+aligned concordantly 1 time
+aligned concordantly >1 times
+```
+
+Inspect these categories across all ChIP-seq libraries:
+
+```bash
+grep -E \
+  "aligned concordantly 1 time|aligned concordantly >1 times" \
+  results/logs/day3/*.bowtie2.log
+```
+
+Bowtie2 can also write `AS:i` for the selected alignment score and `XS:i` when an alternative alignment was found. However, `XS` is **not** a universal unique/multi-mapping flag: absence of `XS` does not prove that no alternative genomic placement exists. Bowtie2 summarizes its confidence in the reported placement through **MAPQ**.
+
+Our standard ChIP-seq filter therefore uses:
+
+```bash
+samtools view -b -q 10 -f 2 -F 2828
+```
+
+The `-q 10` criterion removes low-confidence alignments, while `-f 2` requires the original alignment to be a proper pair and `-F 2828` removes unmapped, mate-unmapped, secondary, failed-QC and supplementary records. Removing secondary records (`0x100`) alone would **not** remove all multimapping reads.
+
+::: {.callout-note title="Paired-end filtering"}
+`samtools view` applies MAPQ filtering to individual BAM records. The `0x2` proper-pair FLAG describes the original Bowtie2 alignment; it does not guarantee that both mates remain after an additional record-level MAPQ filter. For this workshop we keep the simple, transparent filter used in Section 3.1. A production workflow requiring strictly complete post-filter pairs should use a pair-aware filtering strategy and verify the retained fragment pairs before peak calling.
+:::
+
+For standard transcription-factor ChIP-seq, confidently mapped reads are usually preferred because ambiguous placements can generate false enrichment. If the biological question instead concerns repetitive DNA, transposable elements or multicopy loci, multimappers may be informative and should be handled with a repeat-aware strategy rather than discarded automatically.
+
+#### Measure coordinate duplication
+
+For ChIP-seq, duplicate assessment is particularly important because peak calling depends on local fragment depth. We use `samtools markdup` to **mark and measure** coordinate duplicates without changing the standard BAMs used elsewhere in the workshop.
+
+Create `scripts/day3_chipseq/02_duplicate_qc.sh`:
+
+```bash
+nano scripts/day3_chipseq/02_duplicate_qc.sh
+```
+
+Paste:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+bam_dir="results/day3_chipseq/bam"
+qc_dir="results/day3_chipseq/qc/duplicates"
+log_dir="results/logs/day3"
+
+mkdir -p "${qc_dir}/marked" "${qc_dir}/tmp" "${log_dir}"
+
+printf 'sample\tprimary_mapped_records\tduplicate_records\tduplicate_percent\n' \
+  > "${qc_dir}/duplicate_summary.tsv"
+
+for bam in "${bam_dir}"/*.filtered.bam; do
+  [[ -e "${bam}" ]] || continue
+
+  sample="$(basename "${bam}" .filtered.bam)"
+  echo "Duplicate QC: ${sample}"
+
+  samtools sort -n -@ 2 \
+    -o "${qc_dir}/tmp/${sample}.name.bam" \
+    "${bam}"
+
+  samtools fixmate -m \
+    "${qc_dir}/tmp/${sample}.name.bam" \
+    "${qc_dir}/tmp/${sample}.fixmate.bam"
+
+  samtools sort -@ 2 \
+    -o "${qc_dir}/tmp/${sample}.position.bam" \
+    "${qc_dir}/tmp/${sample}.fixmate.bam"
+
+  samtools markdup -s \
+    "${qc_dir}/tmp/${sample}.position.bam" \
+    "${qc_dir}/marked/${sample}.marked.bam" \
+    2> "${log_dir}/${sample}.markdup.log"
+
+  samtools index "${qc_dir}/marked/${sample}.marked.bam"
+
+  total=$(samtools view -c -F 2308 \
+    "${qc_dir}/marked/${sample}.marked.bam")
+
+  duplicates=$(samtools view -c -f 1024 -F 2308 \
+    "${qc_dir}/marked/${sample}.marked.bam")
+
+  awk -v s="${sample}" -v n="${total}" -v d="${duplicates}" \
+    'BEGIN {printf "%s\t%d\t%d\t%.2f\n", s,n,d,(n>0 ? 100*d/n : 0)}' \
+    >> "${qc_dir}/duplicate_summary.tsv"
+
+  # Optional sensitivity-analysis BAM: remove records marked with FLAG 0x400.
+  samtools view -@ 2 -b -F 1024 \
+    -o "${bam_dir}/${sample}.dedup.bam" \
+    "${qc_dir}/marked/${sample}.marked.bam"
+
+  samtools index "${bam_dir}/${sample}.dedup.bam"
+done
+
+rm -rf "${qc_dir}/tmp"
+column -t "${qc_dir}/duplicate_summary.tsv"
+```
+
+Run it with the existing Bowtie2/SAMtools image:
+
+```bash
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-bowtie2-samtools \
+  bash scripts/day3_chipseq/02_duplicate_qc.sh
+```
+
+Inspect:
+
+```bash
+column -t results/day3_chipseq/qc/duplicates/duplicate_summary.tsv
+```
+
+Here the duplicate FLAG (`0x400`) is used only **after** `samtools markdup` has identified coordinate duplicates. The `*.marked.bam` files retain the duplicate flags for QC, while the same script also writes optional `*.dedup.bam` files with `0x400` records removed. The original `*.filtered.bam` files remain unchanged.
+
+#### Should ChIP-seq duplicates be removed?
+
+This decision differs from RNA-seq. In RNA-seq, highly expressed transcripts naturally produce many fragments from the same genomic region, so coordinate deduplication can strongly bias expression estimates. In ChIP-seq, by contrast, PCR-amplified fragments can directly create an artificial local pileup and therefore an artificial peak.
+
+However, blindly removing every repeated coordinate can also be too aggressive: a strong, narrow ChIP enrichment can generate genuinely independent fragments with identical coordinates. This is especially plausible for a small genome and a transcription factor with sharply localized binding.
+
+For the **main workshop route**, we therefore:
+
+- measure and compare duplicate rates across replicates;
+- inspect whether high duplication coincides with abnormal peak spikes, poor replicate agreement or other QC problems;
+- retain the existing `*.filtered.bam` files;
+- call MACS3 with `--keep-dup all`, making this choice explicit and consistent.
+
+The duplicate-QC script already creates `*.dedup.bam` files as an **optional sensitivity-analysis product**. They are not used by the canonical workflow. If the deduplicated route is explored, use the deduplicated BAMs **consistently for WT/WTS treatment samples and their matched ΔHP1021/ΔHP1021S controls**, and do not interpret the resulting peak counts or FRiP values as directly interchangeable with those from the duplicate-retaining route.
+
+::: {.callout-important title="Workshop decision"}
+The canonical Day 3 analysis continues with `*.filtered.bam`: MAPQ-filtered, primary proper-pair alignments with duplicates retained. The duplicate-marked and optional `*.dedup.bam` files are QC/sensitivity-analysis products. This keeps bigWigs, MACS3, replicate correlation, FRiP and `bedtools multicov` based on one consistent definition of a usable fragment.
+:::
+
+### 4.2 Strand cross-correlation: the idea
 
 For a narrow ChIP-seq binding event, DNA fragments overlap the bound locus. The 5′ ends of reads mapping to the `+` strand tend to accumulate on one side of the event, while reads mapping to the `-` strand tend to accumulate on the other side.
 
@@ -296,7 +453,7 @@ The commonly reported quantities are:
 For paired-end data, the physical fragment boundaries are already defined by the two mates. MACS3 `BAMPE` therefore does **not** need the cross-correlation estimate in order to reconstruct fragment length. We use strand cross-correlation as an independent measure of enrichment structure and library quality.
 :::
 
-### 4.2 `phantompeakqualtools`
+### 4.3 `phantompeakqualtools`
 
 We calculate strand cross-correlation with [`phantompeakqualtools`](https://github.com/kundajelab/phantompeakqualtools), the Kundaje Lab implementation widely used in ENCODE-style ChIP-seq QC. The tool is built around the SPP strand cross-correlation framework described by Kharchenko, Tolstorukov and Park (2008) and the ENCODE ChIP-seq QC recommendations of Landt *et al.* (2012).
 
@@ -357,7 +514,7 @@ docker run --rm \
   --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  quay.io/biocontainers/phantompeakqualtools:1.2.2--hdfd78af_1 \
+  docker.io/fgualdr/ngs-phantompeakqualtools:latest \
   bash scripts/day3_chipseq/02_phantom_peak_qc.sh
 ```
 
@@ -370,7 +527,131 @@ find results/day3_chipseq/qc/phantom_peak -name '*.pdf' | sort
 
 Interpret the cross-correlation curve together with mapping rate, read depth, replicate behaviour, bigWig signal and later peak calls rather than using a single historical threshold as a pass/fail rule.
 
-### 4.3 Make CPM-normalized fragment coverage with `bamCoverage`
+### 4.4 Use paired-end information to check the physical fragment length
+
+`phantompeakqualtools` is a **general ChIP-seq QC method** based on strand cross-correlation. It is useful for both single-end and paired-end experiments because it asks whether the `+`- and `-`-strand read-start profiles contain the characteristic displacement expected around enriched fragments.
+
+However, paired-end sequencing gives us an additional piece of information that single-end sequencing does not: **both ends of each sequenced DNA fragment are observed directly**. We can therefore estimate the physical fragment-size distribution from the paired alignments themselves and use it as an independent check of the cross-correlation result.
+
+This is particularly useful for our libraries because the reads are approximately **150 bp long**. If the physical fragments are around 200 bp, the expected read-length-associated phantom structure (~150 bp) and the fragment-length signal (~200 bp) are separated by only ~50 bp. The two features may therefore merge into one broad cross-correlation peak rather than appearing as two clearly resolved maxima.
+
+::: {.callout-important title="Cross-correlation versus paired-end fragment length"}
+The two measurements answer related but different questions:
+
+- **phantompeakqualtools:** does the library show the expected strand-shift enrichment structure?
+- **paired-end TLEN:** what fragment sizes were actually observed between the two mapped mates?
+
+For paired-end data, the TLEN distribution provides the more direct estimate of physical fragment size. Cross-correlation remains useful as an independent enrichment/QC measurement.
+:::
+
+In a SAM/BAM file, column 9 (`TLEN`, template length) records the inferred template length for a paired alignment. The two mates carry values with opposite signs, so we use only records with **positive TLEN** to count each fragment once.
+
+Create `scripts/day3_chipseq/02b_pe_fragment_size_qc.sh`:
+
+```bash
+nano scripts/day3_chipseq/02b_pe_fragment_size_qc.sh
+```
+
+Paste:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+bam_dir="results/day3_chipseq/bam"
+out_dir="results/day3_chipseq/qc/fragment_size"
+
+mkdir -p "${out_dir}"
+
+summary="${out_dir}/fragment_size_summary.tsv"
+printf 'sample\tn_fragments\tmean_bp\tmedian_bp\tq25_bp\tq75_bp\n' > "${summary}"
+
+for bam in "${bam_dir}"/*.filtered.bam
+do
+  sample="$(basename "${bam}" .filtered.bam)"
+  lengths="${out_dir}/${sample}.fragment_lengths.txt"
+
+  echo "Fragment-size QC: ${sample}"
+
+  # Keep one record per proper pair and use positive TLEN only.
+  # The BAMs are already MAPQ-filtered primary alignments from Section 4.1.
+  samtools view -f 2 "${bam}" | \
+    awk '$9 > 0 {print $9}' | \
+    sort -n > "${lengths}"
+
+  awk -v sample="${sample}" '
+    {
+      x[++n]=$1
+      sum+=$1
+    }
+    END {
+      if (n == 0) {
+        printf "%s\t0\tNA\tNA\tNA\tNA\n", sample
+        exit
+      }
+
+      q25=x[int((n-1)*0.25)+1]
+      med=x[int((n-1)*0.50)+1]
+      q75=x[int((n-1)*0.75)+1]
+
+      printf "%s\t%d\t%.1f\t%d\t%d\t%d\n", \
+             sample,n,sum/n,med,q25,q75
+    }
+  ' "${lengths}" >> "${summary}"
+done
+```
+
+Run the script with the same workshop samtools image used for BAM processing:
+
+```bash
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-bowtie2-samtools:latest \
+  bash scripts/day3_chipseq/02b_pe_fragment_size_qc.sh
+```
+
+Inspect the fragment-size summary:
+
+```bash
+column -t -s $'\t' results/day3_chipseq/qc/fragment_size/fragment_size_summary.tsv
+```
+
+For one sample, inspect the most frequent fragment lengths:
+
+```bash
+sort -n results/day3_chipseq/qc/fragment_size/WT_1.fragment_lengths.txt | \
+  uniq -c | \
+  sort -nr | \
+  head
+```
+
+The individual fragment-length files can also be plotted later in R if we want to inspect the complete distribution.
+
+#### How do we combine the two QC measurements?
+
+Suppose a library contains 150-bp reads and `phantompeakqualtools` reports a dominant cross-correlation feature around 200 bp. If the paired-end TLEN distribution independently has its main fragment-size mass around ~200 bp, this strongly supports interpreting the ~200-bp cross-correlation feature as the physical fragment-length signal.
+
+If the TLEN distribution instead centres close to the read length, or is very broad, then the read-length phantom structure and fragment-length structure may not be cleanly distinguishable in the cross-correlation curve. In that situation, **do not force an interpretation from NSC, RSC or `QualityTag` alone**.
+
+For this bacterial paired-end ChIP-seq experiment, use the two measurements together:
+
+```text
+strand cross-correlation
+        +
+paired-end TLEN distribution
+        |
+        v
+fragment-size / enrichment interpretation
+        |
+        v
+combine with duplication, mapping QC, IDR, FRiP and signal tracks
+```
+
+The paired-end fragment-size estimate is also directly relevant to MACS3: when we call peaks with `-f BAMPE`, MACS3 uses the observed paired-end fragment boundaries rather than requiring a fragment length inferred from strand cross-correlation.
+
+### 4.5 Make CPM-normalized fragment coverage with `bamCoverage`
 
 [`bamCoverage`](https://deeptools.readthedocs.io/en/latest/content/tools/bamCoverage.html) from deepTools converts BAM alignments into an indexed bigWig signal track.
 
@@ -652,7 +933,7 @@ For a target-specific ChIP experiment, a well-matched **target-negative ChIP** c
 
 The publication used ΔHP1021 material as a target-negative ChIP control for confirmatory analysis. This is not the same as input DNA, and it is not a perfect control: deleting the target can change the biological state. In a complete experiment, input and target-negative ChIP can be complementary.
 
-The workshop retains this **exploratory no-input analysis** for the core workflow. Section 5.5 adds a separate, optional WT-versus-ΔHP1021 negative-control peak-calling route. The two sets of calls should be interpreted with cross-correlation, replicate agreement, bigWig shape, motif evidence and biological context rather than treated as interchangeable.
+The workshop retains this **exploratory no-input analysis** as a teaching comparison. Section 5.5 then introduces the matched WT-versus-ΔHP1021 target-negative route. **From Section 6 onward, the matched-control route is the primary analysis used for IDR, FRiP, consensus construction and differential occupancy.** The no-control calls remain useful for understanding what the control changes, but they are not mixed into the downstream peak universe.
 :::
 
 ### 5.4 Run MACS3 on each sample
@@ -710,9 +991,9 @@ Check the peak calls:
 wc -l results/day3_chipseq/peaks/no_input/*_peaks.narrowPeak
 ```
 
-This **no-input route** makes one MACS3 call per sample. Its WT and WTS `narrowPeak` files are reused for the default downstream merging, FRiP and IDR exercises. We do not specify `-q` or `-p`, so MACS3 uses its default significance threshold. We retain `--nolambda` here because no external `-c` control is supplied. The separate control-based calls below do **not** use `--nolambda`.
+This **no-input route** makes one MACS3 call per sample and is retained as a comparison showing what MACS3 calls when no external control is supplied. The downstream reproducibility, FRiP and consensus exercises use the matched WT-versus-ΔHP1021 route in Section 5.5. We do not specify `-q` or `-p`, so MACS3 uses its default significance threshold. We retain `--nolambda` here because no external `-c` control is supplied. The separate control-based calls below do **not** use `--nolambda`.
 
-### 5.5 Additional MACS3 calling: WT versus ΔHP1021 negative control
+### 5.5 Parallel MACS3 route: WT versus matched ΔHP1021 negative control
 
 The `S` suffix denotes the **S-treated experimental condition**, not an input or negative control. We therefore keep untreated and S-treated libraries separate. If these are **HP1021 ChIP-seq experiments** and ΔHP1021 is the isogenic strain lacking the immunoprecipitated HP1021 target, the ΔHP1021 ChIP libraries can serve as **target-negative immunoprecipitation controls** for WT peak calling.
 
@@ -826,8 +1107,8 @@ Unlike the no-input command, this call supplies `-c` and **does not include `--n
 
 **Interpretation exercise:** For each WT replicate, compare the number and positions of peaks called *without a control* (Section 5.4) and *with the target-negative control* (this section). Does subtracting genotype-matched nonspecific ChIP signal remove questionable peaks while retaining reproducible HP1021-associated enrichment?
 
-::: {.callout-note title="Independent branch: downstream scripts are unchanged unless you select this peak set"}
-The IDR and FRiP scripts in Section 6 and the core count-matrix construction in Section 7 continue to read `peaks/no_input/` by default. This new branch writes to `peaks/wt_vs_delta/` and does **not** overwrite those peak calls. To pursue controlled peak sets through IDR or quantitative counting, explicitly adapt the peak file paths and document the resulting analysis as a distinct run. Do not mix the two peak-calling strategies in a single consensus set without a stated reason.
+::: {.callout-note title="Keep the two peak-calling routes separate"}
+From this point onward, use **`peaks/wt_vs_delta/` as the primary peak-calling route**. The no-control calls remain available for comparison, but IDR, FRiP, consensus construction and downstream quantitative analysis are based on the matched WT-versus-ΔHP1021 calls. Do not mix peak lists from the two strategies into one consensus set.
 :::
 
 ### 5.6 Read a MACS3 `narrowPeak` file
@@ -845,7 +1126,7 @@ MACS3 writes `narrowPeak` as BED6+4. The first three columns define the genomic 
 | 9 | `-log10(q-value)` at the summit |
 | 10 | summit offset from the peak start |
 
-The `peaks/no_input/` files remain the peak lists used for the **default** IDR, FRiP, construction of the common peak universe and downstream counting. The additional `peaks/wt_vs_delta/` files are a separate control-based comparison. Neither MACS3 route sets `-q` or `-p`, so both use the MACS3 default peak-calling significance threshold.
+The `peaks/no_input/` files provide the comparison route; the `peaks/wt_vs_delta/` files define the **primary controlled analysis**. Use the controlled peak lists for the IDR/FRiP checks and for the consensus used downstream. Neither MACS3 route sets `-q` or `-p`, so both use the MACS3 default peak-calling significance threshold.
 
 A called interval is a model-derived result, not a directly observed object. Important peaks should still be compared with the CPM bigWigs and replicate behaviour.
 
@@ -882,7 +1163,7 @@ Peak counts alone are not enough: two samples can contain similar numbers of pea
 We use the [`idr`](https://github.com/kundajelab/idr) implementation distributed through Bioconda/Biocontainers:
 
 ```text
-quay.io/biocontainers/idr:2.0.4.2--py39h031d066_12
+docker.io/fgualdr/ngs-idr:latest
 ```
 
 The statistical framework was introduced by Li, Brown, Huang and Bickel (2011), *Measuring reproducibility of high-throughput experiments*.
@@ -946,31 +1227,30 @@ Paste:
 #!/usr/bin/env bash
 set -euo pipefail
 
-peak_dir="results/day3_chipseq/peaks/no_input"
-out_dir="results/day3_chipseq/idr"
+peak_dir="results/day3_chipseq/peaks/wt_vs_delta"
+out_dir="results/day3_chipseq/qc/idr/wt_vs_delta"
 log_dir="results/logs/day3"
 
 mkdir -p "${out_dir}" "${log_dir}"
 
 pairs=(
-  "WT_1:WT_2"
-  "WT_1:WT_3"
-  "WT_2:WT_3"
-  "WTS_1:WTS_2"
-  "WTS_1:WTS_3"
-  "WTS_2:WTS_3"
+  "untreated:1:2"
+  "untreated:1:3"
+  "untreated:2:3"
+  "treated:1:2"
+  "treated:1:3"
+  "treated:2:3"
 )
 
-for pair in "${pairs[@]}"
-do
-  sample1="${pair%%:*}"
-  sample2="${pair##*:}"
-  prefix="${sample1}_vs_${sample2}"
+for pair in "${pairs[@]}"; do
+  IFS=: read -r condition rep1 rep2 <<< "${pair}"
+
+  peak1="${peak_dir}/${condition}/WT_vs_Delta_${condition}_rep${rep1}_peaks.narrowPeak"
+  peak2="${peak_dir}/${condition}/WT_vs_Delta_${condition}_rep${rep2}_peaks.narrowPeak"
+  prefix="${condition}_rep${rep1}_vs_rep${rep2}"
 
   idr \
-    --samples \
-      "${peak_dir}/${sample1}_peaks.narrowPeak" \
-      "${peak_dir}/${sample2}_peaks.narrowPeak" \
+    --samples "${peak1}" "${peak2}" \
     --input-file-type narrowPeak \
     --rank p.value \
     --idr-threshold 0.05 \
@@ -989,16 +1269,16 @@ docker run --rm \
   --platform linux/amd64 \
   -v "$PWD:/work" \
   -w /work \
-  quay.io/biocontainers/idr:2.0.4.2--py39h031d066_12 \
+  docker.io/fgualdr/ngs-idr:latest \
   bash scripts/day3_chipseq/05_idr_pairwise_qc.sh
 ```
 
 Inspect:
 
 ```bash
-ls -lh results/day3_chipseq/idr/*.idr.narrowPeak
-ls -lh results/day3_chipseq/idr/*.png
-wc -l results/day3_chipseq/idr/*.idr.narrowPeak
+ls -lh results/day3_chipseq/qc/idr/wt_vs_delta/*.idr.narrowPeak
+ls -lh results/day3_chipseq/qc/idr/wt_vs_delta/*.png
+wc -l results/day3_chipseq/qc/idr/wt_vs_delta/*.idr.narrowPeak
 ```
 
 #### Read the IDR plots
@@ -1138,32 +1418,39 @@ Paste:
 set -euo pipefail
 
 bam_dir="results/day3_chipseq/bam"
-peak_dir="results/day3_chipseq/peaks/no_input"
-out_dir="results/day3_chipseq/qc/frip"
+peak_dir="results/day3_chipseq/peaks/wt_vs_delta"
+out_dir="results/day3_chipseq/qc/frip/wt_vs_delta"
 summary_file="${out_dir}/frip_summary.tsv"
 
 mkdir -p "${out_dir}"
-
 printf 'file\tfeatureType\tpercent\tfeatureReadCount\ttotalReadCount\n' > "${summary_file}"
 
-for bam in "${bam_dir}"/*.filtered.bam
-do
-  sample="$(basename "${bam}" .filtered.bam)"
-  peaks="${peak_dir}/${sample}_peaks.narrowPeak"
-  tmp="${out_dir}/${sample}.plotEnrichment.tsv"
+for condition in untreated treated; do
+  if [[ "${condition}" == "untreated" ]]; then
+    sample_prefix="WT"
+  else
+    sample_prefix="WTS"
+  fi
 
-  plotEnrichment \
-    -b "${bam}" \
-    --BED "${peaks}" \
-    --labels "${sample}" \
-    --regionLabels called_peaks \
-    --extendReads \
-    --samFlagInclude 64 \
-    --numberOfProcessors 2 \
-    --outRawCounts "${tmp}"
+  for rep in 1 2 3; do
+    sample="${sample_prefix}_${rep}"
+    bam="${bam_dir}/${sample}.filtered.bam"
+    peaks="${peak_dir}/${condition}/WT_vs_Delta_${condition}_rep${rep}_peaks.narrowPeak"
+    tmp="${out_dir}/${sample}.plotEnrichment.tsv"
 
-  tail -n +2 "${tmp}" >> "${summary_file}"
-  rm -f "${tmp}"
+    plotEnrichment \
+      -b "${bam}" \
+      --BED "${peaks}" \
+      --labels "${sample}" \
+      --regionLabels matched_control_peaks \
+      --extendReads \
+      --samFlagInclude 64 \
+      --numberOfProcessors 2 \
+      --outRawCounts "${tmp}"
+
+    tail -n +2 "${tmp}" >> "${summary_file}"
+    rm -f "${tmp}"
+  done
 done
 ```
 
@@ -1181,7 +1468,7 @@ docker run --rm \
 Inspect:
 
 ```bash
-column -t -s $'\t' results/day3_chipseq/qc/frip/frip_summary.tsv
+column -t -s $'\t' results/day3_chipseq/qc/frip/wt_vs_delta/frip_summary.tsv
 ```
 
 A higher FRiP means that a larger fraction of usable sequencing fragments is concentrated in called enriched regions. It is useful for comparing similarly processed samples, but it should not be treated as a universal pass/fail score. Current ENCODE transcription-factor ChIP-seq standards list FRiP as an additional metric without a fixed threshold. Interpret it together with peak number, IDR, replicate correlation, cross-correlation and visual inspection of the signal tracks.
@@ -1192,17 +1479,17 @@ A high FRiP can result from strong specific enrichment, but it can also increase
 
 ## 7. Build one common peak set and count matrix
 
-For downstream sample comparison, every sample must be measured over the **same genomic intervals**. For the core DESeq2 exercise we compare **WT_1–WT_3 versus WTS_1–WTS_3**; ΔHP1021 libraries are negative-control candidates for the optional MACS3 route, not part of the WT treatment-effect design. Explicitly selecting these six samples also avoids accidentally importing ΔHP1021 BAMs into the WT/WTS count matrix.
+For downstream sample comparison, every library must be measured over the **same genomic intervals**. Build the consensus specifically from the **matched WT-versus-ΔHP1021 peak calls**, then count **all WT/WTS and ΔHP1021/ΔHP1021S BAMs** over that same consensus. This lets us visualize WT-versus-ΔHP1021 separation directly and then fit genotype and treatment contrasts from one raw count matrix.
 
 We use a deliberately transparent rule:
 
 1. MACS3 has already produced one peak list per sample;
 2. filter each `narrowPeak` on column 9, the **-log10(q-value)** score, using a configurable minimum;
-3. concatenate retained peaks from the six WT/WTS no-input calls and sort by chromosome and start coordinate;
+3. concatenate retained peaks from the six matched-control WT/WTS calls (three untreated and three treated) and sort by chromosome and start coordinate;
 4. merge overlapping or book-ended intervals with [`bedtools merge`](https://bedtools.readthedocs.io/en/latest/content/tools/merge.html);
-5. count the six WT/WTS BAM libraries over every merged interval with [`bedtools multicov`](https://bedtools.readthedocs.io/en/latest/content/tools/multicov.html).
+5. count all twelve WT/WTS/ΔHP1021/ΔHP1021S BAM libraries over every merged interval with [`bedtools multicov`](https://bedtools.readthedocs.io/en/latest/content/tools/multicov.html).
 
-Here, “consensus” means a **union of peaks passing a stringent significance threshold**. It does not mean “present in every replicate”, and it is not the IDR-thresholded peak set. The filter works on MACS3 `narrowPeak` column 9: a score of 10 means q ≤ 1e-10, while a score of 15 means q ≤ 1e-15. The default below is 15; change one variable to test another cutoff. A peak in just one sample can still enter this union, so use IDR or an explicit replicate-support rule for reproducibility.
+Here, “consensus” means a **union of peaks passing a stringent significance threshold**. It does not mean “present in every replicate”, and it is not the IDR-thresholded peak set. The filter works on MACS3 `narrowPeak` column 9, which stores `-log10(q-value)`. We define the desired **consensus FDR directly** (default `0.01`) and convert it to the corresponding column-9 threshold in the script. Change `consensus_fdr` to explore a different cutoff. A peak in just one sample can still enter this union, so use IDR or an explicit replicate-support rule for reproducibility.
 
 ```text
 MACS3 peak lists
@@ -1228,23 +1515,30 @@ Paste:
 #!/usr/bin/env bash
 set -euo pipefail
 
-peak_dir="results/day3_chipseq/peaks/no_input"
+peak_dir="results/day3_chipseq/peaks/wt_vs_delta"
 bam_dir="results/day3_chipseq/bam"
 consensus_dir="results/day3_chipseq/peaks/consensus"
 count_dir="results/day3_chipseq/counts"
 
-# MACS3 -log10(q-value): 20 means q <= 1e-20
-min_log10_q=20
+# Custom MACS3 FDR threshold for the consensus
+consensus_fdr=0.01
+min_log10_q="$(awk -v f="${consensus_fdr}" 'BEGIN{print -log(f)/log(10)}')"
 
 mkdir -p "${consensus_dir}" "${count_dir}"
 
-samples=(WT_1 WT_2 WT_3 WTS_1 WTS_2 WTS_3)
+samples=(WT_1 WT_2 WT_3 WTS_1 WTS_2 WTS_3 ΔHP1021_1 ΔHP1021_2 ΔHP1021_3 ΔHP1021S_1 ΔHP1021S_2 ΔHP1021S_3)
 
-peak_files=()
+peak_files=(
+  "${peak_dir}/untreated/WT_vs_Delta_untreated_rep1_peaks.narrowPeak"
+  "${peak_dir}/untreated/WT_vs_Delta_untreated_rep2_peaks.narrowPeak"
+  "${peak_dir}/untreated/WT_vs_Delta_untreated_rep3_peaks.narrowPeak"
+  "${peak_dir}/treated/WT_vs_Delta_treated_rep1_peaks.narrowPeak"
+  "${peak_dir}/treated/WT_vs_Delta_treated_rep2_peaks.narrowPeak"
+  "${peak_dir}/treated/WT_vs_Delta_treated_rep3_peaks.narrowPeak"
+)
+
 bam_files=()
-
 for sample in "${samples[@]}"; do
-  peak_files+=("${peak_dir}/${sample}_peaks.narrowPeak")
   bam_files+=("${bam_dir}/${sample}.filtered.bam")
 done
 
@@ -1255,9 +1549,10 @@ cat "${peak_files[@]}" \
   | bedtools merge \
   > "${consensus_dir}/consensus_peaks.bed"
 
-# Copy for Day 4
-cp "${consensus_dir}/consensus_peaks.bed" \
-   "${consensus_dir}/day4_consensus_peaks.bed"
+# Add a stable coordinate-based peak ID for Day 4 integration.
+awk 'BEGIN{OFS="\t"} {print $1,$2,$3,$1 ":" $2 "-" $3}' \
+  "${consensus_dir}/consensus_peaks.bed" \
+  > "${consensus_dir}/day4_consensus_peaks.bed"
 
 # Count reads in consensus peaks
 {
@@ -1290,30 +1585,49 @@ Inspect:
 
 ```bash
 head results/day3_chipseq/peaks/consensus/consensus_peaks.bed
+head results/day3_chipseq/peaks/consensus/day4_consensus_peaks.bed
 head results/day3_chipseq/counts/consensus_peak_counts.tsv
 wc -l results/day3_chipseq/peaks/consensus/consensus_peaks.bed
 ```
 
-Because filtering happens before merging, only q-value-qualified peaks contribute to the consensus. The threshold-labelled copies (`consensus_peaks_q15.bed` and `consensus_peak_counts_q15.tsv` at the default setting) provide a record of the cutoff, while the canonical filenames remain compatible with all downstream exercises. `bedtools merge` requires coordinate-sorted input and returns a three-column BED. `bedtools multicov` then appends one raw count column per selected WT/WTS BAM. The header is generated from the BAM basenames; it should contain six sample-count columns, with no ΔHP1021 columns. The optional controlled calls in Section 5.5 do not change this default analysis.
+Because filtering happens before merging, only q-value-qualified peaks contribute to the consensus. `bedtools merge` requires coordinate-sorted input and returns a three-column BED. We keep that file for counting and additionally write `day4_consensus_peaks.bed` as BED4 with a coordinate-based peak ID that exactly matches the `peak_id` used by the Day 3 DESeq2 table. `bedtools multicov` then appends one raw count column per selected WT/WTS/ΔHP1021/ΔHP1021S BAM. The header is generated from the BAM basenames and should contain all twelve sample-count columns. The canonical consensus/count filenames now refer to the **matched-control route** and are used by the downstream classroom analysis. The no-control peak lists remain separate comparison outputs.
 
 ::: {.callout-note title="Why keep the raw count matrix?"}
 These integer counts are the input required by DESeq2. Do not replace them with CPM, normalized bigWig signal or counts-per-kilobase before differential testing.
 :::
 
-## 8. PCA of the common peak-count matrix
+## 8. Peak-count QC and differential occupancy in one DESeq2 analysis
 
-The pairwise replicate signal correlation was already assessed directly from the BAM files in Section 6.2. After constructing one common peak-by-sample count matrix, we now perform one short count-matrix diagnostic before differential testing: **PCA**.
+The consensus peak matrix now provides one common set of genomic features measured across all twelve libraries. We use one saved R script to move from **raw peak counts** through count-matrix QC to the two peak sets needed downstream for sequence extraction and STREME.
 
-This deliberately mirrors Day 2 RNA-seq. The rows are now genomic peak intervals instead of genes, but the question is the same:
+The analysis has four connected parts:
 
-> Do the samples occupy the expected positions in the major directions of variation before we interpret individual differential features?
+1. inspect matched WT-versus-ΔHP1021 libraries with pair-wise scatter plots of DESeq2-normalized counts;
+2. inspect the complete peak-count matrix with PCA and the DESeq2 dispersion plot;
+3. test for **WT-specific HP1021 occupancy** across all twelve samples while accounting for treatment and matched replicate number;
+4. within WT/WTS libraries, test which of those WT-specific peaks also change with treatment.
 
-We use DESeq2 size-factor normalization for library depth, transform the normalized counts with `log2(count + 1)`, and run PCA across samples. Peak width is **not divided out** here: each peak is one fixed feature with the same genomic width in every sample, exactly as a gene has one fixed feature definition across RNA-seq samples.
+The two statistical questions are therefore:
 
-Create `scripts/day3_chipseq/07_peak_matrix_pca.R`:
+- **WT-specific occupancy:** `WT > ΔHP1021`, using `~ replicate + treatment + genotype` across all twelve libraries;
+- **treatment response in WT:** `treated versus control`, using `~ replicate + treatment` after restricting to WT/WTS libraries.
+
+::: {.callout-note title="Why replicate is a block here but not on Day 2"}
+In the Day 3 ChIP-seq design, the replicate labels are used as matched experimental strata across the corresponding WT, WTS, ΔHP1021 and ΔHP1021S libraries. We therefore include `replicate` as a blocking term for the peak-count analysis. This is different from the Day 2 RNA-seq analysis, where replicate numbers are treated only as independent sample identifiers and the teaching model uses the four-level `condition` factor.
+:::
+
+::: {.callout-warning title="The genotype test is performed inside a preselected peak universe"}
+The consensus regions were discovered from MACS3 calls in which WT/WTS ChIP was already compared with the matched ΔHP1021/ΔHP1021S target-negative control. The later DESeq2 `WT > ΔHP1021` test therefore quantifies and prioritizes genotype-dependent signal **within those selected regions**; it should not be described as an independent genome-wide hypothesis test. The treatment-response test asks a different question within that common peak universe.
+:::
+
+For the teaching peak sets below, we retain peaks with `padj < 0.05` and `|log2FC| >= 1`. For the WT-specific set the fold change must also be positive, because positive values mean stronger occupancy in WT than in ΔHP1021.
+
+The second set is explicitly intersected with the first, so `WT_specific_treatment_responsive.bed` is always a subset of `WT_specific_vs_DeltaHP1021.bed`.
+
+Create `scripts/day3_chipseq/07_peak_count_deseq2.R`:
 
 ```bash
-nano scripts/day3_chipseq/07_peak_matrix_pca.R
+nano scripts/day3_chipseq/07_peak_count_deseq2.R
 ```
 
 Paste:
@@ -1326,83 +1640,152 @@ library(ggplot2)
 library(ggrepel)
 
 count_file <- "results/day3_chipseq/counts/consensus_peak_counts.tsv"
-out_dir <- "results/day3_chipseq/qc/peak_counts"
+qc_dir <- "results/day3_chipseq/qc/peak_counts"
+deseq_dir <- "results/day3_chipseq/deseq2"
+peak_dir <- "results/day3_chipseq/differential_peaks"
 
-dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+alpha <- 0.05
+lfc_cutoff <- 1
 
-peak_table <- read.delim(count_file, header = TRUE, check.names = FALSE)
-samples <- colnames(peak_table)[4:ncol(peak_table)]
+dir.create(qc_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(deseq_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(peak_dir, recursive = TRUE, showWarnings = FALSE)
 
-peak_table$peak_id <- paste0(
-  peak_table$chrom, ":", peak_table$start, "-", peak_table$end
-)
+# -------------------------------------------------------------------------
+# 1. Import the raw consensus-peak count matrix
+# -------------------------------------------------------------------------
 
-peak_counts <- as.matrix(peak_table[, samples, drop = FALSE])
-rownames(peak_counts) <- peak_table$peak_id
+x <- read.delim(count_file, check.names = FALSE)
+
+peak_id <- paste0(x$chrom, ":", x$start, "-", x$end)
+peak_counts <- as.matrix(x[, -(1:3), drop = FALSE])
+rownames(peak_counts) <- peak_id
 storage.mode(peak_counts) <- "integer"
 
+peak_dt <- data.frame(
+  peak_id = peak_id,
+  chrom = x$chrom,
+  start = x$start,
+  end = x$end,
+  stringsAsFactors = FALSE
+)
+rownames(peak_dt) <- peak_dt$peak_id
+
+# -------------------------------------------------------------------------
+# 2. Experimental design
+# -------------------------------------------------------------------------
+
+sample_names <- colnames(peak_counts)
+
 design_dt <- data.frame(
-  samples = colnames(peak_counts),
-  replicates = sub("^WTS?_", "", colnames(peak_counts)),
-  conditions = sub("_[123]$", "", colnames(peak_counts))
+  sample = sample_names,
+  genotype = ifelse(grepl("^ΔHP1021", sample_names), "ΔHP1021", "WT"),
+  treatment = ifelse(grepl("^(WTS|ΔHP1021S)_", sample_names), "treated", "control"),
+  replicate = sub(".*_", "", sample_names),
+  stringsAsFactors = FALSE
 )
 
-design_dt$conditions[design_dt$conditions == "WT"] <- "control"
-design_dt$conditions[design_dt$conditions == "WTS"] <- "stressed"
-design_dt$conditions <- factor(
-  design_dt$conditions,
-  levels = c("control", "stressed")
-)
-design_dt$replicates <- factor(design_dt$replicates)
-rownames(design_dt) <- design_dt$samples
+design_dt$genotype <- factor(design_dt$genotype, levels = c("ΔHP1021", "WT"))
+design_dt$treatment <- factor(design_dt$treatment, levels = c("control", "treated"))
+design_dt$replicate <- factor(design_dt$replicate)
+rownames(design_dt) <- design_dt$sample
 
-peak_counts <- peak_counts[rowSums(peak_counts) >= 10, , drop = FALSE]
+stopifnot(identical(colnames(peak_counts), rownames(design_dt)))
+print(design_dt)
 
-dds <- DESeq2::DESeqDataSetFromMatrix(
+# Remove very low-count peaks before model fitting.
+keep <- rowSums(peak_counts) >= 10
+peak_counts <- peak_counts[keep, , drop = FALSE]
+peak_dt <- peak_dt[rownames(peak_counts), , drop = FALSE]
+
+# -------------------------------------------------------------------------
+# 3. Fit the all-sample DESeq2 model
+# -------------------------------------------------------------------------
+
+# genotype estimates WT versus ΔHP1021 while accounting for treatment
+# and matched replicate number.
+dds <- DESeqDataSetFromMatrix(
   countData = peak_counts,
   colData = design_dt,
-  design = ~ conditions
+  design = ~ replicate + treatment + genotype
 )
 
-dds <- DESeq2::estimateSizeFactors(dds)
-normalized_counts <- DESeq2::counts(dds, normalized = TRUE)
+dds <- DESeq(dds, fitType = "parametric")
+print(resultsNames(dds))
+
+normalized_counts <- counts(dds, normalized = TRUE)
 
 write.table(
   data.frame(peak_id = rownames(normalized_counts), normalized_counts, check.names = FALSE),
-  file.path(out_dir, "normalized_peak_counts.tsv"),
+  file.path(deseq_dir, "normalized_peak_counts.tsv"),
   sep = "\t", quote = FALSE, row.names = FALSE
-)
-
-size_dt <- data.frame(
-  sample = names(DESeq2::sizeFactors(dds)),
-  deseq2_size_factor = as.numeric(DESeq2::sizeFactors(dds))
 )
 
 write.table(
-  size_dt,
-  file.path(out_dir, "deseq2_size_factors.tsv"),
+  data.frame(
+    sample = names(sizeFactors(dds)),
+    deseq2_size_factor = as.numeric(sizeFactors(dds))
+  ),
+  file.path(deseq_dir, "deseq2_size_factors.tsv"),
   sep = "\t", quote = FALSE, row.names = FALSE
 )
 
-pca_input <- log2(normalized_counts + 1)
-pca <- prcomp(
-  t(pca_input),
-  center = TRUE,
-  scale. = FALSE
+# -------------------------------------------------------------------------
+# 4. Pair-wise WT versus ΔHP1021 scatter plots
+# -------------------------------------------------------------------------
+
+pairs <- data.frame(
+  WT = c("WT_1", "WT_2", "WT_3", "WTS_1", "WTS_2", "WTS_3"),
+  Delta = c("ΔHP1021_1", "ΔHP1021_2", "ΔHP1021_3",
+            "ΔHP1021S_1", "ΔHP1021S_2", "ΔHP1021S_3")
 )
-variance_explained <- 100 * (pca$sdev^2 / sum(pca$sdev^2))
+
+scatter_dt <- do.call(rbind, lapply(seq_len(nrow(pairs)), function(i) {
+  data.frame(
+    WT = log2(normalized_counts[, pairs$WT[i]] + 1),
+    Delta = log2(normalized_counts[, pairs$Delta[i]] + 1),
+    comparison = paste(pairs$WT[i], "vs", pairs$Delta[i])
+  )
+}))
+
+scatter_lim <- range(c(scatter_dt$WT, scatter_dt$Delta))
+
+scatter_plot <- ggplot(scatter_dt, aes(Delta, WT)) +
+  geom_point(size = 0.7, alpha = 0.6) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+  facet_wrap(~ comparison, ncol = 3) +
+  coord_fixed(xlim = scatter_lim, ylim = scatter_lim, ratio = 1) +
+  theme_bw() +
+  labs(
+    x = "ΔHP1021 log2(normalized count + 1)",
+    y = "WT log2(normalized count + 1)"
+  )
+
+ggsave(
+  file.path(qc_dir, "WT_vs_Delta_scatterplots.pdf"),
+  scatter_plot,
+  width = 10,
+  height = 7
+)
+
+# -------------------------------------------------------------------------
+# 5. PCA and scree plot
+# -------------------------------------------------------------------------
+
+pca <- prcomp(t(log2(normalized_counts + 1)), center = TRUE, scale. = FALSE)
+variance_explained <- 100 * pca$sdev^2 / sum(pca$sdev^2)
 
 pca_dt <- data.frame(
   sample = rownames(pca$x),
   PC1 = pca$x[, 1],
   PC2 = pca$x[, 2],
-  conditions = design_dt[rownames(pca$x), "conditions"],
-  replicates = design_dt[rownames(pca$x), "replicates"]
+  genotype = design_dt[rownames(pca$x), "genotype"],
+  treatment = design_dt[rownames(pca$x), "treatment"]
 )
 
 pca_plot <- ggplot(
   pca_dt,
-  aes(PC1, PC2, color = conditions, shape = replicates, label = sample)
+  aes(PC1, PC2, color = treatment, shape = genotype, label = sample)
 ) +
   geom_point(size = 3) +
   ggrepel::geom_text_repel(show.legend = FALSE) +
@@ -1412,7 +1795,7 @@ pca_plot <- ggplot(
     y = sprintf("PC2 (%.1f%%)", variance_explained[2])
   )
 
-ggsave(file.path(out_dir, "pca.pdf"), pca_plot, width = 6, height = 5)
+ggsave(file.path(qc_dir, "pca.pdf"), pca_plot, width = 6, height = 5)
 
 scree_dt <- data.frame(
   PC = seq_along(variance_explained),
@@ -1425,196 +1808,154 @@ scree_plot <- ggplot(scree_dt, aes(PC, variance)) +
   theme_bw() +
   labs(x = "Principal component", y = "Variance explained (%)")
 
-ggsave(file.path(out_dir, "pca_scree.pdf"), scree_plot, width = 6, height = 4)
-```
+ggsave(file.path(qc_dir, "pca_scree.pdf"), scree_plot, width = 6, height = 4)
 
-Run:
+# -------------------------------------------------------------------------
+# 6. Dispersion plot
+# -------------------------------------------------------------------------
 
-```bash
-docker run --rm \
-  --user "$(id -u):$(id -g)" \
-  -v "$PWD:/work" \
-  -w /work \
-  docker.io/fgualdr/ngs-r-bioc \
-  Rscript scripts/day3_chipseq/07_peak_matrix_pca.R
-```
+pdf(file.path(qc_dir, "dispersion_plot.pdf"), width = 6, height = 5)
+plotDispEsts(dds)
+dev.off()
 
-Inspect:
+# -------------------------------------------------------------------------
+# 7. WT-specific HP1021 occupancy
+# -------------------------------------------------------------------------
 
-```bash
-ls -lh results/day3_chipseq/qc/peak_counts/pca*.pdf
-```
-
-As on Day 2, PCA is a diagnostic. Look for unexpected outliers, sample swaps or technical structure before interpreting differential peaks, but do not remove a sample simply because it does not cluster where expected.
-
-## 9. Differential peak occupancy with DESeq2
-
-We now test whether the raw count for a common genomic interval differs systematically between control and stressed samples.
-
-The logic is directly analogous to Day 2 RNA-seq:
-
-```text
-raw peak counts
-  -> sample design
-  -> DESeq2 normalization + dispersion estimation
-  -> negative-binomial model
-  -> stressed versus control
-  -> adjusted p-values
-```
-
-The numbers `1`, `2`, and `3` in the sample names are independent biological replicate identifiers, not matched blocks. Therefore the model is:
-
-```r
-design = ~ conditions
-```
-
-and not `~ replicates + conditions`.
-
-Create `scripts/day3_chipseq/08_differential_peaks.R`:
-
-```bash
-nano scripts/day3_chipseq/08_differential_peaks.R
-```
-
-Paste:
-
-```r
-#!/usr/bin/env Rscript
-
-library(DESeq2)
-library(ggplot2)
-
-count_file <- "results/day3_chipseq/counts/consensus_peak_counts.tsv"
-out_dir <- "results/day3_chipseq/differential_peaks"
-
-dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-
-peak_table <- read.delim(count_file, header = TRUE, check.names = FALSE)
-samples <- colnames(peak_table)[4:ncol(peak_table)]
-
-peak_table$peak_id <- paste0(
-  peak_table$chrom, ":", peak_table$start, "-", peak_table$end
-)
-
-peak_counts <- as.matrix(peak_table[, samples, drop = FALSE])
-rownames(peak_counts) <- peak_table$peak_id
-storage.mode(peak_counts) <- "integer"
-
-design_dt <- data.frame(
-  samples = colnames(peak_counts),
-  replicates = sub("^WTS?_", "", colnames(peak_counts)),
-  conditions = sub("_[123]$", "", colnames(peak_counts))
-)
-
-design_dt$conditions[design_dt$conditions == "WT"] <- "control"
-design_dt$conditions[design_dt$conditions == "WTS"] <- "stressed"
-design_dt$conditions <- factor(
-  design_dt$conditions,
-  levels = c("control", "stressed")
-)
-design_dt$replicates <- factor(design_dt$replicates)
-rownames(design_dt) <- design_dt$samples
-
-keep <- rowSums(peak_counts) >= 10
-peak_counts <- peak_counts[keep, , drop = FALSE]
-
-dds <- DESeq2::DESeqDataSetFromMatrix(
-  countData = peak_counts,
-  colData = design_dt,
-  design = ~ conditions
-)
-
-dds <- DESeq2::DESeq(dds)
-
-print(DESeq2::resultsNames(dds))
-
-res <- DESeq2::results(
+res_genotype <- results(
   dds,
-  contrast = c("conditions", "stressed", "control")
+  contrast = c("genotype", "WT", "ΔHP1021"),
+  alpha = alpha
 )
 
-print(summary(res))
-
-res_dt <- as.data.frame(res)
-res_dt$peak_id <- rownames(res_dt)
-res_dt <- res_dt[, c("peak_id", setdiff(colnames(res_dt), "peak_id"))]
-
-coords <- peak_table[
-  match(res_dt$peak_id, peak_table$peak_id),
-  c("chrom", "start", "end")
-]
-
-res_dt <- cbind(coords, res_dt)
-
-is_sig <- !is.na(res_dt$padj) &
-  res_dt$padj < 0.05 &
-  abs(res_dt$log2FoldChange) >= 1
-
-res_dt$significant <- is_sig
-
-write.table(
-  res_dt,
-  file.path(out_dir, "differential_peak_results.tsv"),
-  sep = "\t", quote = FALSE, row.names = FALSE
+res_genotype_dt <- data.frame(
+  peak_dt[rownames(res_genotype), , drop = FALSE],
+  as.data.frame(res_genotype),
+  check.names = FALSE
 )
 
-ranked <- res_dt[!is.na(res_dt$padj), , drop = FALSE]
-ranked <- ranked[
-  order(ranked$padj, -abs(ranked$log2FoldChange)),
-  , drop = FALSE
+res_genotype_dt <- res_genotype_dt[
+  order(res_genotype_dt$padj, -res_genotype_dt$log2FoldChange, na.last = TRUE),
 ]
 
 write.table(
-  head(ranked, 20),
-  file.path(out_dir, "top_differential_peaks.tsv"),
+  res_genotype_dt,
+  file.path(peak_dir, "WT_vs_DeltaHP1021_all_results.tsv"),
   sep = "\t", quote = FALSE, row.names = FALSE
 )
 
-sig_dt <- res_dt[is_sig, , drop = FALSE]
+wt_specific <- res_genotype_dt[
+  !is.na(res_genotype_dt$padj) &
+    res_genotype_dt$padj < alpha &
+    res_genotype_dt$log2FoldChange >= lfc_cutoff,
+]
 
 write.table(
-  sig_dt[, c("chrom", "start", "end", "peak_id")],
-  file.path(out_dir, "significant_differential_peaks.bed"),
+  wt_specific,
+  file.path(peak_dir, "WT_specific_vs_DeltaHP1021.tsv"),
+  sep = "\t", quote = FALSE, row.names = FALSE
+)
+
+write.table(
+  wt_specific[, c("chrom", "start", "end")],
+  file.path(peak_dir, "WT_specific_vs_DeltaHP1021.bed"),
   sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE
 )
 
-write.csv(
-  design_dt,
-  file.path(out_dir, "sample_design.csv"),
-  row.names = FALSE
+pdf(file.path(qc_dir, "MA_WT_vs_DeltaHP1021.pdf"), width = 6, height = 5)
+plotMA(
+  res_genotype,
+  alpha = alpha,
+  ylim = c(-5, 5),
+  main = "WT vs ΔHP1021, adjusted for treatment"
 )
-
-pdf(file.path(out_dir, "dispersion_plot.pdf"))
-DESeq2::plotDispEsts(dds)
 dev.off()
 
-pdf(file.path(out_dir, "ma_plot.pdf"), width = 7, height = 5)
-DESeq2::plotMA(res, alpha = 0.05, ylim = c(-5, 5))
-dev.off()
+# -------------------------------------------------------------------------
+# 8. Treatment response within WT/WTS
+# -------------------------------------------------------------------------
 
-res_dt$minus_log10_padj <- -log10(
-  pmax(res_dt$padj, .Machine$double.xmin)
+wt_samples <- rownames(design_dt)[design_dt$genotype == "WT"]
+
+dds_wt <- DESeqDataSetFromMatrix(
+  countData = peak_counts[, wt_samples, drop = FALSE],
+  colData = droplevels(design_dt[wt_samples, , drop = FALSE]),
+  design = ~ replicate + treatment
 )
 
-volcano <- ggplot(res_dt, aes(log2FoldChange, minus_log10_padj)) +
-  geom_point(alpha = 0.6, size = 1, na.rm = TRUE) +
-  geom_vline(xintercept = c(-1, 1), linetype = 2) +
-  geom_hline(yintercept = -log10(0.05), linetype = 2) +
-  theme_bw() +
-  labs(
-    x = "log2 fold change (stressed / control)",
-    y = "-log10 adjusted p-value"
-  )
+dds_wt <- DESeq(dds_wt, fitType = "parametric")
 
-ggsave(file.path(out_dir, "volcano.pdf"), volcano, width = 6, height = 5)
+res_treatment <- results(
+  dds_wt,
+  contrast = c("treatment", "treated", "control"),
+  alpha = alpha
+)
+
+res_treatment_dt <- data.frame(
+  peak_dt[rownames(res_treatment), , drop = FALSE],
+  as.data.frame(res_treatment),
+  check.names = FALSE
+)
+
+res_treatment_dt <- res_treatment_dt[
+  order(res_treatment_dt$padj, -abs(res_treatment_dt$log2FoldChange), na.last = TRUE),
+]
+
+write.table(
+  res_treatment_dt,
+  file.path(peak_dir, "WTS_vs_WT_all_results.tsv"),
+  sep = "\t", quote = FALSE, row.names = FALSE
+)
+
+responsive_ids <- res_treatment_dt$peak_id[
+  !is.na(res_treatment_dt$padj) &
+    res_treatment_dt$padj < alpha &
+    abs(res_treatment_dt$log2FoldChange) >= lfc_cutoff
+]
+
+responsive_ids <- intersect(wt_specific$peak_id, responsive_ids)
+
+treatment_responsive <- res_treatment_dt[
+  match(responsive_ids, res_treatment_dt$peak_id),
+  ,
+  drop = FALSE
+]
+
+write.table(
+  treatment_responsive,
+  file.path(peak_dir, "WT_specific_treatment_responsive.tsv"),
+  sep = "\t", quote = FALSE, row.names = FALSE
+)
+
+write.table(
+  treatment_responsive[, c("chrom", "start", "end")],
+  file.path(peak_dir, "WT_specific_treatment_responsive.bed"),
+  sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE
+)
+
+pdf(file.path(qc_dir, "MA_WTS_vs_WT.pdf"), width = 6, height = 5)
+plotMA(
+  res_treatment,
+  alpha = alpha,
+  ylim = c(-5, 5),
+  main = "WTS vs WT"
+)
+dev.off()
+
+# -------------------------------------------------------------------------
+# 9. Save session information
+# -------------------------------------------------------------------------
 
 writeLines(
   capture.output(sessionInfo()),
-  file.path(out_dir, "sessionInfo.txt")
+  file.path(deseq_dir, "sessionInfo.txt")
 )
+
+cat("WT-specific peaks:", nrow(wt_specific), "\n")
+cat("WT-specific and treatment-responsive peaks:", nrow(treatment_responsive), "\n")
 ```
 
-Run:
+Run the complete peak-count analysis once:
 
 ```bash
 docker run --rm \
@@ -1622,23 +1963,29 @@ docker run --rm \
   -v "$PWD:/work" \
   -w /work \
   docker.io/fgualdr/ngs-r-bioc \
-  Rscript scripts/day3_chipseq/08_differential_peaks.R
+  Rscript scripts/day3_chipseq/07_peak_count_deseq2.R
 ```
 
-Inspect:
+Inspect the QC outputs and the two downstream peak sets:
 
 ```bash
-ls -lh results/day3_chipseq/differential_peaks
-head results/day3_chipseq/differential_peaks/differential_peak_results.tsv
-head results/day3_chipseq/differential_peaks/top_differential_peaks.tsv
-wc -l results/day3_chipseq/differential_peaks/significant_differential_peaks.bed
+ls -lh results/day3_chipseq/qc/peak_counts/*.pdf
+head results/day3_chipseq/differential_peaks/WT_vs_DeltaHP1021_all_results.tsv
+head results/day3_chipseq/differential_peaks/WTS_vs_WT_all_results.tsv
+head results/day3_chipseq/differential_peaks/WT_specific_vs_DeltaHP1021.tsv
+head results/day3_chipseq/differential_peaks/WT_specific_treatment_responsive.tsv
+wc -l results/day3_chipseq/differential_peaks/*.bed
 ```
 
-A positive `log2FoldChange` means higher ChIP-seq occupancy in **stressed** samples; a negative value means higher occupancy in **control** samples.
+The pair-wise scatter plots are a direct signal sanity check: points above the diagonal have more normalized ChIP signal in WT than in the matched ΔHP1021 library. All six panels use the same x/y limits and a 1:1 aspect ratio, so their distances from the diagonal are visually comparable.
 
-The inferential model uses the original raw integer counts. The PCA in Section 8 uses normalized counts only for exploratory sample-level QC.
+PCA and the dispersion plot play the same diagnostic role as on Day 2 RNA-seq. PCA asks whether the samples show unexpected global structure before individual peaks are interpreted; the dispersion plot shows the DESeq2 mean-dispersion relationship used by the negative-binomial model.
 
-## 10. Minimal genomation profiles and heatmaps
+The first differential output, `WT_specific_vs_DeltaHP1021.bed`, contains consensus regions with significantly stronger occupancy in WT after accounting for treatment and replicate. The second, `WT_specific_treatment_responsive.bed`, is a **subset of the first** containing WT-specific regions that also change significantly between WT and WTS.
+
+These BED files are the two foreground sets used independently for FASTA extraction and STREME motif discovery. The corresponding TSV files retain the DESeq2 statistics required for inspection and downstream analysis.
+
+## 9. Minimal genomation profiles and heatmaps
 
 [`genomation`](https://bioconductor.org/packages/genomation) is a Bioconductor package for summarizing and visualizing genomic signal around sets of genomic intervals.
 
@@ -1653,12 +2000,12 @@ values  = CPM signal
 We make one metaplot and one heatmap for:
 
 - **all merged peaks**;
-- **significant differential peaks**, when present.
+- **WT-specific HP1021 peaks selected by DESeq2**, when present.
 
-Create `scripts/day3_chipseq/09_genomation_peak_profiles.R`:
+Create `scripts/day3_chipseq/08_genomation_peak_profiles.R`:
 
 ```bash
-nano scripts/day3_chipseq/09_genomation_peak_profiles.R
+nano scripts/day3_chipseq/08_genomation_peak_profiles.R
 ```
 
 Paste:
@@ -1672,7 +2019,7 @@ library(rtracklayer)
 
 peak_file <- "results/day3_chipseq/peaks/consensus/consensus_peaks.bed"
 bigwig_dir <- "results/day3_chipseq/bigwig"
-differential_file <- "results/day3_chipseq/differential_peaks/differential_peak_results.tsv"
+differential_file <- "results/day3_chipseq/differential_peaks/WT_specific_vs_DeltaHP1021.tsv"
 out_dir <- "results/day3_chipseq/genomation"
 genome_size <- 1696601L
 
@@ -1726,13 +2073,8 @@ multiHeatMatrix(
 dev.off()
 
 differential <- read.delim(differential_file)
-changed <- differential[
-  !is.na(differential$padj) &
-    differential$padj < 0.05 &
-    abs(differential$log2FoldChange) >= 1,
-]
-
-changed_windows <- windows[names(windows) %in% changed$peak_id]
+# This table is already the statistically selected WT-specific peak set.
+changed_windows <- windows[names(windows) %in% differential$peak_id]
 
 if (length(changed_windows) > 0) {
   changed_scores <- ScoreMatrixList(
@@ -1777,7 +2119,7 @@ docker run --rm \
   -v "$PWD:/work" \
   -w /work \
   docker.io/fgualdr/ngs-r-bioc \
-  Rscript scripts/day3_chipseq/09_genomation_peak_profiles.R
+  Rscript scripts/day3_chipseq/08_genomation_peak_profiles.R
 ```
 
 Check:
@@ -1788,7 +2130,7 @@ ls -lh results/day3_chipseq/genomation
 
 `rpm = FALSE` is intentional because the input bigWigs were already normalized to CPM. The metaplot shows the average signal shape across the selected peak set; the heatmap preserves peak-to-peak heterogeneity that the average hides.
 
-## 11. De novo motif discovery with STREME
+## 10. De novo motif discovery with STREME
 
 ChIP-seq tells us **where** a protein-associated enrichment occurs in the genome. Motif analysis asks a different question:
 
@@ -1806,7 +2148,7 @@ This makes motif discovery useful when:
 - we want to recover the expected motif without forcing the answer;
 - we want to detect additional motifs that could reflect cofactors or other sequence features associated with the peaks.
 
-### 11.1 What STREME is comparing
+### 10.1 What STREME is comparing
 
 STREME is a **discriminative motif finder**. It compares two groups of sequences:
 
@@ -1848,7 +2190,7 @@ flowchart TD
     test --> report
 ```
 
-### 11.2 From recurring words to a motif model
+### 10.2 From recurring words to a motif model
 
 STREME does not test only one exact DNA word. Conceptually, it proceeds from candidate sequence words toward a more flexible motif representation:
 
@@ -1865,7 +2207,7 @@ The familiar **sequence logo** is simply a graphical representation of the PWM. 
 A consensus such as `ACGTG` is a convenient summary, but the PWM contains more information. Two sites can both match the same motif even when their sequences are not identical.
 :::
 
-### 11.3 How STREME assesses significance
+### 10.3 How STREME assesses significance
 
 Finding a pattern in the same sequences used to discover it would make significance look artificially strong. STREME therefore separates motif discovery from motif evaluation.
 
@@ -1886,7 +2228,7 @@ The output can contain several related quantities:
 STREME needs enough sequences to reserve an independent hold-out set. With a small ChIP-seq peak set, it may report a **score** rather than a reliable motif p-value, or may not provide an E-value. In that situation, do not treat the numerical score as formal evidence of statistical significance. Inspect the motif, the number of supporting peak sequences, its positional behaviour and the underlying ChIP-seq evidence together.
 :::
 
-### 11.4 What a motif can and cannot tell us
+### 10.4 What a motif can and cannot tell us
 
 For a DNA-binding protein, recovery of a clear enriched motif can strengthen the interpretation that at least a subset of peaks represent sequence-specific binding. However, motif discovery does **not** prove that every ChIP-seq peak is a direct binding event.
 
@@ -1909,12 +2251,22 @@ The teaching question for this workshop is therefore:
 
 > Is there a recurring DNA pattern enriched in our merged ChIP-seq peak sequences relative to composition-matched shuffled versions of those same sequences?
 
-### 11.5 Extract DNA under the merged peaks
+### 10.5 Extract DNA from the two DESeq2-selected peak sets
 
-Create `scripts/day3_chipseq/10_extract_peak_sequences.sh`:
+We now perform motif discovery on **statistically selected biological peak sets**, not on the complete consensus. The two foregrounds answer different questions:
+
+```text
+WT_specific_vs_DeltaHP1021.bed
+    -> sequence features of WT-specific HP1021 occupancy
+
+WT_specific_treatment_responsive.bed
+    -> sequence features of WT-specific peaks that also change with treatment
+```
+
+Create `scripts/day3_chipseq/09_extract_peak_sequences.sh`:
 
 ```bash
-nano scripts/day3_chipseq/10_extract_peak_sequences.sh
+nano scripts/day3_chipseq/09_extract_peak_sequences.sh
 ```
 
 Paste:
@@ -1924,15 +2276,28 @@ Paste:
 set -euo pipefail
 
 genome="reference_genome/genome.fa"
-peaks="results/day3_chipseq/peaks/consensus/consensus_peaks.bed"
-out_fasta="results/day3_chipseq/motifs/consensus_peak_sequences.fa"
+peak_dir="results/day3_chipseq/differential_peaks"
+out_dir="results/day3_chipseq/motifs"
 
-mkdir -p results/day3_chipseq/motifs
+mkdir -p "${out_dir}"
 
-bedtools getfasta \
-  -fi "${genome}" \
-  -bed "${peaks}" \
-  -fo "${out_fasta}"
+for set in WT_specific_vs_DeltaHP1021 WT_specific_treatment_responsive; do
+  bed="${peak_dir}/${set}.bed"
+  fasta="${out_dir}/${set}.fa"
+
+  # Avoid carrying a stale FASTA forward if the current BED is empty.
+  rm -f "${fasta}"
+
+  [[ -s "${bed}" ]] || {
+    echo "WARNING: empty peak set: ${bed}" >&2
+    continue
+  }
+
+  bedtools getfasta \
+    -fi "${genome}" \
+    -bed "${bed}" \
+    -fo "${fasta}"
+done
 ```
 
 Run:
@@ -1943,23 +2308,23 @@ docker run --rm \
   -v "$PWD:/work" \
   -w /work \
   docker.io/fgualdr/ngs-bedtools \
-  bash scripts/day3_chipseq/10_extract_peak_sequences.sh
+  bash scripts/day3_chipseq/09_extract_peak_sequences.sh
 ```
 
 Check:
 
 ```bash
-head results/day3_chipseq/motifs/consensus_peak_sequences.fa
+grep -c '^>' results/day3_chipseq/motifs/*.fa
 ```
 
-At this point, each FASTA entry corresponds to one merged ChIP-seq interval. These sequences are the **primary set** that STREME will analyze.
+### 10.6 Run STREME separately on both peak sets
 
-### 11.6 Run STREME with its default DNA background
+Before running STREME, we require at least 10 peak sequences. Motif discovery from very small foreground sets is unstable: a pattern supported by only a few sequences can appear visually convincing but provide little evidence for a recurrent binding preference. Ten sequences is a pragmatic workshop safety threshold, not a universal statistical rule. Larger peak sets provide substantially more reliable motif inference. If a DESeq2-selected set contains fewer than 10 peaks, we report that result and do not force motif discovery.
 
-Create `scripts/day3_chipseq/11_run_streme.sh`:
+Create `scripts/day3_chipseq/10_run_streme.sh`:
 
 ```bash
-nano scripts/day3_chipseq/11_run_streme.sh
+nano scripts/day3_chipseq/10_run_streme.sh
 ```
 
 Paste:
@@ -1968,16 +2333,76 @@ Paste:
 #!/usr/bin/env bash
 set -euo pipefail
 
-fasta="results/day3_chipseq/motifs/consensus_peak_sequences.fa"
-out_dir="results/day3_chipseq/motifs/streme"
+motif_dir="results/day3_chipseq/motifs"
+streme_dir="${motif_dir}/streme"
+min_sequences=10
 
-streme \
-  --p "${fasta}" \
-  --dna \
-  --oc "${out_dir}"
+# STREME requires the parent output directory to exist
+mkdir -p "${streme_dir}"
+
+for set in WT_specific_vs_DeltaHP1021 WT_specific_treatment_responsive; do
+
+  fasta="${motif_dir}/${set}.fa"
+  out_dir="${streme_dir}/${set}"
+
+  echo
+  echo "===== ${set} ====="
+
+  # ----------------------------------------------------------
+  # Check that the FASTA exists and is not empty
+  # ----------------------------------------------------------
+
+  if [[ ! -s "${fasta}" ]]; then
+    echo "WARNING: ${fasta} does not exist or is empty."
+    echo "Skipping STREME for ${set}."
+    continue
+  fi
+
+  # ----------------------------------------------------------
+  # Count sequences
+  # ----------------------------------------------------------
+
+  n_sequences=$(grep -c '^>' "${fasta}" || true)
+
+  echo "FASTA sequences: ${n_sequences}"
+
+  # ----------------------------------------------------------
+  # Safety gate for very small foreground sets
+  # ----------------------------------------------------------
+
+  if (( n_sequences < min_sequences )); then
+    echo "WARNING: only ${n_sequences} sequences are available."
+    echo "At least ${min_sequences} are required for this workshop."
+    echo "Skipping STREME for ${set}."
+    continue
+  fi
+
+  # ----------------------------------------------------------
+  # Remove an old STREME result if the analysis is rerun
+  # ----------------------------------------------------------
+
+  if [[ -d "${out_dir}" ]]; then
+    echo "Removing previous STREME output: ${out_dir}"
+    rm -rf "${out_dir}"
+  fi
+
+  # ----------------------------------------------------------
+  # Run motif discovery
+  # ----------------------------------------------------------
+
+  echo "Running STREME..."
+
+  streme \
+    --p "${fasta}" \
+    --oc "${out_dir}" \
+    --dna
+
+  echo "STREME completed: ${out_dir}"
+
+done
 ```
 
-Run:
+Run with the workshop MEME Suite image:
 
 ```bash
 docker run --rm \
@@ -1985,16 +2410,19 @@ docker run --rm \
   -v "$PWD:/work" \
   -w /work \
   docker.io/fgualdr/ngs-streme \
-  bash scripts/day3_chipseq/11_run_streme.sh
+  bash scripts/day3_chipseq/10_run_streme.sh
 ```
 
-Inspect:
+The two reports should now be kept separate:
 
-```bash
-find results/day3_chipseq/motifs/streme -maxdepth 1 -type f | sort
+```text
+results/day3_chipseq/motifs/streme/WT_specific_vs_DeltaHP1021/streme.html              # if >=10 sequences
+results/day3_chipseq/motifs/streme/WT_specific_treatment_responsive/streme.html          # if >=10 sequences
 ```
 
-### 11.7 Read the STREME report
+Compare the motifs recovered from the broader WT-specific set with those recovered from the smaller treatment-responsive subset. A motif enriched in both sets may represent a general HP1021 sequence preference; a motif preferentially recovered from the treatment-responsive subset may point to sequence context associated with treatment-dependent occupancy.
+
+### 10.7 Read the STREME report
 
 Open `streme.html`. Do not stop at the sequence logo. For each reported motif, ask:
 
@@ -2021,43 +2449,46 @@ stronger support for a real binding model
 
 A motif is therefore **supporting evidence for a binding mechanism**, not an automatic annotation of every ChIP-seq peak as a direct binding site.
 
-## 12. Main outputs
+## 11. Main outputs
 
 ```text
 results/day3_chipseq/bam/*.filtered.bam
+results/day3_chipseq/bam/*.dedup.bam                         # optional sensitivity analysis
+results/day3_chipseq/qc/duplicates/duplicate_summary.tsv
 results/day3_chipseq/qc/phantom_peak/phantom_peak_summary.tsv
+results/day3_chipseq/qc/fragment_size/fragment_size_summary.tsv
 results/day3_chipseq/bigwig/*.cpm.bw
 results/day3_chipseq/peaks/no_input/*_peaks.narrowPeak
 results/day3_chipseq/peaks/wt_vs_delta/{untreated,treated}/*_peaks.narrowPeak
-results/day3_chipseq/idr/*.idr.narrowPeak
-results/day3_chipseq/idr/*.png
+results/day3_chipseq/qc/idr/wt_vs_delta/*.idr.narrowPeak
+results/day3_chipseq/qc/idr/wt_vs_delta/*.png
 results/day3_chipseq/qc/replicate_correlation/spearman_correlation.tsv
 results/day3_chipseq/qc/replicate_correlation/spearman_heatmap.pdf
 results/day3_chipseq/qc/replicate_correlation/spearman_scatter.pdf
-results/day3_chipseq/qc/frip/frip_summary.tsv
+results/day3_chipseq/qc/frip/wt_vs_delta/frip_summary.tsv
 results/day3_chipseq/peaks/consensus/consensus_peaks.bed
 results/day3_chipseq/peaks/consensus/day4_consensus_peaks.bed
 results/day3_chipseq/counts/consensus_peak_counts.tsv
-results/day3_chipseq/qc/peak_counts/pca.pdf
-results/day3_chipseq/qc/peak_counts/pca_scree.pdf
-results/day3_chipseq/qc/peak_counts/normalized_peak_counts.tsv
-results/day3_chipseq/qc/peak_counts/deseq2_size_factors.tsv
-results/day3_chipseq/differential_peaks/differential_peak_results.tsv
-results/day3_chipseq/differential_peaks/top_differential_peaks.tsv
-results/day3_chipseq/differential_peaks/significant_differential_peaks.bed
-results/day3_chipseq/differential_peaks/sample_design.csv
-results/day3_chipseq/differential_peaks/dispersion_plot.pdf
-results/day3_chipseq/differential_peaks/ma_plot.pdf
-results/day3_chipseq/differential_peaks/volcano.pdf
+results/day3_chipseq/qc/peak_counts/*.pdf
+results/day3_chipseq/deseq2/normalized_peak_counts.tsv
+results/day3_chipseq/deseq2/deseq2_size_factors.tsv
+results/day3_chipseq/deseq2/sessionInfo.txt
+results/day3_chipseq/differential_peaks/WT_vs_DeltaHP1021_all_results.tsv
+results/day3_chipseq/differential_peaks/WT_specific_vs_DeltaHP1021.tsv
+results/day3_chipseq/differential_peaks/WT_specific_vs_DeltaHP1021.bed
+results/day3_chipseq/differential_peaks/WT_specific_treatment_responsive.tsv
+results/day3_chipseq/differential_peaks/WT_specific_treatment_responsive.bed
 results/day3_chipseq/genomation/*.pdf
-results/day3_chipseq/motifs/consensus_peak_sequences.fa
-results/day3_chipseq/motifs/streme/streme.html
+results/day3_chipseq/motifs/WT_specific_vs_DeltaHP1021.fa
+results/day3_chipseq/motifs/WT_specific_treatment_responsive.fa
+results/day3_chipseq/motifs/streme/WT_specific_vs_DeltaHP1021/streme.html              # if >=10 sequences
+results/day3_chipseq/motifs/streme/WT_specific_treatment_responsive/streme.html          # if >=10 sequences
 results/logs/day3/
 ```
 
 Large BAM and bigWig files should remain outside Git. Commit scripts, small tables, logs, plots and documentation according to the repository `.gitignore`.
 
-## 13. Checkpoint route
+## 12. Checkpoint route
 
 If mapping or peak calling is too slow on a laptop, continue from checkpoint files generated against `GCF_025998455.1` and `NZ_AP026446.1`.
 
@@ -2068,7 +2499,7 @@ At minimum, record:
 - the reference assembly and annotation versions;
 - which downstream steps you executed yourself.
 
-## 14. Common problems
+## 13. Common problems
 
 | Symptom | Likely cause | Check |
 |---|---|---|
@@ -2076,9 +2507,11 @@ At minimum, record:
 | `samtools sort` rejects an option | `-b` was incorrectly added to `samtools sort` | use `-O BAM`; reserve `-b` for `samtools view` |
 | Phantom peak output is missing | container architecture, unwritable output path or missing `run_spp.R` | log files and explicit `-odir`/`-tmpdir` paths |
 | Flat bigWig | poor enrichment, wrong reference, low depth or incorrect BAM filtering | mapping summaries and IGV |
+| Bowtie2 reports many concordant multi-mappers | repetitive sequence or short/non-specific reads | Bowtie2 logs, MAPQ distribution and genomic context; do not equate `-F 256` with unique mapping |
+| Duplicate fraction is unusually high | PCR amplification, low library complexity or genuine very strong local enrichment | compare replicates, marked BAMs, bigWigs, peak spikes, IDR and FRiP before deciding whether to deduplicate |
 | MACS3 calls many isolated spikes | no external control, duplicates, repetitive sequence or noisy library | bigWig shape, cross-correlation and replicate agreement |
 | The WT-versus-ΔHP1021 MACS3 script cannot find a control BAM | S-treated versus untreated prefixes or ΔHP1021 Unicode filename do not match | check `ls results/day3_chipseq/bam/*filtered.bam` and the corresponding `WT`/`WTS` and `ΔHP1021`/`ΔHP1021S` pairs |
-| ΔHP1021 samples appear in the WT/WTS DESeq2 design | the count-matrix script used an unrestricted `*.filtered.bam` glob | use the explicit six-sample selection in Section 7 and regenerate the count table |
+| ΔHP1021/ΔHP1021S samples are missing from the consensus count matrix or PCA | the count-matrix step selected only WT/WTS BAMs | verify the explicit twelve-sample list in Section 7 and regenerate the count table |
 | IDR gives little discrimination or nearly everything passes | the single MACS3 peak lists may contain mostly strong peaks | peak counts, IDR plots and replicate signal in IGV |
 | Replicate correlation is unexpectedly low | one replicate has weak/noisy or systematically different genomic signal | Spearman scatter/heatmap, FRiP, bigWigs and mapping summaries |
 | FRiP is much lower in one replicate | less signal concentrated in called peaks, weak IP or higher background | peak number, bigWig shape, IDR and replicate correlation |
@@ -2088,14 +2521,14 @@ At minimum, record:
 | Genomation plots fail at chromosome ends | centred windows extend outside the chromosome | the boundary filter in the R script |
 | STREME has very few sequences | too few merged peaks or an empty BED/FASTA | `wc -l` and FASTA headers |
 
-## 15. Self-check questions
+## 14. Self-check questions
 
 1. Why is `-O BAM` appropriate for `samtools sort`, while `-b` belongs to `samtools view`?
 2. What biological structure creates the fragment-length cross-correlation peak?
 3. Why can a read-length phantom peak be misleading?
 4. Why does equal ChIP and input read depth not guarantee equally informative local background?
 5. What different artefacts are represented by input DNA and by a target-negative ChIP?
-6. Why must `WTS` be paired with `ΔHP1021S` rather than untreated `ΔHP1021` for the optional control-based peak calling? When would using ΔHP1021 as `-c` be invalid?
+6. Why must `WTS` be paired with `ΔHP1021S` rather than untreated `ΔHP1021` for the matched control-based peak calling? When would using the ΔHP1021 ChIP as `-c` be invalid?
 7. What does IDR measure that a simple overlap count does not?
 8. Why can IDR be less informative when we reuse one thresholded MACS3 peak list instead of a longer relaxed ranking?
 9. How is replicate signal correlation different from the strand cross-correlation used by `phantompeakqualtools`?
@@ -2103,11 +2536,11 @@ At minimum, record:
 11. Why do we build one common merged peak set before quantitative sample comparison?
 12. What does PCA add after pairwise replicate correlation has already been inspected?
 13. Why must DESeq2 receive the raw integer peak counts?
-14. Why is the DESeq2 model `~ conditions` rather than `~ replicates + conditions` in this experiment?
+14. Why is replicate used as a matched blocking factor in the Day 3 ChIP-seq peak-count model, while it was only an identifier in the Day 2 RNA-seq model? Why is the second-stage treatment test intentionally restricted to WT/WTS?
 15. What information is preserved in a genomation heatmap that is lost in a metaplot?
 16. What background does STREME use when no separate control FASTA is supplied?
 
-## 16. References and documentation
+## 15. References and documentation
 
 ### Alignment and BAM processing
 
@@ -2139,7 +2572,6 @@ At minimum, record:
 ### Replicate reproducibility / IDR
 
 - Kundaje Lab IDR implementation: <https://github.com/kundajelab/idr>
-- Bioconda/Biocontainers `idr` 2.0.4.2, used here as `quay.io/biocontainers/idr:2.0.4.2--py39h031d066_12`: <https://bioconda.github.io/recipes/idr/README.html>
 - Li Q, Brown JB, Huang H, Bickel PJ. *Measuring reproducibility of high-throughput experiments.* Annals of Applied Statistics. 2011;5:1752–1779. <https://doi.org/10.1214/11-AOAS466>
 
 ### Genomic intervals, differential analysis, visualization and motifs

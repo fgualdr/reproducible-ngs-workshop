@@ -156,7 +156,46 @@ docker buildx build \
   --push \
   .
 
+echo "===== Building docker.io/fgualdr/ngs-dupradar:latest ====="
+docker buildx build \
+  --builder multiarch \
+  --platform linux/amd64,linux/arm64 \
+  --pull \
+  -f Docker_files/Dockerfile.dupradar \
+  -t docker.io/fgualdr/ngs-dupradar:latest \
+  --push \
+  .
+
+echo "===== Building docker.io/fgualdr/ngs-phantompeakqualtools:latest ====="
+docker buildx build \
+  --builder multiarch \
+  --platform linux/amd64,linux/arm64 \
+  --pull \
+  -f Docker_files/Dockerfile.phantompeakqualtools \
+  -t docker.io/fgualdr/ngs-phantompeakqualtools:latest \
+  --push \
+  .
+
+echo "===== Building docker.io/fgualdr/ngs-idr:latest ====="
+docker buildx build \
+  --builder multiarch \
+  --platform linux/amd64,linux/arm64 \
+  --pull \
+  -f Docker_files/Dockerfile.idr \
+  -t docker.io/fgualdr/ngs-idr:latest \
+  --push \
+  .
+
+
+
 echo "===== Inspecting manifests ====="
+
+docker buildx imagetools inspect docker.io/fgualdr/ngs-phantompeakqualtools:latest
+
+docker buildx imagetools inspect docker.io/fgualdr/ngs-idr:latest
+
+docker buildx imagetools inspect docker.io/fgualdr/ngs-dupradar:latest
+
 docker buildx imagetools inspect docker.io/fgualdr/ngs-curl:latest
 
 docker buildx imagetools inspect docker.io/fgualdr/ngs-sra-tools:latest

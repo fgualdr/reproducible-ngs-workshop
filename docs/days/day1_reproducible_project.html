@@ -307,11 +307,37 @@ window.Quarto = {
   <li><a href="#before-we-start" id="toc-before-we-start" class="nav-link active" data-scroll-target="#before-we-start">1. Before we start</a></li>
   <li><a href="#overview" id="toc-overview" class="nav-link" data-scroll-target="#overview">2. Overview</a></li>
   <li><a href="#reproducibility-in-bioinformatics" id="toc-reproducibility-in-bioinformatics" class="nav-link" data-scroll-target="#reproducibility-in-bioinformatics">3. Reproducibility in bioinformatics</a></li>
-  <li><a href="#git-and-github" id="toc-git-and-github" class="nav-link" data-scroll-target="#git-and-github">4. Git and GitHub</a></li>
-  <li><a href="#docker-and-docker-hub" id="toc-docker-and-docker-hub" class="nav-link" data-scroll-target="#docker-and-docker-hub">5. Docker and Docker Hub</a></li>
-  <li><a href="#reference-based-ngs-analysis" id="toc-reference-based-ngs-analysis" class="nav-link" data-scroll-target="#reference-based-ngs-analysis">6. Reference-based NGS analysis</a></li>
-  <li><a href="#from-illumina-bcl-files-to-fastq-files" id="toc-from-illumina-bcl-files-to-fastq-files" class="nav-link" data-scroll-target="#from-illumina-bcl-files-to-fastq-files">7. From Illumina BCL files to FASTQ files</a></li>
-  <li><a href="#fastq-preprocessing-and-quality-assessment-with-fastp" id="toc-fastq-preprocessing-and-quality-assessment-with-fastp" class="nav-link" data-scroll-target="#fastq-preprocessing-and-quality-assessment-with-fastp">8. FASTQ preprocessing and quality assessment with fastp</a></li>
+  <li><a href="#git-and-github" id="toc-git-and-github" class="nav-link" data-scroll-target="#git-and-github">4. Git and GitHub</a>
+  <ul class="collapse">
+  <li><a href="#create-and-initialize-git-locally" id="toc-create-and-initialize-git-locally" class="nav-link" data-scroll-target="#create-and-initialize-git-locally">4.1 Create and initialize Git locally</a></li>
+  <li><a href="#create-an-empty-github-repository" id="toc-create-an-empty-github-repository" class="nav-link" data-scroll-target="#create-an-empty-github-repository">4.2 Create an empty GitHub repository</a></li>
+  <li><a href="#first-git-commit" id="toc-first-git-commit" class="nav-link" data-scroll-target="#first-git-commit">4.3 First Git commit</a></li>
+  </ul></li>
+  <li><a href="#docker-and-docker-hub" id="toc-docker-and-docker-hub" class="nav-link" data-scroll-target="#docker-and-docker-hub">5. Docker and Docker Hub</a>
+  <ul class="collapse">
+  <li><a href="#test-docker" id="toc-test-docker" class="nav-link" data-scroll-target="#test-docker">5.1 Test Docker</a></li>
+  </ul></li>
+  <li><a href="#reference-based-ngs-analysis" id="toc-reference-based-ngs-analysis" class="nav-link" data-scroll-target="#reference-based-ngs-analysis">6. Reference-based NGS analysis</a>
+  <ul class="collapse">
+  <li><a href="#reference-genome-fasta" id="toc-reference-genome-fasta" class="nav-link" data-scroll-target="#reference-genome-fasta">6.1 Reference genome FASTA</a></li>
+  <li><a href="#annotation-files-gff3-and-gtf" id="toc-annotation-files-gff3-and-gtf" class="nav-link" data-scroll-target="#annotation-files-gff3-and-gtf">6.2 Annotation files: GFF3 and GTF</a></li>
+  <li><a href="#download-reference-genome-and-annotation" id="toc-download-reference-genome-and-annotation" class="nav-link" data-scroll-target="#download-reference-genome-and-annotation">6.3 Download reference genome and annotation</a></li>
+  <li><a href="#read-the-first-bash-script" id="toc-read-the-first-bash-script" class="nav-link" data-scroll-target="#read-the-first-bash-script">6.4 Read the first Bash script</a></li>
+  <li><a href="#check-the-network-and-run-the-reference-download" id="toc-check-the-network-and-run-the-reference-download" class="nav-link" data-scroll-target="#check-the-network-and-run-the-reference-download">6.5 Check the network and run the reference download</a></li>
+  </ul></li>
+  <li><a href="#from-illumina-bcl-files-to-fastq-files" id="toc-from-illumina-bcl-files-to-fastq-files" class="nav-link" data-scroll-target="#from-illumina-bcl-files-to-fastq-files">7. From Illumina BCL files to FASTQ files</a>
+  <ul class="collapse">
+  <li><a href="#fastq-structure-and-read-identifiers" id="toc-fastq-structure-and-read-identifiers" class="nav-link" data-scroll-target="#fastq-structure-and-read-identifiers">7.1 FASTQ structure and read identifiers</a></li>
+  <li><a href="#public-archives-we-will-browse-together" id="toc-public-archives-we-will-browse-together" class="nav-link" data-scroll-target="#public-archives-we-will-browse-together">7.2 Public archives we will browse together</a></li>
+  <li><a href="#arrayexpress-collection-in-biostudies-ena-route" id="toc-arrayexpress-collection-in-biostudies-ena-route" class="nav-link" data-scroll-target="#arrayexpress-collection-in-biostudies-ena-route">7.3 ArrayExpress collection in BioStudies + ENA route</a></li>
+  <li><a href="#optional-geosra-route-retrieve-the-same-data-with-fasterq-dump" id="toc-optional-geosra-route-retrieve-the-same-data-with-fasterq-dump" class="nav-link" data-scroll-target="#optional-geosra-route-retrieve-the-same-data-with-fasterq-dump">7.4 Optional GEO/SRA route: retrieve the same data with <code>fasterq-dump</code></a></li>
+  </ul></li>
+  <li><a href="#fastq-preprocessing-and-quality-assessment-with-fastp" id="toc-fastq-preprocessing-and-quality-assessment-with-fastp" class="nav-link" data-scroll-target="#fastq-preprocessing-and-quality-assessment-with-fastp">8. FASTQ preprocessing and quality assessment with fastp</a>
+  <ul class="collapse">
+  <li><a href="#run-fastp" id="toc-run-fastp" class="nav-link" data-scroll-target="#run-fastp">8.1 Run fastp</a></li>
+  <li><a href="#run-the-script-in-docker" id="toc-run-the-script-in-docker" class="nav-link" data-scroll-target="#run-the-script-in-docker">8.2 Run the script in Docker</a></li>
+  <li><a href="#open-and-interpret-the-fastp-reports" id="toc-open-and-interpret-the-fastp-reports" class="nav-link" data-scroll-target="#open-and-interpret-the-fastp-reports">8.3 Open and interpret the fastp reports</a></li>
+  </ul></li>
   <li><a href="#expected-outputs" id="toc-expected-outputs" class="nav-link" data-scroll-target="#expected-outputs">9. Expected outputs</a></li>
   <li><a href="#final-commit-of-day-1" id="toc-final-commit-of-day-1" class="nav-link" data-scroll-target="#final-commit-of-day-1">10. Final Commit of Day 1</a></li>
   <li><a href="#common-problems" id="toc-common-problems" class="nav-link" data-scroll-target="#common-problems">11. Common problems</a></li>
@@ -427,7 +453,7 @@ window.Quarto = {
 <p>The RNA-seq dataset is <strong>rRNA-depleted, directional prokaryotic RNA-seq</strong>, sequenced as <strong>150-bp paired-end reads (PE150; 2 × 150 bp)</strong>. The <a href="https://www.nature.com/articles/s41467-023-42364-6">publication’s library-preparation methods</a> describe rRNA removal and dUTP/USER-based strand-selective library construction. This information affects how we interpret residual rRNA and, on Day 2, which strandedness setting we use for gene counting.</p>
 </div>
 </div>
-<p>The full publication analysis is more complex than this workshop workflow. Our small subset captures the main logic of the published analysis, but it is simplified for laptop-scale execution.</p>
+<p>The full publication analysis is more complex than this workshop workflow. We retain the complete WT/WTS and ΔHP1021/ΔHP1021S sample design used in the workshop, while simplifying the downstream analysis for laptop-scale execution.</p>
 </section>
 <section id="reproducibility-in-bioinformatics" class="level2">
 <h2 class="anchored" data-anchor-id="reproducibility-in-bioinformatics">3. Reproducibility in bioinformatics</h2>
@@ -522,8 +548,8 @@ window.Quarto = {
 </ul>
 <p>Git should not be used as storage for large sequencing data. FASTQ, BAM, BAI, bigWig, SRA files, large archives, and generated indices should be ignored.</p>
 <p>During this lesson, you will use your GitHub account to create an empty personal repository for the workshop.</p>
-<section id="create-and-initialize-git-locally" class="level4">
-<h4 class="anchored" data-anchor-id="create-and-initialize-git-locally">4.1 Create and initialize Git locally</h4>
+<section id="create-and-initialize-git-locally" class="level3">
+<h3 class="anchored" data-anchor-id="create-and-initialize-git-locally">4.1 Create and initialize Git locally</h3>
 <p>From the terminal, make sure you are in your local workshop folder:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ~/workshop_ngs</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">pwd</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -535,8 +561,8 @@ window.Quarto = {
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> config <span class="at">--global</span> user.email <span class="st">"your.email@example.com"</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> config <span class="at">--global</span> init.defaultBranch main</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="create-an-empty-github-repository" class="level4">
-<h4 class="anchored" data-anchor-id="create-an-empty-github-repository">4.2 Create an empty GitHub repository</h4>
+<section id="create-an-empty-github-repository" class="level3">
+<h3 class="anchored" data-anchor-id="create-an-empty-github-repository">4.2 Create an empty GitHub repository</h3>
 <p>Before connecting your local folder to GitHub, create an empty repository in your GitHub account.</p>
 <p>In your browser:</p>
 <ol type="1">
@@ -560,8 +586,8 @@ window.Quarto = {
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> remote add origin https://github.com/YOUR_USERNAME/workshop_ngs.git</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> remote <span class="at">-v</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="first-git-commit" class="level4">
-<h4 class="anchored" data-anchor-id="first-git-commit">4.3 First Git commit</h4>
+<section id="first-git-commit" class="level3">
+<h3 class="anchored" data-anchor-id="first-git-commit">4.3 First Git commit</h3>
 <p>The first commit will be made after we create the project folders, the <code>.gitignore</code>, and a <code>README</code> file. This way Git starts by recording the intended repository structure rather than an empty folder.</p>
 <p>The <code>.gitignore</code> file is a hidden text file that tells Git which files should not be tracked or uploaded to GitHub. In this workshop, GitHub stores the reproducible record of the analysis: scripts, metadata, notes, small tables, figures, logs, and documentation. It is not used as storage for large sequencing or alignment files.</p>
 <p>NGS analyses often generate large FASTQ, BAM, bigWig, index, and temporary files. These files can quickly exceed practical GitHub storage limits and make repositories slow or difficult to clone. Larger project-related files are usually shared through other systems, such as institutional storage, shared drives, Zenodo, OSF, Figshare, or public sequencing archives. Those options are useful, but they are outside the scope of this workshop.</p>
@@ -691,8 +717,8 @@ Figure&nbsp;1: Container concept
 </ul>
 <p>Image tags are useful human-readable labels, but tags such as <code>latest</code> are mutable: the same command can download different content later. Workshop commands therefore use <code>image@sha256:...</code>. The digest is long because it is a content identity, not a nickname. The release inventory is recorded in <code>Docker_files/images.lock.tsv</code> in the course repository.</p>
 <p>Before running analysis images, we will run a small Docker test again together. This assumes that your terminal is already in the <code>workshop_ngs</code> repository root.</p>
-<section id="test-docker" class="level4">
-<h4 class="anchored" data-anchor-id="test-docker">5.1 Test Docker</h4>
+<section id="test-docker" class="level3">
+<h3 class="anchored" data-anchor-id="test-docker">5.1 Test Docker</h3>
 <p>Mount the whole repository into the container and write a test file back into the repository:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--user</span> <span class="st">"</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-u</span><span class="va">)</span><span class="st">:</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-g</span><span class="va">)</span><span class="st">"</span> <span class="dt">\</span></span>
@@ -741,8 +767,8 @@ Figure&nbsp;1: Container concept
       -&gt; ChIP-seq coverage tracks, peak calls, and motifs</code></pre>
 <p>The reference genome FASTA defines the coordinate system. The annotation GFF3/GTF defines gene and feature coordinates. If the FASTA and annotation come from different assemblies or use different sequence names, mapping, counting, and peak-to-gene integration can fail or silently become wrong.</p>
 <p>This is why inputs/provenance are a separate reproducibility component: identical code, parameters, and container images can produce different coordinates and counts when the reference assembly or annotation changes.</p>
-<section id="reference-genome-fasta" class="level4">
-<h4 class="anchored" data-anchor-id="reference-genome-fasta">6.1 Reference genome FASTA</h4>
+<section id="reference-genome-fasta" class="level3">
+<h3 class="anchored" data-anchor-id="reference-genome-fasta">6.1 Reference genome FASTA</h3>
 <p>A FASTA file is a plain text file. Each sequence starts with a header line beginning with <code>&gt;</code>, followed by one or more lines of DNA sequence:</p>
 <pre class="text"><code>&gt;chr1
 ATGCGTACGTTAGCTAGCTAGCTAACGATCGATCGATCG...
@@ -751,8 +777,8 @@ CGATCGATTTAGCTAGCATCGATCGATCGTACGATCGTA...
 TTGACGATCGATCGATCGTAGCTAGCTAGCTAACGATCA...</code></pre>
 <p>For a human reference genome, headers may look like <code>&gt;chr1</code>, <code>&gt;chr2</code>, <code>&gt;chrX</code>, and so on. For a bacterial genome such as <em>H. pylori</em>, there may be one main chromosome sequence and sometimes plasmid sequences. The exact names must match the annotation file. In this workshop, the chromosome name is <code>NZ_AP026446.1</code>; any different sequence accession belongs to another coordinate system and must not be mixed into the workflow.</p>
 </section>
-<section id="annotation-files-gff3-and-gtf" class="level4">
-<h4 class="anchored" data-anchor-id="annotation-files-gff3-and-gtf">6.2 Annotation files: GFF3 and GTF</h4>
+<section id="annotation-files-gff3-and-gtf" class="level3">
+<h3 class="anchored" data-anchor-id="annotation-files-gff3-and-gtf">6.2 Annotation files: GFF3 and GTF</h3>
 <p>Annotation files are also plain text, but they are tab-separated tables. Each row describes one genomic feature on the FASTA coordinate system:</p>
 <pre class="text"><code>seqid        source  type  start  end   score  strand  phase  attributes
 chr1         RefSeq  gene  1000   2500  .      +       .      ID=geneA;Name=geneA
@@ -794,8 +820,8 @@ NZ_AP026446.1  RefSeq  CDS   1500  2400  .  -  0  ID=cds-example;Parent=gene-exa
 <p>Annotation files can be complicated to handle by hand. In this workshop, we use standard GFF3/GTF files and let tools read them for us. Aligners place reads on FASTA coordinates, <code>featureCounts</code> uses the annotation to count RNA-seq reads over genes or CDS features, and integration steps compare ChIP-seq peaks with nearby annotated genes.</p>
 <p>For this bacterial workshop, we use matched NCBI reference genome and annotation files stored under <code>reference_genome/</code>.</p>
 </section>
-<section id="download-reference-genome-and-annotation" class="level4">
-<h4 class="anchored" data-anchor-id="download-reference-genome-and-annotation">6.3 Download reference genome and annotation</h4>
+<section id="download-reference-genome-and-annotation" class="level3">
+<h3 class="anchored" data-anchor-id="download-reference-genome-and-annotation">6.3 Download reference genome and annotation</h3>
 <p>We will first browse the reference source together:</p>
 <ul>
 <li>NCBI assembly page: <a href="https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_025998455.1/">GCF_025998455.1</a></li>
@@ -815,8 +841,8 @@ NZ_AP026446.1  RefSeq  CDS   1500  2400  .  -  0  ID=cds-example;Parent=gene-exa
 <p>All workshop counts, BAM files, bigWigs, peaks, motifs, and integration tables are regenerated after mapping the raw FASTQ files to <code>GCF_025998455.1</code>. Do not reuse processed coordinates or count tables produced with another assembly.</p>
 </div>
 </div>
-<section id="what-is-a-bed12-file" class="level5">
-<h5 class="anchored" data-anchor-id="what-is-a-bed12-file">What is a BED12 file?</h5>
+<section id="what-is-a-bed12-file" class="level4">
+<h4 class="anchored" data-anchor-id="what-is-a-bed12-file">What is a BED12 file?</h4>
 <p>BED is a tab-separated format for describing genomic intervals. The first six BED12 columns locate and identify a feature; the final six describe how that feature is drawn and how it is divided into blocks such as exons:</p>
 <pre class="text"><code>location and identity
 chrom  chromStart  chromEnd  name  score  strand
@@ -947,8 +973,8 @@ NZ_AP026446.1  1499  2400  gene-example  0  -  1499  2400  0  1  901  0</code></
 <span id="cb25-73"><a href="#cb25-73" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"Reference bundle ready in </span><span class="va">${out_dir}</span><span class="st">"</span> <span class="kw">|</span> <span class="fu">tee</span> <span class="at">-a</span> <span class="st">"</span><span class="va">${log_file}</span><span class="st">"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 </section>
-<section id="read-the-first-bash-script" class="level4">
-<h4 class="anchored" data-anchor-id="read-the-first-bash-script">6.4 Read the first Bash script</h4>
+<section id="read-the-first-bash-script" class="level3">
+<h3 class="anchored" data-anchor-id="read-the-first-bash-script">6.4 Read the first Bash script</h3>
 <p>Bash is a command-line interpreter: it reads commands from the terminal or from a script file and runs them in order. This reference script shows one explicit download command for each source file: the genome FASTA, GFF3 annotation, and GTF annotation. Each compressed download is decompressed immediately. The script derives the BED12 gene model needed by RSeQC, records SHA-256 checksums and the UTC download time, and writes the assembly identity to <code>REFERENCE.md</code>.</p>
 <table class="caption-top table">
 <colgroup>
@@ -1016,8 +1042,8 @@ NZ_AP026446.1  1499  2400  gene-example  0  -  1499  2400  0  1  901  0</code></
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">--help</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gzip</span> <span class="at">--help</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="check-the-network-and-run-the-reference-download" class="level4">
-<h4 class="anchored" data-anchor-id="check-the-network-and-run-the-reference-download">6.5 Check the network and run the reference download</h4>
+<section id="check-the-network-and-run-the-reference-download" class="level3">
+<h3 class="anchored" data-anchor-id="check-the-network-and-run-the-reference-download">6.5 Check the network and run the reference download</h3>
 <p>Use the same Bash terminal for these commands on both supported platforms:</p>
 <ul>
 <li><strong>macOS:</strong> VS Code terminal or Terminal;</li>
@@ -1123,8 +1149,8 @@ Figure&nbsp;2: Illumina indexed paired-end sequencing workflow showing Read 1, i
 sample_A_R2.fastq.gz   read 2 sequences from the opposite end</code></pre>
 <p>For each fragment, the R1 and R2 records should remain synchronized: record 1 in the R1 file corresponds to record 1 in the R2 file. Trimming and mapping tools therefore need both files together for paired-end data.</p>
 <p>FASTQ files are often called “raw data” in public repositories, but they are already processed outputs of base calling and demultiplexing.</p>
-<section id="fastq-structure-and-read-identifiers" class="level4">
-<h4 class="anchored" data-anchor-id="fastq-structure-and-read-identifiers">7.1 FASTQ structure and read identifiers</h4>
+<section id="fastq-structure-and-read-identifiers" class="level3">
+<h3 class="anchored" data-anchor-id="fastq-structure-and-read-identifiers">7.1 FASTQ structure and read identifiers</h3>
 <p>Each FASTQ read has four lines:</p>
 <pre class="text"><code>@read_identifier
 ACGT...
@@ -1183,8 +1209,8 @@ Q = -10 \log_{10}(p)
 <p>where (p) is the estimated probability of an incorrect base call. Q30 means an approximate error probability of 0.001.</p>
 <p>FASTQ files may be single-end or paired-end. Paired-end libraries have read 1 and read 2 files, usually named with <code>_R1</code> and <code>_R2</code> or <code>_1</code> and <code>_2</code>. Files are usually compressed as <code>.fastq.gz</code>.</p>
 </section>
-<section id="public-archives-we-will-browse-together" class="level4">
-<h4 class="anchored" data-anchor-id="public-archives-we-will-browse-together">7.2 Public archives we will browse together</h4>
+<section id="public-archives-we-will-browse-together" class="level3">
+<h3 class="anchored" data-anchor-id="public-archives-we-will-browse-together">7.2 Public archives we will browse together</h3>
 <p>There are several routes from a paper or accession to FASTQ files. We will look at these together in the browser:</p>
 <ul>
 <li>NCBI GEO metadata and processed data, linked to raw high-throughput sequencing reads in SRA: <a href="https://www.ncbi.nlm.nih.gov/geo/" class="uri">https://www.ncbi.nlm.nih.gov/geo/</a></li>
@@ -1226,18 +1252,18 @@ Q = -10 \log_{10}(p)
 </table>
 <p>For the main workshop, we use the <strong>ArrayExpress collection in BioStudies + ENA</strong> route because it is easier to explain and easier to script.</p>
 </section>
-<section id="arrayexpress-collection-in-biostudies-ena-route" class="level4">
-<h4 class="anchored" data-anchor-id="arrayexpress-collection-in-biostudies-ena-route">7.3 ArrayExpress collection in BioStudies + ENA route</h4>
+<section id="arrayexpress-collection-in-biostudies-ena-route" class="level3">
+<h3 class="anchored" data-anchor-id="arrayexpress-collection-in-biostudies-ena-route">7.3 ArrayExpress collection in BioStudies + ENA route</h3>
 <p>For this workshop, BioStudies supplies the ArrayExpress study records and SDRF metadata; the linked ENA records supply the run accessions and FASTQ URLs that we need.</p>
 <p>One script performs the complete retrieval step:</p>
 <pre class="text"><code>download original SDRFs
-  -&gt; retain the WT samples
+  -&gt; retain all samples in the experimental design
   -&gt; add HTTPS_FASTQ_URI and FASTQ_NAME columns
   -&gt; download and rename the FASTQ files
   -&gt; write a metadata provenance record and log</code></pre>
 <p>The two modified metadata tables are <code>RNAseq_metadata.txt</code> and <code>Chipseq_metadata.txt</code>. They contain the sample information and FASTQ filenames used throughout the rest of the workshop.</p>
-<section id="create-the-combined-metadata-and-fastq-script" class="level5">
-<h5 class="anchored" data-anchor-id="create-the-combined-metadata-and-fastq-script">Create the combined metadata and FASTQ script</h5>
+<section id="create-the-combined-metadata-and-fastq-script" class="level4">
+<h4 class="anchored" data-anchor-id="create-the-combined-metadata-and-fastq-script">Create the combined metadata and FASTQ script</h4>
 <p>Open the study pages together:</p>
 <ul>
 <li>RNA-seq: <a href="https://www.ebi.ac.uk/biostudies/ArrayExpress/studies/E-MTAB-13025?query=E-MTAB-13025#mt-E-MTAB-13025"><code>E-MTAB-13025</code></a></li>
@@ -1279,183 +1305,188 @@ Q = -10 \log_{10}(p)
 <span id="cb39-31"><a href="#cb39-31" aria-hidden="true" tabindex="-1"></a>  <span class="at">-o</span> raw_data/metadata/E-MTAB-13025.sdrf.txt</span>
 <span id="cb39-32"><a href="#cb39-32" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb39-33"><a href="#cb39-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-34"><a href="#cb39-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep only WT samples</span></span>
-<span id="cb39-35"><a href="#cb39-35" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-v</span> <span class="st">"ΔHP1021"</span> <span class="dt">\</span></span>
-<span id="cb39-36"><a href="#cb39-36" aria-hidden="true" tabindex="-1"></a>  raw_data/metadata/E-MTAB-13025.sdrf.txt <span class="dt">\</span></span>
-<span id="cb39-37"><a href="#cb39-37" aria-hidden="true" tabindex="-1"></a>  <span class="op">&gt;</span> raw_data/metadata/RNAseq_metadata.tmp</span>
+<span id="cb39-34"><a href="#cb39-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep the complete RNA-seq design, including ΔHP1021 samples</span></span>
+<span id="cb39-35"><a href="#cb39-35" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> raw_data/metadata/E-MTAB-13025.sdrf.txt <span class="dt">\</span></span>
+<span id="cb39-36"><a href="#cb39-36" aria-hidden="true" tabindex="-1"></a>  raw_data/metadata/RNAseq_metadata.tmp</span>
+<span id="cb39-37"><a href="#cb39-37" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb39-38"><a href="#cb39-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-39"><a href="#cb39-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-40"><a href="#cb39-40" aria-hidden="true" tabindex="-1"></a><span class="co"># Add two new columns:</span></span>
-<span id="cb39-41"><a href="#cb39-41" aria-hidden="true" tabindex="-1"></a><span class="co"># HTTPS_FASTQ_URI = FASTQ address converted from ftp:// to https://</span></span>
-<span id="cb39-42"><a href="#cb39-42" aria-hidden="true" tabindex="-1"></a><span class="co"># FASTQ_NAME      = simplified name such as WT_1_R1.fastq.gz</span></span>
-<span id="cb39-43"><a href="#cb39-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-44"><a href="#cb39-44" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span> <span class="at">-n</span> 1 raw_data/metadata/RNAseq_metadata.tmp <span class="kw">|</span></span>
-<span id="cb39-45"><a href="#cb39-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sed</span> <span class="st">$'s/$/</span><span class="dt">\t</span><span class="st">HTTPS_FASTQ_URI</span><span class="dt">\t</span><span class="st">FASTQ_NAME/'</span> <span class="dt">\</span></span>
-<span id="cb39-46"><a href="#cb39-46" aria-hidden="true" tabindex="-1"></a>  <span class="op">&gt;</span> raw_data/metadata/RNAseq_metadata.txt</span>
+<span id="cb39-39"><a href="#cb39-39" aria-hidden="true" tabindex="-1"></a><span class="co"># Add two new columns:</span></span>
+<span id="cb39-40"><a href="#cb39-40" aria-hidden="true" tabindex="-1"></a><span class="co"># HTTPS_FASTQ_URI = FASTQ address converted from ftp:// to https://</span></span>
+<span id="cb39-41"><a href="#cb39-41" aria-hidden="true" tabindex="-1"></a><span class="co"># FASTQ_NAME      = simplified name such as WT_1_R1.fastq.gz</span></span>
+<span id="cb39-42"><a href="#cb39-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-43"><a href="#cb39-43" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span> <span class="at">-n</span> 1 raw_data/metadata/RNAseq_metadata.tmp <span class="kw">|</span></span>
+<span id="cb39-44"><a href="#cb39-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sed</span> <span class="st">$'s/$/</span><span class="dt">\t</span><span class="st">HTTPS_FASTQ_URI</span><span class="dt">\t</span><span class="st">FASTQ_NAME/'</span> <span class="dt">\</span></span>
+<span id="cb39-45"><a href="#cb39-45" aria-hidden="true" tabindex="-1"></a>  <span class="op">&gt;</span> raw_data/metadata/RNAseq_metadata.txt</span>
+<span id="cb39-46"><a href="#cb39-46" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb39-47"><a href="#cb39-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-48"><a href="#cb39-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-49"><a href="#cb39-49" aria-hidden="true" tabindex="-1"></a><span class="fu">tail</span> <span class="at">-n</span> +2 raw_data/metadata/RNAseq_metadata.tmp <span class="kw">|</span></span>
-<span id="cb39-50"><a href="#cb39-50" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="va">IFS</span><span class="op">=</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">line</span><span class="kw">;</span> <span class="cf">do</span></span>
-<span id="cb39-51"><a href="#cb39-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-52"><a href="#cb39-52" aria-hidden="true" tabindex="-1"></a>  <span class="va">sample</span><span class="op">=</span><span class="va">$(</span><span class="bu">printf</span> <span class="st">'%s\n'</span> <span class="st">"</span><span class="va">${line}</span><span class="st">"</span> <span class="kw">|</span> <span class="fu">cut</span> <span class="at">-d</span> <span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="at">-f1</span><span class="va">)</span></span>
-<span id="cb39-53"><a href="#cb39-53" aria-hidden="true" tabindex="-1"></a>  <span class="va">url</span><span class="op">=</span><span class="va">$(</span><span class="bu">printf</span> <span class="st">'%s\n'</span> <span class="st">"</span><span class="va">${line}</span><span class="st">"</span> <span class="kw">|</span> <span class="fu">cut</span> <span class="at">-d</span> <span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="at">-f32</span> <span class="kw">|</span> <span class="fu">tr</span> <span class="at">-d</span> <span class="st">'\r'</span><span class="va">)</span></span>
-<span id="cb39-54"><a href="#cb39-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-55"><a href="#cb39-55" aria-hidden="true" tabindex="-1"></a>  <span class="co"># ftp://... -&gt; https://...</span></span>
-<span id="cb39-56"><a href="#cb39-56" aria-hidden="true" tabindex="-1"></a>  <span class="va">url</span><span class="op">=</span><span class="st">"https://</span><span class="va">${url</span><span class="op">#</span>ftp://<span class="va">}</span><span class="st">"</span></span>
-<span id="cb39-57"><a href="#cb39-57" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-58"><a href="#cb39-58" aria-hidden="true" tabindex="-1"></a>  <span class="co"># ERR11479310_1.fastq.gz -&gt; 1</span></span>
-<span id="cb39-59"><a href="#cb39-59" aria-hidden="true" tabindex="-1"></a>  <span class="va">filename</span><span class="op">=</span><span class="st">"</span><span class="va">${url</span><span class="op">##</span><span class="pp">*</span>/<span class="va">}</span><span class="st">"</span></span>
-<span id="cb39-60"><a href="#cb39-60" aria-hidden="true" tabindex="-1"></a>  <span class="va">mate</span><span class="op">=</span><span class="st">"</span><span class="va">${filename</span><span class="op">%</span>.fastq.gz<span class="va">}</span><span class="st">"</span></span>
-<span id="cb39-61"><a href="#cb39-61" aria-hidden="true" tabindex="-1"></a>  <span class="va">mate</span><span class="op">=</span><span class="st">"</span><span class="va">${mate</span><span class="op">##</span><span class="pp">*</span>_<span class="va">}</span><span class="st">"</span></span>
-<span id="cb39-62"><a href="#cb39-62" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-63"><a href="#cb39-63" aria-hidden="true" tabindex="-1"></a>  <span class="co"># WT_1 + 1 -&gt; WT_1_R1.fastq.gz</span></span>
-<span id="cb39-64"><a href="#cb39-64" aria-hidden="true" tabindex="-1"></a>  <span class="va">fastq_name</span><span class="op">=</span><span class="st">"</span><span class="va">${sample}</span><span class="st">_R</span><span class="va">${mate}</span><span class="st">.fastq.gz"</span></span>
-<span id="cb39-65"><a href="#cb39-65" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-66"><a href="#cb39-66" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">'%s\t%s\t%s\n'</span> <span class="dt">\</span></span>
-<span id="cb39-67"><a href="#cb39-67" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span><span class="va">${line}</span><span class="st">"</span> <span class="dt">\</span></span>
-<span id="cb39-68"><a href="#cb39-68" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span><span class="va">${url}</span><span class="st">"</span> <span class="dt">\</span></span>
-<span id="cb39-69"><a href="#cb39-69" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span><span class="va">${fastq_name}</span><span class="st">"</span> <span class="dt">\</span></span>
-<span id="cb39-70"><a href="#cb39-70" aria-hidden="true" tabindex="-1"></a>    <span class="op">&gt;&gt;</span> raw_data/metadata/RNAseq_metadata.txt</span>
-<span id="cb39-71"><a href="#cb39-71" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-72"><a href="#cb39-72" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
+<span id="cb39-48"><a href="#cb39-48" aria-hidden="true" tabindex="-1"></a><span class="fu">tail</span> <span class="at">-n</span> +2 raw_data/metadata/RNAseq_metadata.tmp <span class="kw">|</span></span>
+<span id="cb39-49"><a href="#cb39-49" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="va">IFS</span><span class="op">=</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">line</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb39-50"><a href="#cb39-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-51"><a href="#cb39-51" aria-hidden="true" tabindex="-1"></a>  <span class="va">sample</span><span class="op">=</span><span class="va">$(</span><span class="bu">printf</span> <span class="st">'%s\n'</span> <span class="st">"</span><span class="va">${line}</span><span class="st">"</span> <span class="kw">|</span> <span class="fu">cut</span> <span class="at">-d</span> <span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="at">-f1</span><span class="va">)</span></span>
+<span id="cb39-52"><a href="#cb39-52" aria-hidden="true" tabindex="-1"></a>  <span class="va">url</span><span class="op">=</span><span class="va">$(</span><span class="bu">printf</span> <span class="st">'%s\n'</span> <span class="st">"</span><span class="va">${line}</span><span class="st">"</span> <span class="kw">|</span> <span class="fu">cut</span> <span class="at">-d</span> <span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="at">-f32</span> <span class="kw">|</span> <span class="fu">tr</span> <span class="at">-d</span> <span class="st">'\r'</span><span class="va">)</span></span>
+<span id="cb39-53"><a href="#cb39-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-54"><a href="#cb39-54" aria-hidden="true" tabindex="-1"></a>  <span class="co"># ftp://... -&gt; https://...</span></span>
+<span id="cb39-55"><a href="#cb39-55" aria-hidden="true" tabindex="-1"></a>  <span class="va">url</span><span class="op">=</span><span class="st">"https://</span><span class="va">${url</span><span class="op">#</span>ftp://<span class="va">}</span><span class="st">"</span></span>
+<span id="cb39-56"><a href="#cb39-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-57"><a href="#cb39-57" aria-hidden="true" tabindex="-1"></a>  <span class="co"># ERR11479310_1.fastq.gz -&gt; 1</span></span>
+<span id="cb39-58"><a href="#cb39-58" aria-hidden="true" tabindex="-1"></a>  <span class="va">filename</span><span class="op">=</span><span class="st">"</span><span class="va">${url</span><span class="op">##</span><span class="pp">*</span>/<span class="va">}</span><span class="st">"</span></span>
+<span id="cb39-59"><a href="#cb39-59" aria-hidden="true" tabindex="-1"></a>  <span class="va">mate</span><span class="op">=</span><span class="st">"</span><span class="va">${filename</span><span class="op">%</span>.fastq.gz<span class="va">}</span><span class="st">"</span></span>
+<span id="cb39-60"><a href="#cb39-60" aria-hidden="true" tabindex="-1"></a>  <span class="va">mate</span><span class="op">=</span><span class="st">"</span><span class="va">${mate</span><span class="op">##</span><span class="pp">*</span>_<span class="va">}</span><span class="st">"</span></span>
+<span id="cb39-61"><a href="#cb39-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-62"><a href="#cb39-62" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Retain the metadata sample name unchanged for downstream analyses.</span></span>
+<span id="cb39-63"><a href="#cb39-63" aria-hidden="true" tabindex="-1"></a>  <span class="va">simple_sample</span><span class="op">=</span><span class="st">"</span><span class="va">${sample}</span><span class="st">"</span></span>
+<span id="cb39-64"><a href="#cb39-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-65"><a href="#cb39-65" aria-hidden="true" tabindex="-1"></a>  <span class="co"># WT_1 + 1 -&gt; WT_1_R1.fastq.gz; ΔHP1021_1 -&gt; ΔHP1021_1_R1.fastq.gz</span></span>
+<span id="cb39-66"><a href="#cb39-66" aria-hidden="true" tabindex="-1"></a>  <span class="va">fastq_name</span><span class="op">=</span><span class="st">"</span><span class="va">${simple_sample}</span><span class="st">_R</span><span class="va">${mate}</span><span class="st">.fastq.gz"</span></span>
+<span id="cb39-67"><a href="#cb39-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-68"><a href="#cb39-68" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">'%s\t%s\t%s\n'</span> <span class="dt">\</span></span>
+<span id="cb39-69"><a href="#cb39-69" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span><span class="va">${line}</span><span class="st">"</span> <span class="dt">\</span></span>
+<span id="cb39-70"><a href="#cb39-70" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span><span class="va">${url}</span><span class="st">"</span> <span class="dt">\</span></span>
+<span id="cb39-71"><a href="#cb39-71" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span><span class="va">${fastq_name}</span><span class="st">"</span> <span class="dt">\</span></span>
+<span id="cb39-72"><a href="#cb39-72" aria-hidden="true" tabindex="-1"></a>    <span class="op">&gt;&gt;</span> raw_data/metadata/RNAseq_metadata.txt</span>
 <span id="cb39-73"><a href="#cb39-73" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-74"><a href="#cb39-74" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> raw_data/metadata/RNAseq_metadata.tmp</span>
+<span id="cb39-74"><a href="#cb39-74" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
 <span id="cb39-75"><a href="#cb39-75" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-76"><a href="#cb39-76" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-77"><a href="#cb39-77" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
-<span id="cb39-78"><a href="#cb39-78" aria-hidden="true" tabindex="-1"></a><span class="co"># ChIP-seq metadata</span></span>
+<span id="cb39-76"><a href="#cb39-76" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> raw_data/metadata/RNAseq_metadata.tmp</span>
+<span id="cb39-77"><a href="#cb39-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-78"><a href="#cb39-78" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb39-79"><a href="#cb39-79" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
-<span id="cb39-80"><a href="#cb39-80" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-81"><a href="#cb39-81" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"Downloading ChIP-seq metadata"</span> <span class="kw">|</span> <span class="fu">tee</span> <span class="at">-a</span> <span class="st">"</span><span class="va">${log_file}</span><span class="st">"</span></span>
+<span id="cb39-80"><a href="#cb39-80" aria-hidden="true" tabindex="-1"></a><span class="co"># ChIP-seq metadata</span></span>
+<span id="cb39-81"><a href="#cb39-81" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
 <span id="cb39-82"><a href="#cb39-82" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-83"><a href="#cb39-83" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-fL</span> <span class="dt">\</span></span>
-<span id="cb39-84"><a href="#cb39-84" aria-hidden="true" tabindex="-1"></a>  https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/026/E-MTAB-13026/Files/E-MTAB-13026.sdrf.txt <span class="dt">\</span></span>
-<span id="cb39-85"><a href="#cb39-85" aria-hidden="true" tabindex="-1"></a>  <span class="at">-o</span> raw_data/metadata/E-MTAB-13026.sdrf.txt</span>
-<span id="cb39-86"><a href="#cb39-86" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-87"><a href="#cb39-87" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-88"><a href="#cb39-88" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep only WT samples</span></span>
-<span id="cb39-89"><a href="#cb39-89" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-v</span> <span class="st">"ΔHP1021"</span> <span class="dt">\</span></span>
-<span id="cb39-90"><a href="#cb39-90" aria-hidden="true" tabindex="-1"></a>  raw_data/metadata/E-MTAB-13026.sdrf.txt <span class="dt">\</span></span>
-<span id="cb39-91"><a href="#cb39-91" aria-hidden="true" tabindex="-1"></a>  <span class="op">&gt;</span> raw_data/metadata/Chipseq_metadata.tmp</span>
-<span id="cb39-92"><a href="#cb39-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-83"><a href="#cb39-83" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"Downloading ChIP-seq metadata"</span> <span class="kw">|</span> <span class="fu">tee</span> <span class="at">-a</span> <span class="st">"</span><span class="va">${log_file}</span><span class="st">"</span></span>
+<span id="cb39-84"><a href="#cb39-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-85"><a href="#cb39-85" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-fL</span> <span class="dt">\</span></span>
+<span id="cb39-86"><a href="#cb39-86" aria-hidden="true" tabindex="-1"></a>  https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/026/E-MTAB-13026/Files/E-MTAB-13026.sdrf.txt <span class="dt">\</span></span>
+<span id="cb39-87"><a href="#cb39-87" aria-hidden="true" tabindex="-1"></a>  <span class="at">-o</span> raw_data/metadata/E-MTAB-13026.sdrf.txt</span>
+<span id="cb39-88"><a href="#cb39-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-89"><a href="#cb39-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-90"><a href="#cb39-90" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep the complete ChIP-seq design, including ΔHP1021 samples</span></span>
+<span id="cb39-91"><a href="#cb39-91" aria-hidden="true" tabindex="-1"></a><span class="fu">cp</span> raw_data/metadata/E-MTAB-13026.sdrf.txt <span class="dt">\</span></span>
+<span id="cb39-92"><a href="#cb39-92" aria-hidden="true" tabindex="-1"></a>  raw_data/metadata/Chipseq_metadata.tmp</span>
 <span id="cb39-93"><a href="#cb39-93" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-94"><a href="#cb39-94" aria-hidden="true" tabindex="-1"></a><span class="co"># Add the HTTPS_FASTQ_URI and FASTQ_NAME columns</span></span>
-<span id="cb39-95"><a href="#cb39-95" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-96"><a href="#cb39-96" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span> <span class="at">-n</span> 1 raw_data/metadata/Chipseq_metadata.tmp <span class="kw">|</span></span>
-<span id="cb39-97"><a href="#cb39-97" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sed</span> <span class="st">$'s/$/</span><span class="dt">\t</span><span class="st">HTTPS_FASTQ_URI</span><span class="dt">\t</span><span class="st">FASTQ_NAME/'</span> <span class="dt">\</span></span>
-<span id="cb39-98"><a href="#cb39-98" aria-hidden="true" tabindex="-1"></a>  <span class="op">&gt;</span> raw_data/metadata/Chipseq_metadata.txt</span>
-<span id="cb39-99"><a href="#cb39-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-94"><a href="#cb39-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-95"><a href="#cb39-95" aria-hidden="true" tabindex="-1"></a><span class="co"># Add the HTTPS_FASTQ_URI and FASTQ_NAME columns</span></span>
+<span id="cb39-96"><a href="#cb39-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-97"><a href="#cb39-97" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span> <span class="at">-n</span> 1 raw_data/metadata/Chipseq_metadata.tmp <span class="kw">|</span></span>
+<span id="cb39-98"><a href="#cb39-98" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sed</span> <span class="st">$'s/$/</span><span class="dt">\t</span><span class="st">HTTPS_FASTQ_URI</span><span class="dt">\t</span><span class="st">FASTQ_NAME/'</span> <span class="dt">\</span></span>
+<span id="cb39-99"><a href="#cb39-99" aria-hidden="true" tabindex="-1"></a>  <span class="op">&gt;</span> raw_data/metadata/Chipseq_metadata.txt</span>
 <span id="cb39-100"><a href="#cb39-100" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-101"><a href="#cb39-101" aria-hidden="true" tabindex="-1"></a><span class="fu">tail</span> <span class="at">-n</span> +2 raw_data/metadata/Chipseq_metadata.tmp <span class="kw">|</span></span>
-<span id="cb39-102"><a href="#cb39-102" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="va">IFS</span><span class="op">=</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">line</span><span class="kw">;</span> <span class="cf">do</span></span>
-<span id="cb39-103"><a href="#cb39-103" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-104"><a href="#cb39-104" aria-hidden="true" tabindex="-1"></a>  <span class="va">sample</span><span class="op">=</span><span class="va">$(</span><span class="bu">printf</span> <span class="st">'%s\n'</span> <span class="st">"</span><span class="va">${line}</span><span class="st">"</span> <span class="kw">|</span> <span class="fu">cut</span> <span class="at">-d</span> <span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="at">-f1</span><span class="va">)</span></span>
-<span id="cb39-105"><a href="#cb39-105" aria-hidden="true" tabindex="-1"></a>  <span class="va">url</span><span class="op">=</span><span class="va">$(</span><span class="bu">printf</span> <span class="st">'%s\n'</span> <span class="st">"</span><span class="va">${line}</span><span class="st">"</span> <span class="kw">|</span> <span class="fu">cut</span> <span class="at">-d</span> <span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="at">-f31</span> <span class="kw">|</span> <span class="fu">tr</span> <span class="at">-d</span> <span class="st">'\r'</span><span class="va">)</span></span>
-<span id="cb39-106"><a href="#cb39-106" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-107"><a href="#cb39-107" aria-hidden="true" tabindex="-1"></a>  <span class="co"># ftp://... -&gt; https://...</span></span>
-<span id="cb39-108"><a href="#cb39-108" aria-hidden="true" tabindex="-1"></a>  <span class="va">url</span><span class="op">=</span><span class="st">"https://</span><span class="va">${url</span><span class="op">#</span>ftp://<span class="va">}</span><span class="st">"</span></span>
-<span id="cb39-109"><a href="#cb39-109" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-110"><a href="#cb39-110" aria-hidden="true" tabindex="-1"></a>  <span class="co"># ERR11468761_1.fastq.gz -&gt; 1</span></span>
-<span id="cb39-111"><a href="#cb39-111" aria-hidden="true" tabindex="-1"></a>  <span class="va">filename</span><span class="op">=</span><span class="st">"</span><span class="va">${url</span><span class="op">##</span><span class="pp">*</span>/<span class="va">}</span><span class="st">"</span></span>
-<span id="cb39-112"><a href="#cb39-112" aria-hidden="true" tabindex="-1"></a>  <span class="va">mate</span><span class="op">=</span><span class="st">"</span><span class="va">${filename</span><span class="op">%</span>.fastq.gz<span class="va">}</span><span class="st">"</span></span>
-<span id="cb39-113"><a href="#cb39-113" aria-hidden="true" tabindex="-1"></a>  <span class="va">mate</span><span class="op">=</span><span class="st">"</span><span class="va">${mate</span><span class="op">##</span><span class="pp">*</span>_<span class="va">}</span><span class="st">"</span></span>
-<span id="cb39-114"><a href="#cb39-114" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-115"><a href="#cb39-115" aria-hidden="true" tabindex="-1"></a>  <span class="co"># WT_1 + 1 -&gt; WT_1_R1.fastq.gz</span></span>
-<span id="cb39-116"><a href="#cb39-116" aria-hidden="true" tabindex="-1"></a>  <span class="va">fastq_name</span><span class="op">=</span><span class="st">"</span><span class="va">${sample}</span><span class="st">_R</span><span class="va">${mate}</span><span class="st">.fastq.gz"</span></span>
-<span id="cb39-117"><a href="#cb39-117" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-118"><a href="#cb39-118" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">'%s\t%s\t%s\n'</span> <span class="dt">\</span></span>
-<span id="cb39-119"><a href="#cb39-119" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span><span class="va">${line}</span><span class="st">"</span> <span class="dt">\</span></span>
-<span id="cb39-120"><a href="#cb39-120" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span><span class="va">${url}</span><span class="st">"</span> <span class="dt">\</span></span>
-<span id="cb39-121"><a href="#cb39-121" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span><span class="va">${fastq_name}</span><span class="st">"</span> <span class="dt">\</span></span>
-<span id="cb39-122"><a href="#cb39-122" aria-hidden="true" tabindex="-1"></a>    <span class="op">&gt;&gt;</span> raw_data/metadata/Chipseq_metadata.txt</span>
-<span id="cb39-123"><a href="#cb39-123" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-124"><a href="#cb39-124" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
-<span id="cb39-125"><a href="#cb39-125" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-126"><a href="#cb39-126" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> raw_data/metadata/Chipseq_metadata.tmp</span>
+<span id="cb39-101"><a href="#cb39-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-102"><a href="#cb39-102" aria-hidden="true" tabindex="-1"></a><span class="fu">tail</span> <span class="at">-n</span> +2 raw_data/metadata/Chipseq_metadata.tmp <span class="kw">|</span></span>
+<span id="cb39-103"><a href="#cb39-103" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="va">IFS</span><span class="op">=</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">line</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb39-104"><a href="#cb39-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-105"><a href="#cb39-105" aria-hidden="true" tabindex="-1"></a>  <span class="va">sample</span><span class="op">=</span><span class="va">$(</span><span class="bu">printf</span> <span class="st">'%s\n'</span> <span class="st">"</span><span class="va">${line}</span><span class="st">"</span> <span class="kw">|</span> <span class="fu">cut</span> <span class="at">-d</span> <span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="at">-f1</span><span class="va">)</span></span>
+<span id="cb39-106"><a href="#cb39-106" aria-hidden="true" tabindex="-1"></a>  <span class="va">url</span><span class="op">=</span><span class="va">$(</span><span class="bu">printf</span> <span class="st">'%s\n'</span> <span class="st">"</span><span class="va">${line}</span><span class="st">"</span> <span class="kw">|</span> <span class="fu">cut</span> <span class="at">-d</span> <span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="at">-f31</span> <span class="kw">|</span> <span class="fu">tr</span> <span class="at">-d</span> <span class="st">'\r'</span><span class="va">)</span></span>
+<span id="cb39-107"><a href="#cb39-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-108"><a href="#cb39-108" aria-hidden="true" tabindex="-1"></a>  <span class="co"># ftp://... -&gt; https://...</span></span>
+<span id="cb39-109"><a href="#cb39-109" aria-hidden="true" tabindex="-1"></a>  <span class="va">url</span><span class="op">=</span><span class="st">"https://</span><span class="va">${url</span><span class="op">#</span>ftp://<span class="va">}</span><span class="st">"</span></span>
+<span id="cb39-110"><a href="#cb39-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-111"><a href="#cb39-111" aria-hidden="true" tabindex="-1"></a>  <span class="co"># ERR11468761_1.fastq.gz -&gt; 1</span></span>
+<span id="cb39-112"><a href="#cb39-112" aria-hidden="true" tabindex="-1"></a>  <span class="va">filename</span><span class="op">=</span><span class="st">"</span><span class="va">${url</span><span class="op">##</span><span class="pp">*</span>/<span class="va">}</span><span class="st">"</span></span>
+<span id="cb39-113"><a href="#cb39-113" aria-hidden="true" tabindex="-1"></a>  <span class="va">mate</span><span class="op">=</span><span class="st">"</span><span class="va">${filename</span><span class="op">%</span>.fastq.gz<span class="va">}</span><span class="st">"</span></span>
+<span id="cb39-114"><a href="#cb39-114" aria-hidden="true" tabindex="-1"></a>  <span class="va">mate</span><span class="op">=</span><span class="st">"</span><span class="va">${mate</span><span class="op">##</span><span class="pp">*</span>_<span class="va">}</span><span class="st">"</span></span>
+<span id="cb39-115"><a href="#cb39-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-116"><a href="#cb39-116" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Retain the metadata sample name unchanged for downstream analyses.</span></span>
+<span id="cb39-117"><a href="#cb39-117" aria-hidden="true" tabindex="-1"></a>  <span class="va">simple_sample</span><span class="op">=</span><span class="st">"</span><span class="va">${sample}</span><span class="st">"</span></span>
+<span id="cb39-118"><a href="#cb39-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-119"><a href="#cb39-119" aria-hidden="true" tabindex="-1"></a>  <span class="co"># WT_1 + 1 -&gt; WT_1_R1.fastq.gz; ΔHP1021_1 -&gt; ΔHP1021_1_R1.fastq.gz</span></span>
+<span id="cb39-120"><a href="#cb39-120" aria-hidden="true" tabindex="-1"></a>  <span class="va">fastq_name</span><span class="op">=</span><span class="st">"</span><span class="va">${simple_sample}</span><span class="st">_R</span><span class="va">${mate}</span><span class="st">.fastq.gz"</span></span>
+<span id="cb39-121"><a href="#cb39-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-122"><a href="#cb39-122" aria-hidden="true" tabindex="-1"></a>  <span class="bu">printf</span> <span class="st">'%s\t%s\t%s\n'</span> <span class="dt">\</span></span>
+<span id="cb39-123"><a href="#cb39-123" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span><span class="va">${line}</span><span class="st">"</span> <span class="dt">\</span></span>
+<span id="cb39-124"><a href="#cb39-124" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span><span class="va">${url}</span><span class="st">"</span> <span class="dt">\</span></span>
+<span id="cb39-125"><a href="#cb39-125" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span><span class="va">${fastq_name}</span><span class="st">"</span> <span class="dt">\</span></span>
+<span id="cb39-126"><a href="#cb39-126" aria-hidden="true" tabindex="-1"></a>    <span class="op">&gt;&gt;</span> raw_data/metadata/Chipseq_metadata.txt</span>
 <span id="cb39-127"><a href="#cb39-127" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-128"><a href="#cb39-128" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-129"><a href="#cb39-129" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
-<span id="cb39-130"><a href="#cb39-130" aria-hidden="true" tabindex="-1"></a><span class="co"># Download RNA-seq FASTQ files</span></span>
-<span id="cb39-131"><a href="#cb39-131" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
+<span id="cb39-128"><a href="#cb39-128" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
+<span id="cb39-129"><a href="#cb39-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-130"><a href="#cb39-130" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> raw_data/metadata/Chipseq_metadata.tmp</span>
+<span id="cb39-131"><a href="#cb39-131" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb39-132"><a href="#cb39-132" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-133"><a href="#cb39-133" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"Downloading RNA-seq FASTQ files"</span> <span class="kw">|</span> <span class="fu">tee</span> <span class="at">-a</span> <span class="st">"</span><span class="va">${log_file}</span><span class="st">"</span></span>
-<span id="cb39-134"><a href="#cb39-134" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-135"><a href="#cb39-135" aria-hidden="true" tabindex="-1"></a><span class="co"># The two new columns are columns 33 and 34</span></span>
-<span id="cb39-136"><a href="#cb39-136" aria-hidden="true" tabindex="-1"></a><span class="fu">rev</span> raw_data/metadata/RNAseq_metadata.txt <span class="kw">|</span></span>
-<span id="cb39-137"><a href="#cb39-137" aria-hidden="true" tabindex="-1"></a><span class="fu">cut</span> <span class="at">-d</span> <span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="at">-f1,2</span> <span class="kw">|</span></span>
-<span id="cb39-138"><a href="#cb39-138" aria-hidden="true" tabindex="-1"></a><span class="fu">rev</span> <span class="kw">|</span></span>
-<span id="cb39-139"><a href="#cb39-139" aria-hidden="true" tabindex="-1"></a><span class="fu">tail</span> <span class="at">-n</span> +2 <span class="kw">|</span></span>
-<span id="cb39-140"><a href="#cb39-140" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="va">IFS</span><span class="op">=</span><span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">url</span> <span class="va">fastq_name</span><span class="kw">;</span> <span class="cf">do</span></span>
-<span id="cb39-141"><a href="#cb39-141" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-142"><a href="#cb39-142" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">"Downloading </span><span class="va">${fastq_name}</span><span class="st">"</span> <span class="kw">|</span> <span class="fu">tee</span> <span class="at">-a</span> <span class="st">"</span><span class="va">${log_file}</span><span class="st">"</span></span>
-<span id="cb39-143"><a href="#cb39-143" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-144"><a href="#cb39-144" aria-hidden="true" tabindex="-1"></a>  <span class="ex">curl</span> <span class="at">-fL</span> <span class="dt">\</span></span>
-<span id="cb39-145"><a href="#cb39-145" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span><span class="va">${url}</span><span class="st">"</span> <span class="dt">\</span></span>
-<span id="cb39-146"><a href="#cb39-146" aria-hidden="true" tabindex="-1"></a>    <span class="at">-o</span> <span class="st">"raw_data/fastq/rnaseq/</span><span class="va">${fastq_name}</span><span class="st">"</span></span>
+<span id="cb39-133"><a href="#cb39-133" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
+<span id="cb39-134"><a href="#cb39-134" aria-hidden="true" tabindex="-1"></a><span class="co"># Download RNA-seq FASTQ files</span></span>
+<span id="cb39-135"><a href="#cb39-135" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
+<span id="cb39-136"><a href="#cb39-136" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-137"><a href="#cb39-137" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"Downloading RNA-seq FASTQ files"</span> <span class="kw">|</span> <span class="fu">tee</span> <span class="at">-a</span> <span class="st">"</span><span class="va">${log_file}</span><span class="st">"</span></span>
+<span id="cb39-138"><a href="#cb39-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-139"><a href="#cb39-139" aria-hidden="true" tabindex="-1"></a><span class="co"># The two new columns are columns 33 and 34</span></span>
+<span id="cb39-140"><a href="#cb39-140" aria-hidden="true" tabindex="-1"></a><span class="fu">rev</span> raw_data/metadata/RNAseq_metadata.txt <span class="kw">|</span></span>
+<span id="cb39-141"><a href="#cb39-141" aria-hidden="true" tabindex="-1"></a><span class="fu">cut</span> <span class="at">-d</span> <span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="at">-f1,2</span> <span class="kw">|</span></span>
+<span id="cb39-142"><a href="#cb39-142" aria-hidden="true" tabindex="-1"></a><span class="fu">rev</span> <span class="kw">|</span></span>
+<span id="cb39-143"><a href="#cb39-143" aria-hidden="true" tabindex="-1"></a><span class="fu">tail</span> <span class="at">-n</span> +2 <span class="kw">|</span></span>
+<span id="cb39-144"><a href="#cb39-144" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="va">IFS</span><span class="op">=</span><span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">url</span> <span class="va">fastq_name</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb39-145"><a href="#cb39-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-146"><a href="#cb39-146" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">"Downloading </span><span class="va">${fastq_name}</span><span class="st">"</span> <span class="kw">|</span> <span class="fu">tee</span> <span class="at">-a</span> <span class="st">"</span><span class="va">${log_file}</span><span class="st">"</span></span>
 <span id="cb39-147"><a href="#cb39-147" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-148"><a href="#cb39-148" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
-<span id="cb39-149"><a href="#cb39-149" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-150"><a href="#cb39-150" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-151"><a href="#cb39-151" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
-<span id="cb39-152"><a href="#cb39-152" aria-hidden="true" tabindex="-1"></a><span class="co"># Download ChIP-seq FASTQ files</span></span>
-<span id="cb39-153"><a href="#cb39-153" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
+<span id="cb39-148"><a href="#cb39-148" aria-hidden="true" tabindex="-1"></a>  <span class="ex">curl</span> <span class="at">-fL</span> <span class="dt">\</span></span>
+<span id="cb39-149"><a href="#cb39-149" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span><span class="va">${url}</span><span class="st">"</span> <span class="dt">\</span></span>
+<span id="cb39-150"><a href="#cb39-150" aria-hidden="true" tabindex="-1"></a>    <span class="at">-o</span> <span class="st">"raw_data/fastq/rnaseq/</span><span class="va">${fastq_name}</span><span class="st">"</span></span>
+<span id="cb39-151"><a href="#cb39-151" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-152"><a href="#cb39-152" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
+<span id="cb39-153"><a href="#cb39-153" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb39-154"><a href="#cb39-154" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-155"><a href="#cb39-155" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"Downloading ChIP-seq FASTQ files"</span> <span class="kw">|</span> <span class="fu">tee</span> <span class="at">-a</span> <span class="st">"</span><span class="va">${log_file}</span><span class="st">"</span></span>
-<span id="cb39-156"><a href="#cb39-156" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-157"><a href="#cb39-157" aria-hidden="true" tabindex="-1"></a><span class="co"># The two new columns are columns 32 and 33</span></span>
-<span id="cb39-158"><a href="#cb39-158" aria-hidden="true" tabindex="-1"></a><span class="fu">rev</span> raw_data/metadata/Chipseq_metadata.txt <span class="kw">|</span></span>
-<span id="cb39-159"><a href="#cb39-159" aria-hidden="true" tabindex="-1"></a><span class="fu">cut</span> <span class="at">-d</span> <span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="at">-f1,2</span> <span class="kw">|</span></span>
-<span id="cb39-160"><a href="#cb39-160" aria-hidden="true" tabindex="-1"></a><span class="fu">rev</span> <span class="kw">|</span></span>
-<span id="cb39-161"><a href="#cb39-161" aria-hidden="true" tabindex="-1"></a><span class="fu">tail</span> <span class="at">-n</span> +2 <span class="kw">|</span></span>
-<span id="cb39-162"><a href="#cb39-162" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="va">IFS</span><span class="op">=</span><span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">url</span> <span class="va">fastq_name</span><span class="kw">;</span> <span class="cf">do</span></span>
-<span id="cb39-163"><a href="#cb39-163" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-164"><a href="#cb39-164" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">"Downloading </span><span class="va">${fastq_name}</span><span class="st">"</span> <span class="kw">|</span> <span class="fu">tee</span> <span class="at">-a</span> <span class="st">"</span><span class="va">${log_file}</span><span class="st">"</span></span>
-<span id="cb39-165"><a href="#cb39-165" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-166"><a href="#cb39-166" aria-hidden="true" tabindex="-1"></a>  <span class="ex">curl</span> <span class="at">-fL</span> <span class="dt">\</span></span>
-<span id="cb39-167"><a href="#cb39-167" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span><span class="va">${url}</span><span class="st">"</span> <span class="dt">\</span></span>
-<span id="cb39-168"><a href="#cb39-168" aria-hidden="true" tabindex="-1"></a>    <span class="at">-o</span> <span class="st">"raw_data/fastq/chipseq/</span><span class="va">${fastq_name}</span><span class="st">"</span></span>
+<span id="cb39-155"><a href="#cb39-155" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
+<span id="cb39-156"><a href="#cb39-156" aria-hidden="true" tabindex="-1"></a><span class="co"># Download ChIP-seq FASTQ files</span></span>
+<span id="cb39-157"><a href="#cb39-157" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
+<span id="cb39-158"><a href="#cb39-158" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-159"><a href="#cb39-159" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"Downloading ChIP-seq FASTQ files"</span> <span class="kw">|</span> <span class="fu">tee</span> <span class="at">-a</span> <span class="st">"</span><span class="va">${log_file}</span><span class="st">"</span></span>
+<span id="cb39-160"><a href="#cb39-160" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-161"><a href="#cb39-161" aria-hidden="true" tabindex="-1"></a><span class="co"># The two new columns are columns 32 and 33</span></span>
+<span id="cb39-162"><a href="#cb39-162" aria-hidden="true" tabindex="-1"></a><span class="fu">rev</span> raw_data/metadata/Chipseq_metadata.txt <span class="kw">|</span></span>
+<span id="cb39-163"><a href="#cb39-163" aria-hidden="true" tabindex="-1"></a><span class="fu">cut</span> <span class="at">-d</span> <span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="at">-f1,2</span> <span class="kw">|</span></span>
+<span id="cb39-164"><a href="#cb39-164" aria-hidden="true" tabindex="-1"></a><span class="fu">rev</span> <span class="kw">|</span></span>
+<span id="cb39-165"><a href="#cb39-165" aria-hidden="true" tabindex="-1"></a><span class="fu">tail</span> <span class="at">-n</span> +2 <span class="kw">|</span></span>
+<span id="cb39-166"><a href="#cb39-166" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="va">IFS</span><span class="op">=</span><span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">url</span> <span class="va">fastq_name</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb39-167"><a href="#cb39-167" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-168"><a href="#cb39-168" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">"Downloading </span><span class="va">${fastq_name}</span><span class="st">"</span> <span class="kw">|</span> <span class="fu">tee</span> <span class="at">-a</span> <span class="st">"</span><span class="va">${log_file}</span><span class="st">"</span></span>
 <span id="cb39-169"><a href="#cb39-169" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-170"><a href="#cb39-170" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
-<span id="cb39-171"><a href="#cb39-171" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-172"><a href="#cb39-172" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-173"><a href="#cb39-173" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
-<span id="cb39-174"><a href="#cb39-174" aria-hidden="true" tabindex="-1"></a><span class="co"># Record what was done</span></span>
-<span id="cb39-175"><a href="#cb39-175" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
+<span id="cb39-170"><a href="#cb39-170" aria-hidden="true" tabindex="-1"></a>  <span class="ex">curl</span> <span class="at">-fL</span> <span class="dt">\</span></span>
+<span id="cb39-171"><a href="#cb39-171" aria-hidden="true" tabindex="-1"></a>    <span class="st">"</span><span class="va">${url}</span><span class="st">"</span> <span class="dt">\</span></span>
+<span id="cb39-172"><a href="#cb39-172" aria-hidden="true" tabindex="-1"></a>    <span class="at">-o</span> <span class="st">"raw_data/fastq/chipseq/</span><span class="va">${fastq_name}</span><span class="st">"</span></span>
+<span id="cb39-173"><a href="#cb39-173" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-174"><a href="#cb39-174" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
+<span id="cb39-175"><a href="#cb39-175" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb39-176"><a href="#cb39-176" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-177"><a href="#cb39-177" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> <span class="op">&gt;</span> raw_data/metadata/METADATA.md <span class="op">&lt;&lt;EOF</span></span>
-<span id="cb39-178"><a href="#cb39-178" aria-hidden="true" tabindex="-1"></a><span class="st"># Metadata download and modification</span></span>
-<span id="cb39-179"><a href="#cb39-179" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-180"><a href="#cb39-180" aria-hidden="true" tabindex="-1"></a><span class="st">RNA-seq metadata:</span></span>
-<span id="cb39-181"><a href="#cb39-181" aria-hidden="true" tabindex="-1"></a><span class="st">https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/025/E-MTAB-13025/Files/E-MTAB-13025.sdrf.txt</span></span>
-<span id="cb39-182"><a href="#cb39-182" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-183"><a href="#cb39-183" aria-hidden="true" tabindex="-1"></a><span class="st">ChIP-seq metadata:</span></span>
-<span id="cb39-184"><a href="#cb39-184" aria-hidden="true" tabindex="-1"></a><span class="st">https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/026/E-MTAB-13026/Files/E-MTAB-13026.sdrf.txt</span></span>
-<span id="cb39-185"><a href="#cb39-185" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-186"><a href="#cb39-186" aria-hidden="true" tabindex="-1"></a><span class="st">The metadata files were modified as follows:</span></span>
-<span id="cb39-187"><a href="#cb39-187" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-188"><a href="#cb39-188" aria-hidden="true" tabindex="-1"></a><span class="st">- Samples carrying the ΔHP1021 genotype were excluded.</span></span>
-<span id="cb39-189"><a href="#cb39-189" aria-hidden="true" tabindex="-1"></a><span class="st">- ENA FASTQ addresses were converted from ftp:// to https://.</span></span>
-<span id="cb39-190"><a href="#cb39-190" aria-hidden="true" tabindex="-1"></a><span class="st">- A new HTTPS_FASTQ_URI column was added.</span></span>
-<span id="cb39-191"><a href="#cb39-191" aria-hidden="true" tabindex="-1"></a><span class="st">- A new FASTQ_NAME column was added.</span></span>
-<span id="cb39-192"><a href="#cb39-192" aria-hidden="true" tabindex="-1"></a><span class="st">- FASTQ names combine the sample name with the paired-end read number.</span></span>
-<span id="cb39-193"><a href="#cb39-193" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-194"><a href="#cb39-194" aria-hidden="true" tabindex="-1"></a><span class="st">Example:</span></span>
-<span id="cb39-195"><a href="#cb39-195" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-196"><a href="#cb39-196" aria-hidden="true" tabindex="-1"></a><span class="st">WT_1 + ERR11479310_1.fastq.gz -&gt; WT_1_R1.fastq.gz</span></span>
-<span id="cb39-197"><a href="#cb39-197" aria-hidden="true" tabindex="-1"></a><span class="st">WT_1 + ERR11479310_2.fastq.gz -&gt; WT_1_R2.fastq.gz</span></span>
+<span id="cb39-177"><a href="#cb39-177" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
+<span id="cb39-178"><a href="#cb39-178" aria-hidden="true" tabindex="-1"></a><span class="co"># Record what was done</span></span>
+<span id="cb39-179"><a href="#cb39-179" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------------------------------------------------</span></span>
+<span id="cb39-180"><a href="#cb39-180" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-181"><a href="#cb39-181" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> <span class="op">&gt;</span> raw_data/metadata/METADATA.md <span class="op">&lt;&lt;EOF</span></span>
+<span id="cb39-182"><a href="#cb39-182" aria-hidden="true" tabindex="-1"></a><span class="st"># Metadata download and modification</span></span>
+<span id="cb39-183"><a href="#cb39-183" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-184"><a href="#cb39-184" aria-hidden="true" tabindex="-1"></a><span class="st">RNA-seq metadata:</span></span>
+<span id="cb39-185"><a href="#cb39-185" aria-hidden="true" tabindex="-1"></a><span class="st">https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/025/E-MTAB-13025/Files/E-MTAB-13025.sdrf.txt</span></span>
+<span id="cb39-186"><a href="#cb39-186" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-187"><a href="#cb39-187" aria-hidden="true" tabindex="-1"></a><span class="st">ChIP-seq metadata:</span></span>
+<span id="cb39-188"><a href="#cb39-188" aria-hidden="true" tabindex="-1"></a><span class="st">https://ftp.ebi.ac.uk/biostudies/fire/E-MTAB-/026/E-MTAB-13026/Files/E-MTAB-13026.sdrf.txt</span></span>
+<span id="cb39-189"><a href="#cb39-189" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-190"><a href="#cb39-190" aria-hidden="true" tabindex="-1"></a><span class="st">The metadata files were modified as follows:</span></span>
+<span id="cb39-191"><a href="#cb39-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-192"><a href="#cb39-192" aria-hidden="true" tabindex="-1"></a><span class="st">- All samples in the SDRFs were retained, including the ΔHP1021 genotype.</span></span>
+<span id="cb39-193"><a href="#cb39-193" aria-hidden="true" tabindex="-1"></a><span class="st">- Local FASTQ filenames retain the sample names from the metadata, including </span><span class="kw">`</span><span class="ex">ΔHP1021</span><span class="kw">`</span> and <span class="kw">`</span><span class="ex">ΔHP1021S</span><span class="kw">`</span>.</span>
+<span id="cb39-194"><a href="#cb39-194" aria-hidden="true" tabindex="-1"></a><span class="st">- ENA FASTQ addresses were converted from ftp:// to https://.</span></span>
+<span id="cb39-195"><a href="#cb39-195" aria-hidden="true" tabindex="-1"></a><span class="st">- A new HTTPS_FASTQ_URI column was added.</span></span>
+<span id="cb39-196"><a href="#cb39-196" aria-hidden="true" tabindex="-1"></a><span class="st">- A new FASTQ_NAME column was added.</span></span>
+<span id="cb39-197"><a href="#cb39-197" aria-hidden="true" tabindex="-1"></a><span class="st">- FASTQ names combine the sample name with the paired-end read number.</span></span>
 <span id="cb39-198"><a href="#cb39-198" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-199"><a href="#cb39-199" aria-hidden="true" tabindex="-1"></a><span class="st">RNA-seq FASTQ files:</span></span>
-<span id="cb39-200"><a href="#cb39-200" aria-hidden="true" tabindex="-1"></a><span class="st">raw_data/fastq/rnaseq</span></span>
-<span id="cb39-201"><a href="#cb39-201" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-202"><a href="#cb39-202" aria-hidden="true" tabindex="-1"></a><span class="st">ChIP-seq FASTQ files:</span></span>
-<span id="cb39-203"><a href="#cb39-203" aria-hidden="true" tabindex="-1"></a><span class="st">raw_data/fastq/chipseq</span></span>
-<span id="cb39-204"><a href="#cb39-204" aria-hidden="true" tabindex="-1"></a><span class="op">EOF</span></span>
-<span id="cb39-205"><a href="#cb39-205" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-199"><a href="#cb39-199" aria-hidden="true" tabindex="-1"></a><span class="st">Example:</span></span>
+<span id="cb39-200"><a href="#cb39-200" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-201"><a href="#cb39-201" aria-hidden="true" tabindex="-1"></a><span class="st">WT_1 + ERR11479310_1.fastq.gz -&gt; WT_1_R1.fastq.gz</span></span>
+<span id="cb39-202"><a href="#cb39-202" aria-hidden="true" tabindex="-1"></a><span class="st">WT_1 + ERR11479310_2.fastq.gz -&gt; WT_1_R2.fastq.gz</span></span>
+<span id="cb39-203"><a href="#cb39-203" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-204"><a href="#cb39-204" aria-hidden="true" tabindex="-1"></a><span class="st">RNA-seq FASTQ files:</span></span>
+<span id="cb39-205"><a href="#cb39-205" aria-hidden="true" tabindex="-1"></a><span class="st">raw_data/fastq/rnaseq</span></span>
 <span id="cb39-206"><a href="#cb39-206" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-207"><a href="#cb39-207" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"Metadata processing and FASTQ download complete"</span> <span class="kw">|</span> <span class="fu">tee</span> <span class="at">-a</span> <span class="st">"</span><span class="va">${log_file}</span><span class="st">"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb39-207"><a href="#cb39-207" aria-hidden="true" tabindex="-1"></a><span class="st">ChIP-seq FASTQ files:</span></span>
+<span id="cb39-208"><a href="#cb39-208" aria-hidden="true" tabindex="-1"></a><span class="st">raw_data/fastq/chipseq</span></span>
+<span id="cb39-209"><a href="#cb39-209" aria-hidden="true" tabindex="-1"></a><span class="op">EOF</span></span>
+<span id="cb39-210"><a href="#cb39-210" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-211"><a href="#cb39-211" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-212"><a href="#cb39-212" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">"Metadata processing and FASTQ download complete"</span> <span class="kw">|</span> <span class="fu">tee</span> <span class="at">-a</span> <span class="st">"</span><span class="va">${log_file}</span><span class="st">"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="what-each-block-does" class="level5">
-<h5 class="anchored" data-anchor-id="what-each-block-does">What each block does</h5>
+<section id="what-each-block-does" class="level4">
+<h4 class="anchored" data-anchor-id="what-each-block-does">What each block does</h4>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 50%">
@@ -1474,11 +1505,11 @@ Q = -10 \log_{10}(p)
 </tr>
 <tr class="even">
 <td>RNA-seq metadata</td>
-<td>Downloads the original SDRF, removes <code>ΔHP1021</code> rows, reads the FASTQ URL from column 32, and adds the HTTPS URL and simplified filename.</td>
+<td>Downloads the original SDRF, retains the complete design including <code>ΔHP1021</code>, reads the FASTQ URL from column 32, and adds the HTTPS URL and metadata-derived local filename.</td>
 </tr>
 <tr class="odd">
 <td>ChIP-seq metadata</td>
-<td>Performs the same operations using the FASTQ URL in column 31 of the ChIP-seq SDRF.</td>
+<td>Retains the complete design including <code>ΔHP1021</code> and performs the same operations using the FASTQ URL in column 31 of the ChIP-seq SDRF.</td>
 </tr>
 <tr class="even">
 <td>FASTQ downloads</td>
@@ -1692,8 +1723,8 @@ result   = WT_1_R1.fastq.gz</code></pre>
 </div>
 <p>The two FASTQ-download blocks then use the same logic: select the final URL and filename columns, skip the header, read one URL/name pair at a time, and let <code>curl</code> save each file under the chosen local name.</p>
 </section>
-<section id="check-the-ebi-connection-and-run-the-script" class="level5">
-<h5 class="anchored" data-anchor-id="check-the-ebi-connection-and-run-the-script">Check the EBI connection and run the script</h5>
+<section id="check-the-ebi-connection-and-run-the-script" class="level4">
+<h4 class="anchored" data-anchor-id="check-the-ebi-connection-and-run-the-script">Check the EBI connection and run the script</h4>
 <p>The ArrayExpress/ENA route uses <code>curl</code> inside the <code>ngs-curl</code> image. The command is identical from macOS Bash and Ubuntu/WSL2 Bash.</p>
 <p>First test EBI from inside the image:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb42"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
@@ -1716,10 +1747,10 @@ result   = WT_1_R1.fastq.gz</code></pre>
 <span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-lh</span> raw_data/fastq/rnaseq/<span class="pp">*</span>.fastq.gz</span>
 <span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-lh</span> raw_data/fastq/chipseq/<span class="pp">*</span>.fastq.gz</span>
 <span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> results/logs/day1/metadata_fastq_download.log</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>The current WT metadata contain three biological replicates in each of two conditions. Each FASTQ folder should therefore contain twelve files: R1 and R2 for six samples. Keep the original SDRFs as downloaded provenance records; use <code>RNAseq_metadata.txt</code> and <code>Chipseq_metadata.txt</code> in the subsequent workshop steps.</p>
+<p>The metadata now retain the complete design. The WT/WTS and ΔHP1021/ΔHP1021S libraries are all downloaded, with R1 and R2 files for every biological replicate. Local filenames retain the sample names from the metadata. Keep the original SDRFs as downloaded provenance records; use <code>RNAseq_metadata.txt</code> and <code>Chipseq_metadata.txt</code> in the subsequent workshop steps.</p>
 </section>
-<section id="inspect-the-downloaded-fastq-files" class="level5">
-<h5 class="anchored" data-anchor-id="inspect-the-downloaded-fastq-files">Inspect the downloaded FASTQ files</h5>
+<section id="inspect-the-downloaded-fastq-files" class="level4">
+<h4 class="anchored" data-anchor-id="inspect-the-downloaded-fastq-files">Inspect the downloaded FASTQ files</h4>
 <p>Look inside one compressed FASTQ file manually. Choose one RNA-seq R1 file that exists in your folder:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb45"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">zcat</span> raw_data/fastq/rnaseq/WT_1_R1.fastq.gz <span class="kw">|</span> <span class="fu">head</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>or on OSX use gzcat</p>
@@ -1733,8 +1764,8 @@ result   = WT_1_R1.fastq.gz</code></pre>
 <p>If the pair is present, <code>grep</code> should print the matching R2 read header. This is a useful sanity check that the R1 and R2 files belong together. Read-identifier formats can differ between sequencing platforms and archive-processing routes.</p>
 </section>
 </section>
-<section id="optional-geosra-route-retrieve-the-same-data-with-fasterq-dump" class="level4">
-<h4 class="anchored" data-anchor-id="optional-geosra-route-retrieve-the-same-data-with-fasterq-dump">7.4 Optional GEO/SRA route: retrieve the same data with <code>fasterq-dump</code></h4>
+<section id="optional-geosra-route-retrieve-the-same-data-with-fasterq-dump" class="level3">
+<h3 class="anchored" data-anchor-id="optional-geosra-route-retrieve-the-same-data-with-fasterq-dump">7.4 Optional GEO/SRA route: retrieve the same data with <code>fasterq-dump</code></h3>
 <p>The previous section retrieved metadata from the <strong>ArrayExpress collection in BioStudies</strong> and downloaded the linked FASTQ files directly from ENA URLs. Here we retrieve the same type of raw sequencing data through the <strong>SRA Toolkit</strong> instead.</p>
 <p>The two routes are complementary:</p>
 <table class="caption-top table">
@@ -1805,8 +1836,8 @@ SRA / ENA run metadata
     ├── rnaseq/
     └── chipseq/</code></pre>
 <p>If this were the only retrieval route used for the project, we could simply change <code>root="raw_data_sra"</code> to <code>root="raw_data"</code> and the downstream folder structure would be identical to Section 7.3.</p>
-<section id="create-the-sra-metadata-and-fastq-script" class="level5">
-<h5 class="anchored" data-anchor-id="create-the-sra-metadata-and-fastq-script">Create the SRA metadata and FASTQ script</h5>
+<section id="create-the-sra-metadata-and-fastq-script" class="level4">
+<h4 class="anchored" data-anchor-id="create-the-sra-metadata-and-fastq-script">Create the SRA metadata and FASTQ script</h4>
 <p>Create:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb51"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nano</span> scripts/day1/04_download_sra_fastq.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Paste:</p>
@@ -1843,10 +1874,10 @@ SRA / ENA run metadata
 <span id="cb52-31"><a href="#cb52-31" aria-hidden="true" tabindex="-1"></a>  <span class="st">"https://www.ebi.ac.uk/ena/portal/api/filereport?accession=</span><span class="va">${rnaseq_study}</span><span class="st">&amp;result=read_run&amp;fields=run_accession,sample_title,library_layout&amp;format=tsv"</span> <span class="dt">\</span></span>
 <span id="cb52-32"><a href="#cb52-32" aria-hidden="true" tabindex="-1"></a>  <span class="at">-o</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/metadata/RNAseq_metadata_all.tsv"</span></span>
 <span id="cb52-33"><a href="#cb52-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb52-34"><a href="#cb52-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep WT_1-3 and WTS_1-3 and add the local FASTQ prefix</span></span>
+<span id="cb52-34"><a href="#cb52-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep every sample in the design and add the local FASTQ prefix</span></span>
 <span id="cb52-35"><a href="#cb52-35" aria-hidden="true" tabindex="-1"></a><span class="fu">awk</span> <span class="at">-F</span> <span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="st">'BEGIN {OFS="\t"}</span></span>
 <span id="cb52-36"><a href="#cb52-36" aria-hidden="true" tabindex="-1"></a><span class="st">NR==1 {print $1,$2,$3,"FASTQ_PREFIX"; next}</span></span>
-<span id="cb52-37"><a href="#cb52-37" aria-hidden="true" tabindex="-1"></a><span class="st">$2 ~ /^(WT|WTS)_[123]$/ {print $1,$2,$3,$2}</span></span>
+<span id="cb52-37"><a href="#cb52-37" aria-hidden="true" tabindex="-1"></a><span class="st">{simple=$2; print $1,$2,$3,simple}</span></span>
 <span id="cb52-38"><a href="#cb52-38" aria-hidden="true" tabindex="-1"></a><span class="st">'</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/metadata/RNAseq_metadata_all.tsv"</span> <span class="dt">\</span></span>
 <span id="cb52-39"><a href="#cb52-39" aria-hidden="true" tabindex="-1"></a>  <span class="op">&gt;</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/metadata/RNAseq_metadata.txt"</span></span>
 <span id="cb52-40"><a href="#cb52-40" aria-hidden="true" tabindex="-1"></a></span>
@@ -1861,10 +1892,10 @@ SRA / ENA run metadata
 <span id="cb52-49"><a href="#cb52-49" aria-hidden="true" tabindex="-1"></a>  <span class="st">"https://www.ebi.ac.uk/ena/portal/api/filereport?accession=</span><span class="va">${chipseq_study}</span><span class="st">&amp;result=read_run&amp;fields=run_accession,sample_title,library_layout&amp;format=tsv"</span> <span class="dt">\</span></span>
 <span id="cb52-50"><a href="#cb52-50" aria-hidden="true" tabindex="-1"></a>  <span class="at">-o</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/metadata/Chipseq_metadata_all.tsv"</span></span>
 <span id="cb52-51"><a href="#cb52-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb52-52"><a href="#cb52-52" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep WT_1-3 and WTS_1-3 and add the local FASTQ prefix</span></span>
+<span id="cb52-52"><a href="#cb52-52" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep every sample in the design and add the local FASTQ prefix</span></span>
 <span id="cb52-53"><a href="#cb52-53" aria-hidden="true" tabindex="-1"></a><span class="fu">awk</span> <span class="at">-F</span> <span class="st">$'</span><span class="dt">\t</span><span class="st">'</span> <span class="st">'BEGIN {OFS="\t"}</span></span>
 <span id="cb52-54"><a href="#cb52-54" aria-hidden="true" tabindex="-1"></a><span class="st">NR==1 {print $1,$2,$3,"FASTQ_PREFIX"; next}</span></span>
-<span id="cb52-55"><a href="#cb52-55" aria-hidden="true" tabindex="-1"></a><span class="st">$2 ~ /^(WT|WTS)_[123]$/ {print $1,$2,$3,$2}</span></span>
+<span id="cb52-55"><a href="#cb52-55" aria-hidden="true" tabindex="-1"></a><span class="st">{simple=$2; print $1,$2,$3,simple}</span></span>
 <span id="cb52-56"><a href="#cb52-56" aria-hidden="true" tabindex="-1"></a><span class="st">'</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/metadata/Chipseq_metadata_all.tsv"</span> <span class="dt">\</span></span>
 <span id="cb52-57"><a href="#cb52-57" aria-hidden="true" tabindex="-1"></a>  <span class="op">&gt;</span> <span class="st">"</span><span class="va">${root}</span><span class="st">/metadata/Chipseq_metadata.txt"</span></span>
 <span id="cb52-58"><a href="#cb52-58" aria-hidden="true" tabindex="-1"></a></span>
@@ -2016,8 +2047,8 @@ SRA / ENA run metadata
 <td>In <code>awk</code>, these mean column 1, column 2, and column 3. Here they correspond to run accession, sample title, and library layout.</td>
 </tr>
 <tr class="odd">
-<td><code>$2 ~ /^(WT\|WTS)_[123]$/</code></td>
-<td>Keep only sample names <code>WT_1</code>-<code>WT_3</code> and <code>WTS_1</code>-<code>WTS_3</code>.</td>
+<td><code>simple=$2</code></td>
+<td>Keep every sample and retain the metadata sample name in the local filename, including <code>ΔHP1021</code>/<code>ΔHP1021S</code>.</td>
 </tr>
 <tr class="even">
 <td><code>print $1,$2,$3,$2</code></td>
@@ -2144,8 +2175,8 @@ ERR...           WT_2            PAIRED             WT_2
 </div>
 </div>
 </section>
-<section id="check-ebincbi-and-run-the-complete-sra-route" class="level5">
-<h5 class="anchored" data-anchor-id="check-ebincbi-and-run-the-complete-sra-route">Check EBI/NCBI and run the complete SRA route</h5>
+<section id="check-ebincbi-and-run-the-complete-sra-route" class="level4">
+<h4 class="anchored" data-anchor-id="check-ebincbi-and-run-the-complete-sra-route">Check EBI/NCBI and run the complete SRA route</h4>
 <p>This route separates retrieval from conversion:</p>
 <pre class="text"><code>curl              -&gt; retrieve the small run-metadata tables
 prefetch          -&gt; download each selected run into raw_data_sra/sra/
@@ -2213,16 +2244,16 @@ Windows + Docker       -&gt; Ubuntu WSL2 terminal</code></pre>
 </div>
 </div>
 </section>
-<section id="inspect-the-metadata" class="level5">
-<h5 class="anchored" data-anchor-id="inspect-the-metadata">Inspect the metadata</h5>
+<section id="inspect-the-metadata" class="level4">
+<h4 class="anchored" data-anchor-id="inspect-the-metadata">Inspect the metadata</h4>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb59"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span> raw_data_sra/metadata/RNAseq_metadata_all.tsv</span>
 <span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> raw_data_sra/metadata/RNAseq_metadata.txt</span>
 <span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span> raw_data_sra/metadata/Chipseq_metadata_all.tsv</span>
 <span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> raw_data_sra/metadata/Chipseq_metadata.txt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="inspect-the-downloaded-fastq-files-1" class="level5">
-<h5 class="anchored" data-anchor-id="inspect-the-downloaded-fastq-files-1">Inspect the downloaded FASTQ files</h5>
+<section id="inspect-the-downloaded-fastq-files-1" class="level4">
+<h4 class="anchored" data-anchor-id="inspect-the-downloaded-fastq-files-1">Inspect the downloaded FASTQ files</h4>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb60"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-lh</span> raw_data_sra/fastq/rnaseq/</span>
 <span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span> <span class="at">-lh</span> raw_data_sra/fastq/chipseq/</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The final filenames should follow the same biological naming convention used by the ArrayExpress/ENA route, for example:</p>
@@ -2281,8 +2312,8 @@ WT_1_R2.fastq.gz                         WT_1_R2.fastq.gz</code></pre>
 <p>We will use <a href="https://github.com/opengene/fastp"><code>fastp</code></a> for both preprocessing and quality assessment:</p>
 <pre class="text"><code>raw paired FASTQ -&gt; fastp -&gt; trimmed paired FASTQ + HTML/JSON report</code></pre>
 <p>For each RNA-seq and ChIP-seq sample, <code>fastp</code> detects adapters, trims low-quality read tails, filters poor or very short reads, and compares the reads before and after filtering. We inspect the reports across replicates and then use the trimmed FASTQ files as the inputs for Days 2 and 3.</p>
-<section id="run-fastp" class="level4">
-<h4 class="anchored" data-anchor-id="run-fastp">8.1 Run fastp</h4>
+<section id="run-fastp" class="level3">
+<h3 class="anchored" data-anchor-id="run-fastp">8.1 Run fastp</h3>
 <p>Create <code>scripts/day1/03_trim_fastq.sh</code>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb64"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nano</span> scripts/day1/03_trim_fastq.sh</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Paste this script:</p>
@@ -2336,8 +2367,8 @@ WT_1_R2.fastq.gz                         WT_1_R2.fastq.gz</code></pre>
 <li>removes that sample’s two raw FASTQ files only after <code>fastp</code> finishes successfully. Because <code>set -e</code> is active, a failed <code>fastp</code> command stops the script before <code>rm</code>.</li>
 </ul>
 </section>
-<section id="run-the-script-in-docker" class="level4">
-<h4 class="anchored" data-anchor-id="run-the-script-in-docker">8.2 Run the script in Docker</h4>
+<section id="run-the-script-in-docker" class="level3">
+<h3 class="anchored" data-anchor-id="run-the-script-in-docker">8.2 Run the script in Docker</h3>
 <p>From the project root, run the script inside the fastp image:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb66"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> run <span class="at">--rm</span> <span class="dt">\</span></span>
 <span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--user</span> <span class="st">"</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-u</span><span class="va">)</span><span class="st">:</span><span class="va">$(</span><span class="fu">id</span> <span class="at">-g</span><span class="va">)</span><span class="st">"</span> <span class="dt">\</span></span>
@@ -2353,8 +2384,8 @@ results/logs/day1/fastp/*.fastp.html
 results/logs/day1/fastp/*.fastp.json</code></pre>
 <p>The trimmed FASTQ files are large intermediate files. Keep them locally for Days 2 and 3, but do not commit them to GitHub. After each sample finishes successfully, its raw pair is removed automatically; rerun <code>02_download_ena_fastq.sh</code> if the raw files are needed again.</p>
 </section>
-<section id="open-and-interpret-the-fastp-reports" class="level4">
-<h4 class="anchored" data-anchor-id="open-and-interpret-the-fastp-reports">8.3 Open and interpret the fastp reports</h4>
+<section id="open-and-interpret-the-fastp-reports" class="level3">
+<h3 class="anchored" data-anchor-id="open-and-interpret-the-fastp-reports">8.3 Open and interpret the fastp reports</h3>
 <p>In the VS Code Explorer, open <code>results/logs/day1/fastp/</code>. Right-click a <code>*.fastp.html</code> file, reveal it in Finder or File Explorer, and double-click it to open it in your web browser.</p>
 <p>Compare the report across replicates as well as before and after filtering:</p>
 <table class="caption-top table">
@@ -2434,7 +2465,7 @@ results/logs/day1/fastp/</code></pre>
 <p>Add something like this:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb70"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="fu">## Day 1</span></span>
 <span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a>Day 1 created the reproducible project structure, downloaded the matched reference genome and annotation, converted the RNA-seq and ChIP-seq SDRFs into the two metadata tables used by the workshop, downloaded and renamed the WT FASTQ files, and used fastp to preprocess and assess the reads.</span>
+<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a>Day 1 created the reproducible project structure, downloaded the matched reference genome and annotation, converted the RNA-seq and ChIP-seq SDRFs into the two metadata tables used by the workshop, downloaded and renamed the WT/WTS and ΔHP1021/ΔHP1021S FASTQ files, and used fastp to preprocess and assess the reads.</span>
 <span id="cb70-4"><a href="#cb70-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb70-5"><a href="#cb70-5" aria-hidden="true" tabindex="-1"></a>After each sample was processed successfully, its raw FASTQ pair was removed to save space. Large files such as trimmed FASTQ files and reference sequence/annotation files are ignored by Git and are not pushed to GitHub. Small provenance records and quality reports are committed.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Create or update a simple workflow log:</p>
@@ -2448,7 +2479,7 @@ results/logs/day1/fastp/</code></pre>
 <span id="cb72-6"><a href="#cb72-6" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Connected the local repository to GitHub.</span>
 <span id="cb72-7"><a href="#cb72-7" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Tested Docker with a mounted project folder.</span>
 <span id="cb72-8"><a href="#cb72-8" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Downloaded the matched <span class="in">`GCF_025998455.1`</span> FASTA, GFF3, and GTF files for chromosome <span class="in">`NZ_AP026446.1`</span> and derived the RSeQC BED12 gene model from the GFF3.</span>
-<span id="cb72-9"><a href="#cb72-9" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Ran <span class="in">`02_download_ena_fastq.sh`</span> to download and filter the original SDRFs, create <span class="in">`RNAseq_metadata.txt`</span> and <span class="in">`Chipseq_metadata.txt`</span>, and retrieve the WT FASTQ files.</span>
+<span id="cb72-9"><a href="#cb72-9" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Ran <span class="in">`02_download_ena_fastq.sh`</span> to download and filter the original SDRFs, create <span class="in">`RNAseq_metadata.txt`</span> and <span class="in">`Chipseq_metadata.txt`</span>, and retrieve all WT/WTS and ΔHP1021/ΔHP1021S FASTQ files.</span>
 <span id="cb72-10"><a href="#cb72-10" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Recorded the metadata sources and transformations in <span class="in">`raw_data/metadata/METADATA.md`</span> and reviewed GEO/SRA as an optional route.</span>
 <span id="cb72-11"><a href="#cb72-11" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Ran fastp to trim adapters and low-quality tails, filter poor reads, and create trimmed FASTQ files.</span>
 <span id="cb72-12"><a href="#cb72-12" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Inspected the fastp HTML reports; raw pairs were removed automatically after successful processing.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>

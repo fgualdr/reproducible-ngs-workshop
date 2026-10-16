@@ -58,17 +58,19 @@ flowchart TD
     index["Bowtie2 reference index"]
     mapping["Bowtie2 mapping"]
     bam["Sorted, filtered + indexed BAM"]
-    qc["Mapping QC + library strandedness"]
+    alignqc["RNA-seq alignment QC: duplication + multi-mapping + rRNA"]
+    strandqc["Library strandedness"]
     counts["featureCounts gene counting"]
     matrix["Raw gene count matrix"]
-    deseq2["DESeq2 differential expression"]
-    results["Diagnostic plots + result tables"]
+    deseq2["DESeq2: four-condition model + explicit contrasts"]
+    results["Diagnostic plots + contrast tables"]
 
     fastq --> mapping
     index --> mapping
     mapping --> bam
-    bam --> qc
-    qc --> counts
+    bam --> alignqc
+    alignqc --> strandqc
+    strandqc --> counts
     counts --> matrix
     matrix --> deseq2
     deseq2 --> results
@@ -80,17 +82,24 @@ Today we will produce:
 reference_genome/bowtie2_index/
 results/day2_rnaseq/bam/*.sorted.bam
 results/day2_rnaseq/bam/*.filtered.bam
+results/day2_rnaseq/qc/coordinate_duplicates.tsv
+results/day2_rnaseq/qc/rrna_counts.txt
+results/day2_rnaseq/qc/*.dupradar.pdf
 results/day2_rnaseq/counts/featureCounts_all_samples.txt
 results/day2_rnaseq/counts/gene_count_matrix.tsv
-results/day2_rnaseq/bigwig/*.deseq2.bw
+results/day2_rnaseq/deseq2/sample_design.tsv
+results/day2_rnaseq/deseq2/WT_vs_deltaHP1021.tsv
+results/day2_rnaseq/deseq2/WTS_vs_deltaHP1021S.tsv
+results/day2_rnaseq/deseq2/WTS_vs_WT.tsv
+results/day2_rnaseq/deseq2/deltaHP1021S_vs_deltaHP1021.tsv
 results/day2_rnaseq/deseq2/normalized_counts.tsv
 results/day2_rnaseq/deseq2/deseq2_size_factors.tsv
-results/day2_rnaseq/deseq2/deseq2_results.tsv
-results/day2_rnaseq/deseq2/pca.pdf
+results/day2_rnaseq/deseq2/pc1_pc2_pca.pdf
 results/day2_rnaseq/deseq2/pca_scree.pdf
 results/day2_rnaseq/deseq2/dispersion_plot.pdf
-results/day2_rnaseq/deseq2/ma_plot.pdf
-results/day2_rnaseq/deseq2/volcano.pdf
+results/day2_rnaseq/deseq2/MA_WT_vs_deltaHP1021.pdf
+results/day2_rnaseq/deseq2/volcano_WT_vs_deltaHP1021.pdf
+results/day2_rnaseq/bigwig/*.deseq2.bw
 results/day2_rnaseq/qc/multiqc_report.html
 results/logs/day2/
 ```
@@ -105,10 +114,11 @@ mkdir -p results/day2_rnaseq/bam
 mkdir -p results/day2_rnaseq/counts
 mkdir -p results/day2_rnaseq/bigwig
 mkdir -p results/day2_rnaseq/deseq2
+mkdir -p results/day2_rnaseq/qc
 mkdir -p results/logs/day2
 ```
 
-Day 1 named each FASTQ from the publication sample and mate, for example `WT_1_R1.fastq.gz` and `WTS_1_R1.fastq.gz`. Day 2 keeps the sample part (`WT_1`, `WTS_1`, and so on) in the BAM and count-column names. The DESeq2 script reads condition and replicate labels directly from `RNAseq_metadata.txt` rather than guessing the design from filenames.
+Day 1 retained the publication sample names in the FASTQ filenames. Day 2 therefore carries the same names into BAM and count columns: `WT_1`, `WTS_1`, `ΔHP1021_1`, `ΔHP1021S_1`, and the corresponding replicates. The DESeq2 script uses these stable metadata-derived names to construct the four analysis conditions explicitly.
 
 Each practical section below follows the same pattern:
 
@@ -129,7 +139,7 @@ Mapping starts from:
 
 The index does not change the genome. It creates extra files that allow the aligner to search the genome quickly.
 
-#### 3.1 Alignment versus pseudoalignment
+### 3.1 Alignment versus pseudoalignment
 
 Full aligners try to place each read or read pair at one or more genomic or transcriptomic coordinates. A common strategy is seed-and-extend:
 
@@ -163,7 +173,7 @@ Common pseudoalignment or quasi-alignment tools include:
 
 In this workshop we use Bowtie2 because *H. pylori* has a small bacterial genome, there are no introns to model, and we want coordinate-sorted BAM files that can also be inspected later in IGV.
 
-#### 3.2 SAM and BAM files
+### 3.2 SAM and BAM files
 
 The general alignment file created by an aligner is SAM:
 
@@ -201,7 +211,7 @@ The `CIGAR` string is important for RNA-seq. In bacterial RNA-seq, reads usually
 
 Aligners also write optional tags after the common columns. These tags are tool-specific. Common examples include edit distance, alignment score, number of possible alignments, or strand information. This is one reason BAM files from different aligners can contain the same core information but different additional descriptors.
 
-#### 3.3 How paired-end reads are stored in BAM
+### 3.3 How paired-end reads are stored in BAM
 
 Paired-end FASTQ files have one R1 file and one R2 file. In the BAM file, the two ends are not stored as one combined row. They are stored as two separate alignment records with the same read name (`QNAME`), one record for read 1 and one record for read 2.
 
@@ -220,7 +230,7 @@ For a simple properly paired fragment, R1 and R2 usually map to nearby positions
 
 This is why paired-end tools can count fragments rather than individual read ends. Later, featureCounts uses the paired-end information to assign one fragment-level count to a gene instead of counting R1 and R2 separately.
 
-#### 3.4 Build the Bowtie2 index
+### 3.4 Build the Bowtie2 index
 
 Bowtie2 must search for possible locations for millions of reads. Searching the FASTA sequence from beginning to end for every read would be inefficient, so `bowtie2-build` converts the reference genome into compact index files that Bowtie2 can search quickly. We build the index once for this exact genome and reuse it for every RNA-seq and ChIP-seq sample; if the reference FASTA changes, the index must be rebuilt.
 
@@ -260,7 +270,7 @@ docker run --rm \
   bash scripts/day2_rnaseq/01_build_bowtie2_index.sh
 ```
 
-#### 3.5 Map RNA-seq reads
+### 3.5 Map RNA-seq reads
 
 The mapping script uses the Day 1 trimmed RNA-seq FASTQ files. It writes Bowtie2 logs, sorted BAM files, BAM indexes, and samtools mapping summaries.
 
@@ -348,7 +358,7 @@ trimmed R1 + R2
   -> remove temporary SAM
 ```
 
-##### 3.5.1 Map the paired reads
+#### 3.5.1 Map the paired reads
 
 `bowtie2` uses the Bowtie2 index (`-x`) and the trimmed R1/R2 files (`-1` and `-2`) to find genomic alignments. It writes:
 
@@ -357,7 +367,7 @@ trimmed R1 + R2
 
 The log is written separately with `2>` because Bowtie2 sends its progress and summary information to the standard-error stream.
 
-##### 3.5.2 Convert SAM to a coordinate-sorted BAM
+#### 3.5.2 Convert SAM to a coordinate-sorted BAM
 
 `samtools sort` reads the text SAM file directly and writes a coordinate-sorted BAM. The `-O BAM` option makes the output format explicit:
 
@@ -371,13 +381,13 @@ samtools sort \
 
 Conversion and sorting therefore happen in the same command. Coordinate sorting places alignments from the same genomic region together, which is required for BAM indexing and makes downstream access efficient.
 
-##### 3.5.3 Index and summarize the sorted BAM
+#### 3.5.3 Index and summarize the sorted BAM
 
 `samtools index` creates `sample.sorted.bam.bai`. This index allows programs to jump directly to one genomic region without reading the complete BAM.
 
 `samtools flagstat` then creates the first mapping summary. It reports totals such as mapped reads and properly paired reads before we apply alignment filters.
 
-##### 3.5.4 Filter alignments for counting
+#### 3.5.4 Filter alignments for counting
 
 The script creates a second BAM containing the alignments we want to use for gene counting:
 
@@ -403,11 +413,11 @@ SAM flags are bit-coded and do not need to be memorized. The [Picard flag conver
 
 We do not exclude reads marked as duplicates in this workshop RNA-seq workflow. Multiple reads at the same position can represent high gene expression rather than PCR duplication, so removing them can bias counts.
 
-##### 3.5.5 Index and summarize the filtered BAM
+#### 3.5.5 Index and summarize the filtered BAM
 
 The filtered BAM is also indexed and summarized with `samtools flagstat`. Comparing the summaries before and after filtering shows how many alignments were removed. Finally, the temporary SAM is deleted because the sorted BAM contains the alignment information in a smaller, more useful form.
 
-##### 3.5.6 Run the mapping workflow
+#### 3.5.6 Run the mapping workflow
 
 ```bash
 docker run --rm \
@@ -438,7 +448,7 @@ Bowtie2 logs report useful mapping metrics, including:
 
 Low mapping percentage can indicate a wrong reference, contamination, poor read quality, wrong sample labels, incomplete trimming, or strong rRNA/technical content.
 
-##### 3.5.7 Inspect the BAM summaries and outputs
+#### 3.5.7 Inspect the BAM summaries and outputs
 
 Check the `samtools flagstat` summaries before and after filtering:
 
@@ -465,7 +475,752 @@ results/day2_rnaseq/bam/*.filtered.bam.bai
 
 The `*.sorted.bam` files preserve all alignments for diagnosis. The `*.filtered.bam` files are the inputs to featureCounts.
 
-#### 3.6 Determine RNA-seq library strandedness
+### 3.6 RNA-seq-specific alignment QC: duplication, multi-mapping and residual rRNA
+
+The mapping workflow in Section 3.5 produces `*.sorted.bam` files containing the alignments before our standard filtering and `*.filtered.bam` files used for downstream gene counting.
+
+**Keep the standard workshop filtering unchanged.**
+
+Here we use the unfiltered alignments to investigate three additional RNA-seq-specific QC properties:
+
+1. **duplication** — does duplication depend on transcript abundance, and what fraction of alignments share coordinates?
+2. **multi-mapping** — how many reads or read pairs have more than one plausible genomic placement?
+3. **residual rRNA** — how much of the sequenced library derives from ribosomal RNA?
+
+These are first **QC measurements**. Whether reads should subsequently be removed depends on the biological question and on how the aligner represents alignment ambiguity.
+
+We perform the QC using:
+
+```bash
+docker.io/fgualdr/ngs-dupradar:latest
+```
+
+which provides `samtools`, `featureCounts`, R/Bioconductor and `dupRadar`.
+
+#### 3.6.1 Duplication: measure it, but do not automatically remove it
+
+RNA-seq duplication cannot be interpreted in the same way as duplication in genomic DNA sequencing.
+
+Highly expressed transcripts naturally generate many fragments from the same genomic regions. RNA fragmentation also does not guarantee completely random start and end coordinates. Consequently, two independently sampled RNA molecules can generate reads with identical alignment coordinates.
+
+Without **unique molecular identifiers (UMIs)**, coordinate identity alone cannot reliably distinguish:
+
+- PCR duplicates;
+- independently sampled molecules from an abundant transcript.
+
+We therefore assess duplication in two complementary ways:
+
+- `samtools markdup` provides the overall coordinate-duplicate fraction;
+- `dupRadar` evaluates whether duplication depends on gene expression.
+
+We **mark duplicates for QC but do not remove them**.
+
+Create:
+
+```bash
+nano scripts/day2_rnaseq/02_rnaseq_alignment_qc.sh
+```
+
+Add:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+bam_dir="results/day2_rnaseq/bam"
+log_dir="results/logs/day2"
+qc_dir="results/day2_rnaseq/qc"
+annotation="reference_genome/annotation.gff3"
+
+mkdir -p "${qc_dir}/marked" "${qc_dir}/tmp"
+
+# ------------------------------------------------------------
+# Prepare gene-level GTF for dupRadar
+# ------------------------------------------------------------
+
+awk 'BEGIN{FS=OFS="\t"}
+!/^#/ && $3=="gene" {
+    id=""
+    n=split($9,a,";")
+
+    for(i=1;i<=n;i++) {
+        if(a[i] ~ /^ID=/) {
+            id=substr(a[i],4)
+            break
+        }
+    }
+
+    if(id!="") {
+        $3="exon"
+        $9="gene_id \"" id "\"; transcript_id \"" id "\";"
+        print
+    }
+}' "${annotation}" > "${qc_dir}/dupradar_genes.gtf"
+
+[[ -s "${qc_dir}/dupradar_genes.gtf" ]] || {
+    echo "No gene features found in ${annotation}" >&2
+    exit 1
+}
+
+# ------------------------------------------------------------
+# Prepare rRNA-only annotation
+# ------------------------------------------------------------
+
+awk 'BEGIN{FS=OFS="\t"}
+!/^#/ && $3=="rRNA" {print}
+' "${annotation}" > "${qc_dir}/rrna.gff3"
+
+[[ -s "${qc_dir}/rrna.gff3" ]] || {
+    echo "No rRNA features found in ${annotation}" >&2
+    exit 1
+}
+
+# ------------------------------------------------------------
+# Coordinate-duplicate summary
+# ------------------------------------------------------------
+
+printf "sample\tprimary_mapped\tduplicates\tduplicate_percent\n" \
+    > "${qc_dir}/coordinate_duplicates.tsv"
+
+for bam in "${bam_dir}"/*.sorted.bam; do
+
+    [[ -e "${bam}" ]] || continue
+
+    sample="$(basename "${bam}" .sorted.bam)"
+
+    echo "Duplicate QC: ${sample}"
+
+    samtools sort -n -@ 2 \
+        -o "${qc_dir}/tmp/${sample}.name.bam" \
+        "${bam}"
+
+    samtools fixmate -m \
+        "${qc_dir}/tmp/${sample}.name.bam" \
+        "${qc_dir}/tmp/${sample}.fixmate.bam"
+
+    samtools sort -@ 2 \
+        -o "${qc_dir}/tmp/${sample}.position.bam" \
+        "${qc_dir}/tmp/${sample}.fixmate.bam"
+
+    samtools markdup \
+        "${qc_dir}/tmp/${sample}.position.bam" \
+        "${qc_dir}/marked/${sample}.marked.bam"
+
+    samtools index \
+        "${qc_dir}/marked/${sample}.marked.bam"
+
+    # 2308 = unmapped (4) + secondary (256) + supplementary (2048)
+    total=$(samtools view -c -F 2308 \
+        "${qc_dir}/marked/${sample}.marked.bam")
+
+    duplicates=$(samtools view -c -f 1024 -F 2308 \
+        "${qc_dir}/marked/${sample}.marked.bam")
+
+    awk \
+        -v s="${sample}" \
+        -v n="${total}" \
+        -v d="${duplicates}" \
+        'BEGIN {
+            printf "%s\t%d\t%d\t%.2f\n",
+                   s,n,d,(n>0 ? 100*d/n : 0)
+        }' >> "${qc_dir}/coordinate_duplicates.tsv"
+
+done
+
+# ------------------------------------------------------------
+# Residual rRNA
+# ------------------------------------------------------------
+
+featureCounts \
+    -T 2 \
+    -p \
+    --countReadPairs \
+    -s 0 \
+    -t rRNA \
+    -g ID \
+    -a "${qc_dir}/rrna.gff3" \
+    -o "${qc_dir}/rrna_counts.txt" \
+    "${bam_dir}"/*.sorted.bam
+
+rm -rf "${qc_dir}/tmp"
+
+echo
+echo "Coordinate duplication:"
+column -t "${qc_dir}/coordinate_duplicates.tsv"
+
+echo
+echo "RNA-seq alignment QC completed."
+```
+
+Run the QC workflow:
+
+```bash
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-dupradar:latest \
+  bash scripts/day2_rnaseq/02_rnaseq_alignment_qc.sh
+```
+
+Inspect the coordinate-duplicate fraction:
+
+```bash
+more results/day2_rnaseq/qc/coordinate_duplicates.tsv
+```
+
+A high duplicate percentage is therefore something to **investigate**, not automatically something to remove.
+
+#### 3.6.2 Expression-dependent duplication with dupRadar
+
+The global duplicate percentage does not tell us whether duplication is concentrated among highly expressed genes.
+
+`dupRadar` relates duplication rate to expression level and is therefore more informative for RNA-seq. Because this QC section comes before the empirical strandedness check in Section 3.7, we run the duplication and rRNA-assignment diagnostics **unstranded**. The final gene-counting step later uses the empirically supported `-s 2` setting.
+
+Create:
+
+```bash
+nano scripts/day2_rnaseq/02_dupradar.R
+```
+
+Add:
+
+```r
+library(dupRadar)
+
+qc_dir <- "results/day2_rnaseq/qc"
+gtf <- file.path(qc_dir, "dupradar_genes.gtf")
+
+bams <- sort(
+  Sys.glob(
+    file.path(qc_dir, "marked", "*.marked.bam")
+  )
+)
+
+stopifnot(length(bams) > 0)
+stopifnot(file.exists(gtf))
+
+for (bam in bams) {
+
+  sample <- sub(
+    "\\.marked\\.bam$",
+    "",
+    basename(bam)
+  )
+
+  message("dupRadar: ", sample)
+
+  dm <- analyzeDuprates(
+    bam,
+    gtf,
+    stranded = 0,
+    paired = TRUE,
+    threads = 2
+  )
+
+  write.table(
+    dm,
+    file.path(
+      qc_dir,
+      paste0(sample, ".dupradar.tsv")
+    ),
+    sep = "\t",
+    quote = FALSE,
+    row.names = FALSE
+  )
+
+  pdf(
+    file.path(
+      qc_dir,
+      paste0(sample, ".dupradar.pdf")
+    ),
+    width = 7,
+    height = 6
+  )
+
+  duprateExpPlot(DupMat = dm)
+
+  dev.off()
+}
+```
+
+Run:
+
+```bash
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -v "$PWD:/work" \
+  -w /work \
+  docker.io/fgualdr/ngs-dupradar:latest \
+  Rscript scripts/day2_rnaseq/02_dupradar.R
+```
+
+Inspect:
+
+```bash
+ls results/day2_rnaseq/qc/*.dupradar.pdf
+```
+
+**Interpretation:** increasing duplication among highly expressed genes is expected. Strong duplication extending into weakly expressed genes can instead indicate low library complexity or excessive PCR amplification.
+
+Compare the pattern **between biological replicates** rather than applying one arbitrary duplicate-rate cutoff.
+
+For the standard RNA-seq analysis, **do not remove coordinate duplicates**.
+
+---
+
+#### 3.6.3 Multi-mapping: alignment scores, MAPQ and filtering
+
+A read is considered a **multi-mapper** when it can align to more than one genomic position.
+
+However, not all alternative alignments are equally plausible. A read may have one very good alignment and several substantially worse alternatives.
+
+The central question is therefore not simply:
+
+*Can this read align somewhere else?*
+
+Instead, we ask:
+
+**How confident are we that the reported alignment represents the correct genomic origin?**
+
+Three kinds of information help us answer this:
+
+- **Alignment score (`AS`)** measures how well a sequence aligns to a particular genomic location.
+- **Alternative alignment information** indicates whether other plausible genomic placements exist.
+- **Mapping quality (`MAPQ`)** summarizes the aligner's confidence in the reported placement.
+
+MAPQ is reported in column 5 of a SAM file.
+
+For ordinary gene-level RNA-seq, **filtering on mapping confidence is generally preferable to automatically removing every read for which an alternative alignment exists**.
+
+This distinction is particularly important for paired-end sequencing, where the two mates provide additional information about the fragment's genomic origin.
+
+##### Understanding SAM FLAGs
+
+SAM FLAGs describe properties of an alignment record. They do not directly indicate how many genomic locations a read can map to.
+
+| FLAG | Meaning |
+|---|---|
+| `0x1` (1) | Read belongs to a pair |
+| `0x2` (2) | Properly paired alignment |
+| `0x4` (4) | Read unmapped |
+| `0x8` (8) | Mate unmapped |
+| `0x100` (256) | Secondary alignment |
+| `0x200` (512) | Failed vendor/platform QC |
+| `0x400` (1024) | Duplicate |
+| `0x800` (2048) | Supplementary alignment |
+
+The distinction between **secondary** and **multimapping** is essential.
+
+A read with several possible genomic placements can still have one primary alignment. Removing secondary alignments therefore does not necessarily remove multimapping reads.
+
+Similarly, the duplicate FLAG (`0x400`) describes coordinate duplication, not multimapping.
+
+For paired-end RNA-seq, we generally want to retain both mates of a confidently aligned fragment.
+
+---
+
+##### Bowtie2: alignment scores and MAPQ
+
+Bowtie2 is the aligner used in our workshop.
+
+It reports the score of the selected alignment using:
+
+```text
+AS:i:<score>
+```
+
+When another alignment was found, Bowtie2 can also report:
+
+```text
+XS:i:<score>
+```
+
+This represents the score of the best alternative alignment found.
+
+For example:
+
+```text
+AS:i:-2
+XS:i:-15
+```
+
+The reported alignment is substantially better than the alternative.
+
+In contrast:
+
+```text
+AS:i:-2
+XS:i:-2
+```
+
+indicates that Bowtie2 found an alternative with an equally good score.
+
+The second situation is more ambiguous because the alignment scores do not distinguish the two genomic locations.
+
+**However, the difference between `AS` and `XS` should not be used as a universal filtering threshold.**
+
+Bowtie2 already incorporates information about alternative alignments into its MAPQ calculation.
+
+Importantly, Bowtie2 does not guarantee that every possible genomic placement has been discovered.
+
+Therefore:
+
+- `XS` present means an alternative alignment was found.
+- `XS` absent does not prove that the read is uniquely mappable.
+- A larger `AS`–`XS` difference generally supports greater confidence.
+- MAPQ provides the practical alignment-confidence measure.
+
+For paired-end data, Bowtie2 also evaluates concordance, orientation and fragment length when assessing the alignment of a read pair.
+
+**Inspecting multimapping**
+
+Bowtie2 reports:
+
+```text
+aligned concordantly 1 time
+aligned concordantly >1 times
+```
+
+We can inspect these categories in the mapping logs:
+
+```bash
+grep -E \
+  "aligned concordantly 1 time|aligned concordantly >1 times" \
+  results/logs/day2/*.bowtie2.log
+```
+
+These statistics describe concordantly aligned pairs and are useful for comparing samples.
+
+**Filtering Bowtie2 alignments**
+
+Our existing workshop workflow uses:
+
+```bash
+samtools view \
+  -b \
+  -q 10 \
+  -f 2 \
+  -F 2828 \
+  -o sample.filtered.bam \
+  sample.sorted.bam
+```
+
+The options mean:
+
+| Option | Interpretation |
+|---|---|
+| `-b` | Write BAM output |
+| `-q 10` | Retain alignments with MAPQ ≥ 10 |
+| `-f 2` | Require the proper-pair FLAG |
+| `-F 2828` | Exclude unmapped, mate-unmapped, secondary, QC-failed and supplementary records |
+
+The value `2828` corresponds to:
+
+```text
+4 + 8 + 256 + 512 + 2048
+```
+
+**We do not exclude duplicate reads (`0x400`).**
+
+The resulting BAM contains confidently aligned primary records from proper pairs.
+
+This is a sensible default for the workshop, but it is important to understand that **MAPQ ≥ 10 is not an absolute guarantee of unique mapping**.
+
+A higher MAPQ threshold can be used when greater confidence is required, at the cost of discarding more alignments.
+
+For example:
+
+```bash
+samtools view \
+  -b \
+  -q 30 \
+  -f 2 \
+  -F 2828 \
+  -o sample.mapq30.bam \
+  sample.sorted.bam
+
+samtools index sample.mapq30.bam
+```
+
+This is an optional sensitivity analysis, not a replacement for our standard filtering.
+
+---
+
+##### STAR: the `NH` tag and MAPQ
+
+STAR reports multimapping information explicitly.
+
+The optional SAM tag:
+
+```text
+NH:i:1
+```
+
+indicates that STAR identified one genomic mapping location.
+
+Conversely:
+
+```text
+NH:i:3
+```
+
+indicates three genomic mapping locations.
+
+Thus:
+
+- `NH:i:1` identifies uniquely mapped reads according to STAR.
+- `NH:i:N`, with N > 1, identifies multimappers.
+
+STAR also reports these categories in `Log.final.out`:
+
+```text
+Uniquely mapped reads number
+Uniquely mapped reads %
+Number of reads mapped to multiple loci
+% of reads mapped to multiple loci
+```
+
+Under STAR's default settings, uniquely mapped reads receive:
+
+```text
+MAPQ = 255
+```
+
+This differs from Bowtie2, where MAPQ values are calculated using a different scoring scheme.
+
+**Optional STAR filtering**
+
+With STAR's default MAPQ convention, we can select uniquely mapped primary alignments using:
+
+```bash
+samtools view \
+  -b \
+  -q 255 \
+  -f 2 \
+  -F 2828 \
+  -o sample.star.unique.bam \
+  sample.star.sorted.bam
+
+samtools index sample.star.unique.bam
+```
+
+This selects proper-pair alignments assigned STAR's unique-mapping MAPQ category.
+
+The approach assumes that STAR was run with its default `--outSAMmapqUnique 255` setting.
+
+An alternative is to select records explicitly carrying `NH:i:1`, which is particularly useful if STAR's MAPQ convention was modified.
+
+For example, with a samtools version supporting auxiliary-tag expressions:
+
+```bash
+samtools view \
+  -b \
+  -f 2 \
+  -F 2828 \
+  -e '[NH] == 1' \
+  -o sample.star.unique.bam \
+  sample.star.sorted.bam
+```
+
+This selects records for which STAR reports one mapping location.
+
+---
+
+##### HISAT2: `NH`, `ZS` and MAPQ
+
+HISAT2 combines features of the Bowtie2 alignment framework with RNA-seq-specific spliced alignment.
+
+Like STAR, HISAT2 can report:
+
+```text
+NH:i:<N>
+```
+
+This indicates the number of mapped locations for the read or read pair.
+
+HISAT2 also reports:
+
+```text
+AS:i:<score>
+```
+
+for the alignment score, and:
+
+```text
+ZS:i:<score>
+```
+
+for the score of the best alternative alignment found.
+
+**Note:** HISAT2 uses `ZS:i` for alternative alignment scores, whereas Bowtie2 uses `XS:i`.
+
+In HISAT2, `XS:A:+` or `XS:A:-` instead describes transcript strand.
+
+This is an important distinction because SAM optional tags are aligner-specific.
+
+**Optional HISAT2 filtering**
+
+If the BAM contains the `NH` tag, we can select uniquely mapped primary alignments using:
+
+```bash
+samtools view \
+  -b \
+  -f 2 \
+  -F 2828 \
+  -e '[NH] == 1' \
+  -o sample.hisat2.unique.bam \
+  sample.hisat2.sorted.bam
+
+samtools index sample.hisat2.unique.bam
+```
+
+Alternatively, if our objective is to retain confidently mapped alignments rather than enforce strict uniqueness, we can filter by MAPQ:
+
+```bash
+samtools view \
+  -b \
+  -q 10 \
+  -f 2 \
+  -F 2828 \
+  -o sample.hisat2.filtered.bam \
+  sample.hisat2.sorted.bam
+
+samtools index sample.hisat2.filtered.bam
+```
+
+These two approaches answer slightly different questions.
+
+**`NH == 1`** selects alignments for which HISAT2 reports one genomic placement.
+
+**MAPQ ≥ 10** selects alignments meeting a mapping-confidence threshold.
+
+Neither criterion guarantees that all possible genomic placements were exhaustively discovered.
+
+---
+
+##### Paired-end filtering: an important consideration
+
+Our RNA-seq libraries are paired-end.
+
+A paired-end fragment consists of two reads, but BAM filtering operates on **individual alignment records**.
+
+This distinction matters.
+
+For example, when using:
+
+```bash
+samtools view -q 30
+```
+
+one mate might pass the threshold while the other does not.
+
+The output can therefore contain only one mate of a fragment.
+
+Similarly:
+
+```bash
+samtools view -f 2
+```
+
+requires the proper-pair FLAG, but does not guarantee that both mates survive an additional MAPQ or tag-based filter.
+
+For gene-level paired-end counting, this can be undesirable.
+
+**If we require both mates to satisfy the filtering criterion, we must perform pair-aware filtering rather than assuming that `samtools view` automatically preserves complete pairs.**
+
+For our workshop, the existing filtering is retained for consistency with the mapping and counting exercises.
+
+When designing a stricter analysis, the recommended procedure is to:
+
+1. Evaluate mapping confidence for both mates.
+2. Retain the fragment only when both mates satisfy the selected criteria.
+3. Preserve both records in the output BAM.
+4. Sort and index the resulting BAM.
+5. Verify the number of retained complete pairs before counting.
+
+This is especially important when comparing different aligners or using strict uniqueness criteria.
+
+---
+
+##### Which filtering strategy should we use?
+
+| Aligner | Alternative alignment information | Explicit multiplicity tag | Practical filtering |
+|---|---|---|---|
+| **Bowtie2** | `XS:i` | No standard `NH` output | MAPQ + FLAGs |
+| **STAR** | Multiple reported alignments | `NH:i` | `NH == 1` or STAR-specific MAPQ |
+| **HISAT2** | `ZS:i` | `NH:i` | `NH == 1` or MAPQ + FLAGs |
+
+**For conventional gene-level RNA-seq, our preferred default is confidence-based filtering rather than automatically discarding every read with an alternative alignment.**
+
+A read with one substantially better alignment can still provide useful information.
+
+Conversely, a read with several equally good placements should generally have low mapping confidence.
+
+However, MAPQ is an aligner-dependent estimate, and low MAPQ does not identify every possible multimapper perfectly.
+
+For studies of repetitive elements, transposable elements or duplicated gene families, we may deliberately retain multimappers and use quantification methods designed to handle ambiguous placements.
+
+**Workshop decision:** continue using the existing Bowtie2 `*.filtered.bam` files with MAPQ ≥ 10, retain coordinate duplicates, and treat stricter filtering as an optional sensitivity analysis.
+
+#### 3.6.4 Residual ribosomal RNA
+
+Ribosomal RNA represents a large fraction of cellular RNA. RNA-seq library preparation therefore normally includes rRNA depletion or another enrichment strategy.
+
+Residual rRNA consumes sequencing depth that could otherwise contribute to informative transcript measurements.
+
+The QC workflow extracted the `rRNA` features from the bacterial annotation and quantified fragments overlapping them with featureCounts. This contamination-oriented count is deliberately unstranded (`-s 0`) because strandedness is inferred in the next section; the final gene counts still use the validated reverse-stranded setting.
+
+Inspect:
+
+```bash
+ls -lh results/day2_rnaseq/qc/rrna_counts.txt*
+```
+
+The featureCounts summary reports the fragments assigned to annotated rRNA features.
+
+Compare this across samples. A sample with substantially higher rRNA representation than its biological replicates may indicate less efficient depletion or another library-preparation difference.
+
+Importantly, **substantial rRNA contamination is best addressed at the read level before genome alignment**.
+
+A dedicated rRNA-depletion workflow can use a tool such as SortMeRNA:
+
+```text
+FASTQ
+  │
+  ├── rRNA classification
+  │
+  ├── rRNA reads ──────────→ QC / discard
+  │
+  └── non-rRNA reads
+           │
+           └───────────────→ genome alignment
+```
+
+For this workshop, we use residual rRNA as a **QC metric** and do not alter the existing BAMs.
+
+---
+
+#### 3.6.5 What do we retain for downstream analysis?
+
+These QC checks answer different questions:
+
+| QC | Question | Workshop decision |
+|---|---|---|
+| **dupRadar** | Is duplication associated with expression? | Report; do not deduplicate |
+| **coordinate duplicates** | What fraction of records share coordinates? | Report; do not deduplicate |
+| **multi-mapping** | How much alignment ambiguity is present? | Report; retain standard Bowtie2 filtering |
+| **rRNA** | How much sequencing derives from rRNA? | Report; retain current libraries |
+
+The standard downstream RNA-seq analysis continues with:
+
+```text
+results/day2_rnaseq/bam/*.filtered.bam
+```
+
+> **Self-check:** A sample has high coordinate duplication but its dupRadar profile shows that the duplication is concentrated among highly expressed genes. Would you remove those reads? What if another sample has unusually high multi-mapping and high residual rRNA? Would your decision about multimappers change if the biological question concerned transposable elements?
+
+### 3.7 Determine RNA-seq library strandedness
 
 Genes are transcribed from either the `+` or the `-` genomic strand. RNA-seq library preparation determines whether the orientation of read 1 (R1) retains information about the strand of the original transcript. `featureCounts` needs this information so that a fragment is assigned only to a gene with the expected orientation.
 
@@ -774,21 +1529,24 @@ The experimental unit matters more than the column name. In particular, a metada
 
 #### Biological replicate versus blocking factor
 
-For this workshop we have three control and three treated samples. The metadata labels them as replicate 1, 2, and 3 within each condition, but those replicate numbers are simply identifiers for **independent biological replicates**. Replicate 1 in control is not a repeated measurement of the same biological unit as replicate 1 in treated.
+For this workshop we have a **2 × 2 biological design**: genotype (`WT` or `ΔHP1021`) and treatment (`control` or `treated`), with three independent biological replicates in each combination. Replicate numbers are identifiers; replicate 1 in one RNA-seq group is not a repeated measurement of replicate 1 in another group.
 
-Therefore our workshop model is:
+For teaching, we encode genotype and treatment together as one four-level factor:
 
-```r
-design = ~ conditions
+```text
+WT          = WT, untreated
+WTS         = WT, treated
+ΔHP1021     = ΔHP1021, untreated
+ΔHP1021S    = ΔHP1021, treated
 ```
 
-and **not**:
+and fit the simple model:
 
 ```r
-design = ~ replicates + conditions
+design = ~ condition
 ```
 
-Adding an arbitrary replicate-number factor would incorrectly tell the model that samples carrying the same number form matched blocks.
+This parameterization makes the biologically useful pairwise contrasts explicit: `WT vs ΔHP1021`, `WTS vs ΔHP1021S`, `WTS vs WT`, and `ΔHP1021S vs ΔHP1021`. We do **not** add replicate number as a blocking factor. If the scientific question were specifically whether the treatment response differs by genotype, we would instead formulate the factorial interaction `~ genotype + treatment + genotype:treatment`.
 
 By contrast, if the experiment contained samples from the same patient before and after treatment, the patient identity would represent genuine pairing and we would use:
 
@@ -903,11 +1661,7 @@ Save the downloaded file as:
 results/day2_rnaseq/counts/featureCounts_all_samples.txt
 ```
 
-Alternatively we can start from the original data of the Paper whihc includes all the conditions.
-
-```text
-results/day2_rnaseq/counts/count_matrix_hpylori.txt
-```
+The paper-derived `count_matrix_hpylori.txt` may also be inspected as a reference dataset containing all conditions, but it is **not** a drop-in replacement for the featureCounts-formatted file used by the script below. The reproducible workshop route continues from `featureCounts_all_samples.txt`.
 
 :::
 
@@ -925,68 +1679,125 @@ count_matrix_file <- "results/day2_rnaseq/counts/gene_count_matrix.tsv"
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
 # -------------------------------------------------------------------------
-# Import featureCounts output and prepare the raw count matrix
+# 1. Import featureCounts output
 # -------------------------------------------------------------------------
 
-featureCounts <- read.delim(count_file, sep = "\t", comment.char = "#", check.names = FALSE)
-
-colnames(featureCounts) <- gsub("results/day2_rnaseq/bam/", "", colnames(featureCounts), fixed = TRUE)
-colnames(featureCounts) <- gsub(".filtered.bam", "", colnames(featureCounts), fixed = TRUE)
-rownames(featureCounts) <- featureCounts$Geneid
-
-# Keep only sample-count columns
-featureCounts <- featureCounts[,grep("^WT",colnames(featureCounts))]
-# -------------------------------------------------------------------------
-# Build the sample design
-# -------------------------------------------------------------------------
-
-design_dt <- data.frame(
-    samples = colnames(featureCounts),
-    conditions = gsub("_1|_2|_3","",colnames(featureCounts)),
-    replicates = gsub("WT_","",gsub("WTS_","",colnames(featureCounts)))
+featureCounts <- read.delim(
+  count_file,
+  sep = "\t",
+  comment.char = "#",
+  check.names = FALSE
 )
 
-design_dt$conditions[design_dt$conditions == "WT"] <- "control"
-design_dt$conditions[design_dt$conditions == "WTS"] <- "treated"
-design_dt$conditions <- factor(design_dt$conditions, levels = c("control", "treated"))
+# Clean sample names
+colnames(featureCounts) <- gsub(
+  "results/day2_rnaseq/bam/",
+  "",
+  colnames(featureCounts),
+  fixed = TRUE
+)
 
-rownames(design_dt) <- design_dt$samples
+colnames(featureCounts) <- gsub(
+  ".filtered.bam",
+  "",
+  colnames(featureCounts),
+  fixed = TRUE
+)
 
-# Put the design rows in exactly the same order as the count columns
+rownames(featureCounts) <- featureCounts$Geneid
+
+# featureCounts writes six annotation columns:
+# Geneid, Chr, Start, End, Strand, Length
+# Remove them and retain all 12 samples.
+featureCounts <- featureCounts[, -(1:6), drop = FALSE]
+
+# -------------------------------------------------------------------------
+# 2. Build the experimental design
+# -------------------------------------------------------------------------
+
+sample_names <- colnames(featureCounts)
+
+# Remove replicate suffix:
+# WT_1        -> WT
+# WTS_1       -> WTS
+# ΔHP1021_1   -> ΔHP1021
+# ΔHP1021S_1  -> ΔHP1021S
+
+condition <- sub("_[123]$", "", sample_names)
+
+design_dt <- data.frame(
+  sample = sample_names,
+  condition = factor(
+    condition,
+    levels = c(
+      "WT",
+      "WTS",
+      "ΔHP1021",
+      "ΔHP1021S"
+    )
+  ),
+  replicate = sub(".*_", "", sample_names)
+)
+
+rownames(design_dt) <- design_dt$sample
+
+# Check and save the design
+print(design_dt)
+
+write.table(
+  design_dt,
+  file.path(out_dir, "sample_design.tsv"),
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
+
+# Make sure metadata and count columns have the same order
 design_dt <- design_dt[colnames(featureCounts), , drop = FALSE]
 featureCounts <- featureCounts[, rownames(design_dt), drop = FALSE]
 
 # Save the clean raw count matrix
-count_out <- data.frame(gene_id = rownames(featureCounts), featureCounts, check.names = FALSE)
-write.table(count_out, count_matrix_file, sep = "\t", quote = FALSE, row.names = FALSE)
-
-# -------------------------------------------------------------------------
-# Create the DESeq2 dataset
-# -------------------------------------------------------------------------
-
-dds <- DESeq2::DESeqDataSetFromMatrix(
-  countData = as.matrix(featureCounts),
-  colData = design_dt,
-  design = ~ conditions
+count_out <- data.frame(
+  gene_id = rownames(featureCounts),
+  featureCounts,
+  check.names = FALSE
 )
 
-# inspect the content using attributes(dds)!
+write.table(
+  count_out,
+  count_matrix_file,
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
 
 # -------------------------------------------------------------------------
-# Estimate library-size factors BEFORE fitting the full model
+# 3. Create and fit the DESeq2 model
 # -------------------------------------------------------------------------
 
-dds <- DESeq2::estimateSizeFactors(dds)
+dds <- DESeqDataSetFromMatrix(
+  countData = as.matrix(featureCounts),
+  colData = design_dt,
+  design = ~ condition
+)
+
+dds <- DESeq(
+  dds,
+  fitType = "parametric"
+)
+
+print(resultsNames(dds))
 
 # -------------------------------------------------------------------------
-# PCA on log2-normalized counts: inspect sample relationships and outliers
-# Before diving into DEGs we check if the expected biological perturbation is the main driver of the variation in the experiment!
-# Use PCA
+# 4. PCA
 # -------------------------------------------------------------------------
-normalized_counts <- DESeq2::counts(dds, normalized = TRUE)
-pca_input <- log2(normalized_counts+1) 
-# Here there are different ways to treat the count data before PCA!
-# log, scale, center, center+scale, Yeo-Johnson, Box-Cox, Quantile, etc...
+
+normalized_counts <- counts(
+  dds,
+  normalized = TRUE
+)
+
+pca_input <- log2(normalized_counts + 1)
 
 pca <- prcomp(
   t(pca_input),
@@ -994,118 +1805,309 @@ pca <- prcomp(
   scale. = FALSE
 )
 
-variance_explained <- 100 * (pca$sdev^2 / sum(pca$sdev^2))
+variance_explained <- 100 * (
+  pca$sdev^2 / sum(pca$sdev^2)
+)
 
 pca_dt <- data.frame(
   sample = rownames(pca$x),
   PC1 = pca$x[, 1],
   PC2 = pca$x[, 2],
-  conditions = design_dt[rownames(pca$x), "conditions"],
-  replicates = design_dt[rownames(pca$x), "replicates"]
+  condition = design_dt[rownames(pca$x), "condition"],
+  replicate = design_dt[rownames(pca$x), "replicate"]
 )
 
-pca_plot <- ggplot(pca_dt, aes(x=PC1, y=PC2, color = conditions, shape = replicates, label = sample)) +
+pca_plot <- ggplot(
+  pca_dt,
+  aes(
+    x = PC1,
+    y = PC2,
+    color = condition,
+    label = sample
+  )
+) +
   geom_point(size = 3) +
-  ggrepel::geom_text_repel(show.legend = FALSE) +
+  ggrepel::geom_text_repel(
+    show.legend = FALSE
+  ) +
   theme_bw() +
   labs(
-    x = sprintf("PC1 (%.1f%%)", variance_explained[1]),
-    y = sprintf("PC2 (%.1f%%)", variance_explained[2])
+    x = sprintf(
+      "PC1 (%.1f%%)",
+      variance_explained[1]
+    ),
+    y = sprintf(
+      "PC2 (%.1f%%)",
+      variance_explained[2]
+    )
   )
 
-ggsave(file.path(out_dir, "pc1_pc2_pca.pdf"), pca_plot, width = 6, height = 5)
+ggsave(
+  file.path(out_dir, "pc1_pc2_pca.pdf"),
+  pca_plot,
+  width = 6,
+  height = 5
+)
+
+# Scree plot
 
 scree_dt <- data.frame(
   PC = seq_along(variance_explained),
   variance = variance_explained
 )
 
-scree_plot <- ggplot(scree_dt, aes(x=PC, y=variance)) +
+scree_plot <- ggplot(
+  scree_dt,
+  aes(x = PC, y = variance)
+) +
   geom_col() +
-  scale_x_continuous(breaks = scree_dt$PC) +
+  scale_x_continuous(
+    breaks = scree_dt$PC
+  ) +
   theme_bw() +
-  labs(x = "Principal component", y = "Variance explained (%)")
-
-ggsave(file.path(out_dir, "pca_scree.pdf"), scree_plot, width = 6, height = 4)
-
-# -------------------------------------------------------------------------
-# Fit the DESeq2 model and extract treated versus control
-# -------------------------------------------------------------------------
-
-dds <- DESeq2::DESeq(dds, fitType = "parametric")
-
-print(DESeq2::resultsNames(dds))
-
-res2 <- DESeq2::results(
-  dds,
-  contrast = c("conditions", "treated", "control") # treated vs control so control is the denominator!
-)
-
-res_dt <- as.data.frame(res2)
-res_dt$gene_id <- rownames(res_dt)
-
-write.table(
-  res_dt, 
-  file.path(out_dir, "deseq2_results.tsv"),
-  sep = "\t", 
-  quote = FALSE, 
-  row.names = FALSE
+  labs(
+    x = "Principal component",
+    y = "Variance explained (%)"
   )
 
-ranked <- res_dt[!is.na(res_dt$padj), , drop = FALSE]
+ggsave(
+  file.path(out_dir, "pca_scree.pdf"),
+  scree_plot,
+  width = 6,
+  height = 4
+)
 
-ranked <- ranked[order(ranked$padj, abs(ranked$log2FoldChange)), , drop = FALSE]
+# -------------------------------------------------------------------------
+# 5. Extract the biologically relevant contrasts
+# -------------------------------------------------------------------------
 
-normalized_counts <- DESeq2::counts(dds, normalized = TRUE)
+# --------------------------------------------------
+# A. WT versus ΔHP1021
+# untreated genotype comparison
+#
+# positive log2FC = higher in WT
+# negative log2FC = higher in ΔHP1021
+# --------------------------------------------------
 
-l <- list()
-for(cond in unique(design_dt$conditions)){
-  idx <- which(
-    colnames(normalized_counts)  %in% rownames(design_dt[design_dt$conditions == cond,])
-    )
-  a <- normalized_counts[, idx]
-  a <- rowMeans(a)
-  l[[cond]] <- a
+res_WT_vs_delta <- results(
+  dds,
+  contrast = c(
+    "condition",
+    "WT",
+    "ΔHP1021"
+  ),
+  alpha = 0.05
+)
+
+# --------------------------------------------------
+# B. WTS versus ΔHP1021S
+# treated genotype comparison
+#
+# positive log2FC = higher in WTS
+# negative log2FC = higher in ΔHP1021S
+# --------------------------------------------------
+
+res_WTS_vs_deltaS <- results(
+  dds,
+  contrast = c(
+    "condition",
+    "WTS",
+    "ΔHP1021S"
+  ),
+  alpha = 0.05
+)
+
+# --------------------------------------------------
+# C. WTS versus WT
+# treatment effect in WT
+#
+# positive log2FC = induced by treatment
+# negative log2FC = reduced by treatment
+# --------------------------------------------------
+
+res_WTS_vs_WT <- results(
+  dds,
+  contrast = c(
+    "condition",
+    "WTS",
+    "WT"
+  ),
+  alpha = 0.05
+)
+
+# --------------------------------------------------
+# D. ΔHP1021S versus ΔHP1021
+# treatment effect in ΔHP1021
+#
+# positive log2FC = induced by treatment
+# negative log2FC = reduced by treatment
+# --------------------------------------------------
+
+res_deltaS_vs_delta <- results(
+  dds,
+  contrast = c(
+    "condition",
+    "ΔHP1021S",
+    "ΔHP1021"
+  ),
+  alpha = 0.05
+)
+
+# -------------------------------------------------------------------------
+# 6. Save all DESeq2 contrasts
+# -------------------------------------------------------------------------
+
+write_results <- function(res, filename) {
+
+  res_dt <- as.data.frame(res)
+
+  res_dt$gene_id <- rownames(res_dt)
+
+  res_dt <- res_dt[
+    order(
+      res_dt$padj,
+      -abs(res_dt$log2FoldChange),
+      na.last = TRUE
+    ),
+  ]
+
+  write.table(
+    res_dt,
+    file.path(out_dir, filename),
+    sep = "\t",
+    quote = FALSE,
+    row.names = FALSE
+  )
 }
-av_l <- as.data.frame(do.call(cbind,l))
-av_l <- av_l[,c("control","treated")]
 
-ranked <- cbind(ranked,av_l[rownames(ranked),])
+write_results(
+  res_WT_vs_delta,
+  "WT_vs_deltaHP1021.tsv"
+)
+
+write_results(
+  res_WTS_vs_deltaS,
+  "WTS_vs_deltaHP1021S.tsv"
+)
+
+write_results(
+  res_WTS_vs_WT,
+  "WTS_vs_WT.tsv"
+)
+
+write_results(
+  res_deltaS_vs_delta,
+  "deltaHP1021S_vs_deltaHP1021.tsv"
+)
 
 # -------------------------------------------------------------------------
-# Dispersion plot
+# 7. Dispersion plot
 # -------------------------------------------------------------------------
 
-pdf(file.path(out_dir, "dispersion_plot.pdf"))
-  DESeq2::plotDispEsts(dds)
+pdf(
+  file.path(
+    out_dir,
+    "dispersion_plot.pdf"
+  )
+)
+
+plotDispEsts(dds)
+
 dev.off()
 
 # -------------------------------------------------------------------------
-# Custom MA-like plot: mean expression versus log2 fold change
+# 8. Plot one selected contrast
+#
+# Main example: WT versus ΔHP1021
 # -------------------------------------------------------------------------
 
-# Use a signed significance score:
-# significant down-regulated genes -> negative -> blue
-# non-significant genes            -> 0        -> white
-# significant up-regulated genes   -> positive -> red
+res <- res_WT_vs_delta
+
+res_dt <- as.data.frame(res)
+res_dt$gene_id <- rownames(res_dt)
+
+# -------------------------------------------------------------------------
+# MA-like plot
+# -------------------------------------------------------------------------
+
 res_dt$signed_significance <- 0
-is_sig <- !is.na(res_dt$padj) & res_dt$padj < 0.05
+
+is_sig <- (
+  !is.na(res_dt$padj) &
+  res_dt$padj < 0.05
+)
+
 res_dt$signed_significance[is_sig] <-
-  sign(res_dt$log2FoldChange[is_sig]) * -log10(pmax(res_dt$padj[is_sig], .Machine$double.xmin))
+  sign(res_dt$log2FoldChange[is_sig]) *
+  -log10(
+    pmax(
+      res_dt$padj[is_sig],
+      .Machine$double.xmin
+    )
+  )
 
-sig_dt <- res_dt[is_sig, , drop = FALSE]
+sig_dt <- res_dt[
+  is_sig,
+  ,
+  drop = FALSE
+]
 
-top_up <- sig_dt[sig_dt$log2FoldChange > 0, , drop = FALSE]
-top_up <- head(top_up[order(top_up$padj, -top_up$log2FoldChange), , drop = FALSE], 5)
+# Label five strongest genes in each direction
 
-top_down <- sig_dt[sig_dt$log2FoldChange < 0, , drop = FALSE]
-top_down <- head(top_down[order(top_down$padj, top_down$log2FoldChange), , drop = FALSE], 5)
+top_up <- sig_dt[
+  sig_dt$log2FoldChange > 0,
+  ,
+  drop = FALSE
+]
 
-label_dt <- rbind(top_up, top_down)
+top_up <- head(
+  top_up[
+    order(
+      top_up$padj,
+      -top_up$log2FoldChange
+    ),
+  ],
+  5
+)
 
-ma_plot <- ggplot(res_dt, aes(baseMean + 1, log2FoldChange, color = signed_significance)) +
-  geom_point(alpha = 0.9, size = 1, na.rm = TRUE) +
-  geom_hline(yintercept = 0, linetype = 2) +
+top_down <- sig_dt[
+  sig_dt$log2FoldChange < 0,
+  ,
+  drop = FALSE
+]
+
+top_down <- head(
+  top_down[
+    order(
+      top_down$padj,
+      top_down$log2FoldChange
+    ),
+  ],
+  5
+)
+
+label_dt <- rbind(
+  top_up,
+  top_down
+)
+
+ma_plot <- ggplot(
+  res_dt,
+  aes(
+    x = baseMean + 1,
+    y = log2FoldChange,
+    color = signed_significance
+  )
+) +
+  geom_point(
+    alpha = 0.9,
+    size = 1,
+    na.rm = TRUE
+  ) +
+  geom_hline(
+    yintercept = 0,
+    linetype = 2
+  ) +
   scale_x_log10() +
   scale_color_gradient2(
     low = "blue",
@@ -1123,63 +2125,133 @@ ma_plot <- ggplot(res_dt, aes(baseMean + 1, log2FoldChange, color = signed_signi
   ) +
   theme_bw() +
   labs(
+    title = "WT vs ΔHP1021",
     x = "Mean normalized expression (baseMean + 1, log10 scale)",
-    y = "log2 fold change (treated / control)"
+    y = "log2 fold change (WT / ΔHP1021)"
   )
 
-ggsave(file.path(out_dir, "ma_plot.pdf"), ma_plot, width = 7, height = 5)
+ggsave(
+  file.path(
+    out_dir,
+    "MA_WT_vs_deltaHP1021.pdf"
+  ),
+  ma_plot,
+  width = 7,
+  height = 5
+)
 
 # -------------------------------------------------------------------------
 # Volcano plot
 # -------------------------------------------------------------------------
 
-res_dt$minus_log10_padj <- -log10(pmax(res_dt$padj, .Machine$double.xmin))
+res_dt$minus_log10_padj <- -log10(
+  pmax(
+    res_dt$padj,
+    .Machine$double.xmin
+  )
+)
 
-volcano <- ggplot(res_dt, aes(log2FoldChange, minus_log10_padj)) +
-  geom_point(alpha = 0.6, size = 1, na.rm = TRUE) +
+volcano <- ggplot(
+  res_dt,
+  aes(
+    x = log2FoldChange,
+    y = minus_log10_padj
+  )
+) +
+  geom_point(
+    alpha = 0.6,
+    size = 1,
+    na.rm = TRUE
+  ) +
+  geom_vline(
+    xintercept = 0,
+    linetype = 2
+  ) +
   theme_bw() +
   labs(
-    x = "log2 fold change (treated / control)",
+    title = "WT vs ΔHP1021",
+    x = "log2 fold change (WT / ΔHP1021)",
     y = "-log10 adjusted p-value"
   )
 
-ggsave(file.path(out_dir, "volcano.pdf"), volcano, width = 6, height = 5)
-
-writeLines(capture.output(sessionInfo()), file.path(out_dir, "sessionInfo.txt"))
+ggsave(
+  file.path(
+    out_dir,
+    "volcano_WT_vs_deltaHP1021.pdf"
+  ),
+  volcano,
+  width = 6,
+  height = 5
+)
 
 # -------------------------------------------------------------------------
-# We will save usefull data for the generation of scaled Tracks!
+# 9. Save normalized counts
 # -------------------------------------------------------------------------
 
-size_factors <- DESeq2::sizeFactors(dds)
-normalized_counts <- DESeq2::counts(dds, normalized = TRUE)
-normalized_out <- data.frame(gene_id = rownames(normalized_counts), normalized_counts, check.names = FALSE)
+normalized_counts <- counts(
+  dds,
+  normalized = TRUE
+)
+
+normalized_out <- data.frame(
+  gene_id = rownames(normalized_counts),
+  normalized_counts,
+  check.names = FALSE
+)
 
 write.table(
-  normalized_out, 
-  file.path(out_dir, "normalized_counts.tsv"),
-  sep = "\t", 
-  quote = FALSE, 
+  normalized_out,
+  file.path(
+    out_dir,
+    "normalized_counts.tsv"
+  ),
+  sep = "\t",
+  quote = FALSE,
   row.names = FALSE
-  )
+)
+
+# -------------------------------------------------------------------------
+# 10. Save DESeq2 size factors for scaled BigWig tracks
+# -------------------------------------------------------------------------
+
+size_factors <- sizeFactors(dds)
 
 # DESeq2 divides counts by the size factor.
-# Later we will use bamCoverage to create BigWig tracks
-# bamCoverage  multiplies coverage by --scaleFactor.
-# Therefore the matching bamCoverage factor is 1 / DESeq2 size factor.
+# bamCoverage multiplies coverage by --scaleFactor.
+# Therefore:
+#
+# bamCoverage scale factor = 1 / DESeq2 size factor
+
 scale_dt <- data.frame(
   sample = names(size_factors),
   deseq2_size_factor = as.numeric(size_factors),
-  bamcoverage_scale_factor = 1 / as.numeric(size_factors) 
-  # this as Deseq2 divide so scales down to the lower. BamCoverage used for BigWig generation instead uses multiplicative scaling
+  bamcoverage_scale_factor = 1 / as.numeric(size_factors)
 )
 
-write.table(scale_dt, file.path(out_dir, "deseq2_size_factors.tsv"),
-            sep = "\t", quote = FALSE, row.names = FALSE)
+write.table(
+  scale_dt,
+  file.path(
+    out_dir,
+    "deseq2_size_factors.tsv"
+  ),
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
+)
 
 print(scale_dt)
 
+# -------------------------------------------------------------------------
+# 11. Save session information
+# -------------------------------------------------------------------------
 
+writeLines(
+  capture.output(sessionInfo()),
+  file.path(
+    out_dir,
+    "sessionInfo.txt"
+  )
+)
 ```
 
 ### 5.7 Read the analysis in the same order DESeq2 performs it
@@ -1188,7 +2260,7 @@ The code above contains many R commands, but conceptually the workflow is short.
 
 #### Step 1: raw count matrix + metadata
 
-The rows are genes and the columns are samples. The counts remain integer fragment counts from featureCounts. The metadata describes which samples are control or treated.
+The rows are genes and the columns are samples. The counts remain integer fragment counts from featureCounts. The metadata assigns every sample to one of the four groups `WT`, `WTS`, `ΔHP1021`, or `ΔHP1021S`.
 
 The order must match exactly:
 
@@ -1208,10 +2280,10 @@ We save normalized counts for exploration and visualization, but the statistical
 
 We run PCA **before interpreting differential expression**. The important questions are not whether the conditions separate perfectly, but whether the global sample structure makes biological and technical sense.
 
-For this six-sample experiment:
+For this twelve-sample experiment:
 
 ```text
-6 samples x many genes
+12 samples x many genes
         |
         v
 log2-normalized expression
@@ -1230,21 +2302,19 @@ Each point is one sample. Samples close together have broadly similar global exp
 For this experiment we use:
 
 ```r
-design = ~ conditions
+design = ~ condition
 ```
 
-The coefficient of interest compares:
+The model contains the four biological groups directly. We then request explicit contrasts according to the question:
 
 ```text
-treated / control
+WT versus ΔHP1021          -> genotype difference without S treatment
+WTS versus ΔHP1021S        -> genotype difference with S treatment
+WTS versus WT              -> treatment response in WT
+ΔHP1021S versus ΔHP1021    -> treatment response in ΔHP1021
 ```
 
-Therefore:
-
-```text
-positive log2FoldChange  -> higher expression in treated samples
-negative log2FoldChange  -> lower expression in treated samples
-```
+The sign of `log2FoldChange` always follows the numerator and denominator written in the selected contrast. For example, positive values in `WT versus ΔHP1021` mean higher expression in WT.
 
 When `DESeq()` runs, it carries out the major stages discussed above: size-factor estimation, gene-wise dispersion estimation, fitting/stabilizing the genome-wide dispersion trend, negative-binomial GLM fitting, and coefficient testing.
 
@@ -1263,7 +2333,7 @@ The main DESeq2 columns are:
 | Column | Meaning |
 |---|---|
 | `baseMean` | Mean normalized expression across samples |
-| `log2FoldChange` | Estimated treated-versus-control effect |
+| `log2FoldChange` | Estimated effect for the specific contrast being inspected; its sign follows the numerator versus denominator |
 | `lfcSE` | Standard error of that estimated log2 fold change |
 | `stat` | Wald statistic: effect divided by its SE |
 | `pvalue` | Unadjusted p-value for this gene |
@@ -1428,9 +2498,11 @@ reference_genome/genome.fa
 reference_genome/annotation.gff3
 results/day2_rnaseq/counts/featureCounts_all_samples.txt
 results/day2_rnaseq/counts/gene_count_matrix.tsv
-results/day2_rnaseq/deseq2/deseq2_results.tsv
-results/day2_rnaseq/deseq2/top_deg.tsv
-results/day2_rnaseq/deseq2/sample_design.csv
+results/day2_rnaseq/deseq2/sample_design.tsv
+results/day2_rnaseq/deseq2/WT_vs_deltaHP1021.tsv
+results/day2_rnaseq/deseq2/WTS_vs_deltaHP1021S.tsv
+results/day2_rnaseq/deseq2/WTS_vs_WT.tsv
+results/day2_rnaseq/deseq2/deltaHP1021S_vs_deltaHP1021.tsv
 results/day2_rnaseq/deseq2/normalized_counts.tsv
 results/day2_rnaseq/deseq2/deseq2_size_factors.tsv
 results/day2_rnaseq/bam/*.filtered.bam
@@ -1511,7 +2583,7 @@ git push
 4. Why does this directional library require `featureCounts -s 2`, and how did we validate that choice?
 5. Why can a sample map well but still have poor featureCounts assignment?
 6. Why does DESeq2 require raw integer counts rather than CPM, TPM, or bigWig signal?
-7. Why is the workshop design `~ conditions` rather than `~ replicates + conditions`?
+7. Why does the workshop use a four-level `~ condition` design, and why is replicate number not included as a blocking factor? When would a `genotype:treatment` interaction be required instead?
 8. When would `~ patient + condition` or `~ batch + condition` be appropriate?
 9. What does the dispersion parameter represent intuitively, and why is information borrowed across genes?
 10. What does PCA tell us before differential-expression testing, and why should PCA alone not be used to remove a sample?
@@ -1525,7 +2597,7 @@ git push
 | Bowtie2 cannot find the index | Day 2 index build was skipped or used another prefix | `reference_genome/bowtie2_index/genome*.bt2` |
 | Mapping is unexpectedly low | Wrong assembly, damaged FASTQ, contamination, or overly strict filtering | Day 1 fastp report, reference accession, Bowtie2 log |
 | featureCounts assignment is low | Annotation mismatch, wrong feature/ID field, or wrong strandedness | GFF3, `-t gene -g ID`, and the metadata/RSeQC-supported `-s` value |
-| DESeq2 sample mismatch | Count-matrix column names do not match metadata sample names or are in a different order | `RNAseq_metadata.txt`, `Source Name`, and the count-matrix header |
+| Unexpected DESeq2 sample labels or ordering | Count-matrix column names no longer follow the workshop sample convention or the design table was edited independently | count-matrix header and `results/day2_rnaseq/deseq2/sample_design.tsv` |
 | Volcano plot has few points | Low counts, high dispersion, or adjusted p-values are `NA` | Count summary, PCA, dispersion and MA plots |
 
 ## 13. References and further reading
