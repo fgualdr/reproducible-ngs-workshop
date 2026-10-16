@@ -282,7 +282,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#import-untreated-rna-seq-statistics-wt-specific-peaks-orfs-and-the-indexed-genome" id="toc-import-untreated-rna-seq-statistics-wt-specific-peaks-orfs-and-the-indexed-genome" class="nav-link" data-scroll-target="#import-untreated-rna-seq-statistics-wt-specific-peaks-orfs-and-the-indexed-genome">5. Import untreated RNA-seq statistics, WT-specific peaks, ORFs and the indexed genome</a>
   <ul class="collapse">
   <li><a href="#prepare-the-untreated-rna-seq-result-and-define-degs" id="toc-prepare-the-untreated-rna-seq-result-and-define-degs" class="nav-link" data-scroll-target="#prepare-the-untreated-rna-seq-result-and-define-degs">5.1 Prepare the untreated RNA-seq result and define DEGs</a></li>
-  <li><a href="#use-the-same-gene-identifier-as-day-2" id="toc-use-the-same-gene-identifier-as-day-2" class="nav-link" data-scroll-target="#use-the-same-gene-identifier-as-day-2">5.2 Use the same gene identifier as Day 2</a></li>
+  <li><a href="#harmonize-rna-seq-and-gff3-gene-identifiers" id="toc-harmonize-rna-seq-and-gff3-gene-identifiers" class="nav-link" data-scroll-target="#harmonize-rna-seq-and-gff3-gene-identifiers">5.2 Harmonize RNA-seq and GFF3 gene identifiers</a></li>
   </ul></li>
   <li><a href="#distance-from-each-wt-specific-peak-to-the-nearest-orf-and-nearest-deg" id="toc-distance-from-each-wt-specific-peak-to-the-nearest-orf-and-nearest-deg" class="nav-link" data-scroll-target="#distance-from-each-wt-specific-peak-to-the-nearest-orf-and-nearest-deg">6. Distance from each WT-specific peak to the nearest ORF and nearest DEG</a></li>
   <li><a href="#orf-overlap-promoter-overlap-and-simple-genomic-context" id="toc-orf-overlap-promoter-overlap-and-simple-genomic-context" class="nav-link" data-scroll-target="#orf-overlap-promoter-overlap-and-simple-genomic-context">7. ORF overlap, promoter overlap and simple genomic context</a>
@@ -562,28 +562,29 @@ results/day3_chipseq/differential_peaks/WT_specific_vs_DeltaHP1021.tsv</code></p
 </div>
 </div>
 </section>
-<section id="use-the-same-gene-identifier-as-day-2" class="level3">
-<h3 class="anchored" data-anchor-id="use-the-same-gene-identifier-as-day-2">5.2 Use the same gene identifier as Day 2</h3>
+<section id="harmonize-rna-seq-and-gff3-gene-identifiers" class="level3">
+<h3 class="anchored" data-anchor-id="harmonize-rna-seq-and-gff3-gene-identifiers">5.2 Harmonize RNA-seq and GFF3 gene identifiers</h3>
 <p>The updated Day 3 <code>WT_specific_vs_DeltaHP1021.bed</code> is a three-column BED. Reconstruct the same coordinate-based <code>peak_id</code> used in the matching Day 3 differential-peak TSV:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>peaks<span class="sc">$</span>peak_id <span class="ot">&lt;-</span> <span class="fu">paste0</span>(</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.character</span>(<span class="fu">seqnames</span>(peaks)), <span class="st">":"</span>, <span class="fu">start</span>(peaks) <span class="sc">-</span> <span class="dv">1</span>, <span class="st">"-"</span>, <span class="fu">end</span>(peaks)</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(peaks) <span class="ot">&lt;-</span> peaks<span class="sc">$</span>peak_id</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>For the ORFs, keep the identifier logic deliberately simple. In Day 2, featureCounts used the GFF3 <code>ID</code> attribute (<code>-g ID</code>). The <code>gene_id</code> column in the DESeq2 result therefore comes from the same GFF3 identifier.</p>
-<p>We simply copy the GFF3 <code>ID</code> field into a metadata column called <code>gene_id</code> so that both objects use the same column name. <strong>We do not modify the identifier values.</strong></p>
+<p>For the ORFs, keep the identifier harmonization deliberately simple. The imported NCBI GFF3 stores gene IDs such as <code>gene-OW489_RS00005</code>, whereas the legacy RNA-seq result stores the same locus as <code>OW489_RS00005</code>.</p>
+<p>We therefore remove only the fixed leading <code>gene-</code> prefix from the GFF3 annotation and use the resulting value as the common <code>gene_id</code>. This changes the identifier syntax, not the biological locus.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="st">"ID"</span> <span class="sc">%in%</span> <span class="fu">names</span>(<span class="fu">mcols</span>(genes))) {</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">"The GFF3 gene features do not contain an ID attribute"</span>)</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>genes<span class="sc">$</span>gene_id <span class="ot">&lt;-</span> <span class="fu">as.character</span>(genes<span class="sc">$</span>ID)</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(genes) <span class="ot">&lt;-</span> genes<span class="sc">$</span>gene_id</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>n_matching_ids <span class="ot">&lt;-</span> <span class="fu">sum</span>(rna<span class="sc">$</span>gene_id <span class="sc">%in%</span> genes<span class="sc">$</span>gene_id)</span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"RNA-seq gene IDs matching the GFF3:"</span>, n_matching_ids, <span class="st">"of"</span>, <span class="fu">nrow</span>(rna), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (n_matching_ids <span class="sc">==</span> <span class="dv">0</span>) {</span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">"RNA-seq gene_id values do not match the GFF3 gene ID values"</span>)</span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>genes<span class="sc">$</span>gff3_id <span class="ot">&lt;-</span> <span class="fu">as.character</span>(genes<span class="sc">$</span>ID)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>genes<span class="sc">$</span>gene_id <span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">"^gene-"</span>, <span class="st">""</span>, genes<span class="sc">$</span>gff3_id)</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(genes) <span class="ot">&lt;-</span> genes<span class="sc">$</span>gene_id</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>n_matching_ids <span class="ot">&lt;-</span> <span class="fu">sum</span>(rna<span class="sc">$</span>gene_id <span class="sc">%in%</span> genes<span class="sc">$</span>gene_id)</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"RNA-seq gene IDs matching the GFF3:"</span>, n_matching_ids, <span class="st">"of"</span>, <span class="fu">nrow</span>(rna), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (n_matching_ids <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">"RNA-seq gene_id values still do not match the normalized GFF3 gene IDs"</span>)</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Set chromosome lengths from the FASTA index and verify that the interval objects share sequence names:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>genome_lengths <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">width</span>(genome_index), <span class="fu">as.character</span>(<span class="fu">seqnames</span>(genome_index)))</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>common_seqlevels <span class="ot">&lt;-</span> <span class="fu">intersect</span>(<span class="fu">names</span>(genome_lengths), <span class="fu">union</span>(<span class="fu">seqlevels</span>(peaks), <span class="fu">seqlevels</span>(genes)))</span>
@@ -966,7 +967,7 @@ peak_sequences = which DNA bases occur in those intervals</code></pre>
 <ul>
 <li>Day 4 deliberately integrates <strong>one RNA-seq contrast at a time</strong>; untreated and treated DESeq2 results are not merged into one table;</li>
 <li>this case study uses the untreated WT-versus-ΔHP1021 RNA-seq result together with Day 3 peaks already selected as WT-specific versus ΔHP1021;</li>
-<li>Day 2 gene identifiers come from the GFF3 <code>ID</code> attribute, so Day 4 uses that same <code>ID</code> directly for annotation matching;</li>
+<li>the legacy RNA-seq table stores locus IDs such as <code>OW489_RS00005</code>, while the NCBI GFF3 <code>ID</code> is <code>gene-OW489_RS00005</code>; Day 4 removes only this fixed <code>gene-</code> prefix before matching;</li>
 <li>genomic interval operations should be done with interval-aware objects;</li>
 <li>nearest ORF, nearest DEG, ORF overlap and promoter overlap answer different questions;</li>
 <li>strand changes the location of an upstream promoter window;</li>
@@ -1001,8 +1002,8 @@ peak_sequences = which DNA bases occur in those intervals</code></pre>
 </tr>
 <tr class="even">
 <td>RNA-seq genes do not match the annotation</td>
-<td>the RNA-seq <code>gene_id</code> values are not the same GFF3 <code>ID</code> values used for counting</td>
-<td>compare <code>rna$gene_id</code> with <code>genes$ID</code>; do not rename or strip identifier values</td>
+<td>the NCBI GFF3 <code>ID</code> includes the <code>gene-</code> prefix while the legacy RNA-seq IDs do not</td>
+<td>compare <code>head(rna$gene_id)</code> with <code>head(genes$ID)</code> and normalize only the fixed <code>gene-</code> prefix</td>
 </tr>
 <tr class="odd">
 <td>RNA-seq effect signs look reversed</td>

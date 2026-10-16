@@ -213,7 +213,7 @@ cat("Untreated RNA-seq DEGs:", sum(rna$is_de), "\n")
 This exercise assumes that the legacy `deseq2_results.tsv` represents **WT versus ΔHP1021 in untreated samples**, so positive `log2FoldChange` means higher expression in WT. If an older result file was generated with the opposite DESeq2 contrast, the signs must be interpreted in the opposite direction.
 :::
 
-### 5.2 Use the same gene identifier as Day 2
+### 5.2 Harmonize RNA-seq and GFF3 gene identifiers
 
 The updated Day 3 `WT_specific_vs_DeltaHP1021.bed` is a three-column BED. Reconstruct the same coordinate-based `peak_id` used in the matching Day 3 differential-peak TSV:
 
@@ -224,23 +224,24 @@ peaks$peak_id <- paste0(
 names(peaks) <- peaks$peak_id
 ```
 
-For the ORFs, keep the identifier logic deliberately simple. In Day 2, featureCounts used the GFF3 `ID` attribute (`-g ID`). The `gene_id` column in the DESeq2 result therefore comes from the same GFF3 identifier.
+For the ORFs, keep the identifier harmonization deliberately simple. The imported NCBI GFF3 stores gene IDs such as `gene-OW489_RS00005`, whereas the legacy RNA-seq result stores the same locus as `OW489_RS00005`.
 
-We simply copy the GFF3 `ID` field into a metadata column called `gene_id` so that both objects use the same column name. **We do not modify the identifier values.**
+We therefore remove only the fixed leading `gene-` prefix from the GFF3 annotation and use the resulting value as the common `gene_id`. This changes the identifier syntax, not the biological locus.
 
 ```r
 if (!"ID" %in% names(mcols(genes))) {
   stop("The GFF3 gene features do not contain an ID attribute")
 }
 
-genes$gene_id <- as.character(genes$ID)
+genes$gff3_id <- as.character(genes$ID)
+genes$gene_id <- sub("^gene-", "", genes$gff3_id)
 names(genes) <- genes$gene_id
 
 n_matching_ids <- sum(rna$gene_id %in% genes$gene_id)
 cat("RNA-seq gene IDs matching the GFF3:", n_matching_ids, "of", nrow(rna), "\n")
 
 if (n_matching_ids == 0) {
-  stop("RNA-seq gene_id values do not match the GFF3 gene ID values")
+  stop("RNA-seq gene_id values still do not match the normalized GFF3 gene IDs")
 }
 ```
 
@@ -699,7 +700,7 @@ The transferable ideas are more important than the exact thresholds:
 
 - Day 4 deliberately integrates **one RNA-seq contrast at a time**; untreated and treated DESeq2 results are not merged into one table;
 - this case study uses the untreated WT-versus-ΔHP1021 RNA-seq result together with Day 3 peaks already selected as WT-specific versus ΔHP1021;
-- Day 2 gene identifiers come from the GFF3 `ID` attribute, so Day 4 uses that same `ID` directly for annotation matching;
+- the legacy RNA-seq table stores locus IDs such as `OW489_RS00005`, while the NCBI GFF3 `ID` is `gene-OW489_RS00005`; Day 4 removes only this fixed `gene-` prefix before matching;
 - genomic interval operations should be done with interval-aware objects;
 - nearest ORF, nearest DEG, ORF overlap and promoter overlap answer different questions;
 - strand changes the location of an upstream promoter window;
@@ -715,7 +716,7 @@ The transferable ideas are more important than the exact thresholds:
 | Symptom | Likely cause | Check |
 |---|---|---|
 | No shared sequence names | files use different assemblies or chromosome labels | GFF3 column 1, BED column 1 and FASTA headers |
-| RNA-seq genes do not match the annotation | the RNA-seq `gene_id` values are not the same GFF3 `ID` values used for counting | compare `rna$gene_id` with `genes$ID`; do not rename or strip identifier values |
+| RNA-seq genes do not match the annotation | the NCBI GFF3 `ID` includes the `gene-` prefix while the legacy RNA-seq IDs do not | compare `head(rna$gene_id)` with `head(genes$ID)` and normalize only the fixed `gene-` prefix |
 | RNA-seq effect signs look reversed | the legacy table was generated with the opposite DESeq2 contrast | confirm whether positive log2FC means WT over ΔHP1021 |
 | Day 3 peak statistics do not join | coordinate-derived BED IDs do not match the Day 3 `peak_id` | `WT_specific_vs_DeltaHP1021.bed` coordinates and matching TSV `peak_id` |
 | Promoter ranges extend outside the chromosome | no sequence lengths were attached before `trim()` | FASTA index and `seqlengths()` |
