@@ -182,10 +182,6 @@ The legacy `deseq2_results.tsv` is used as a **single contrast table**. We do no
 Add:
 
 ```r
-if (!"gene_id" %in% names(rna)) {
-  names(rna)[1] <- "gene_id"
-}
-
 required_rna_columns <- c("gene_id", "log2FoldChange", "padj")
 missing_rna_columns <- setdiff(required_rna_columns, names(rna))
 
@@ -217,7 +213,7 @@ cat("Untreated RNA-seq DEGs:", sum(rna$is_de), "\n")
 This exercise assumes that the legacy `deseq2_results.tsv` represents **WT versus ΔHP1021 in untreated samples**, so positive `log2FoldChange` means higher expression in WT. If an older result file was generated with the opposite DESeq2 contrast, the signs must be interpreted in the opposite direction.
 :::
 
-### 5.2 Add stable peak and ORF identifiers
+### 5.2 Use the same gene identifier as Day 2
 
 The updated Day 3 `WT_specific_vs_DeltaHP1021.bed` is a three-column BED. Reconstruct the same coordinate-based `peak_id` used in the matching Day 3 differential-peak TSV:
 
@@ -228,18 +224,24 @@ peaks$peak_id <- paste0(
 names(peaks) <- peaks$peak_id
 ```
 
-For this basic workshop exercise we use GFF3 `gene` features as the annotated gene/ORF set. If a project requires protein-coding ORFs only, subset the annotation by the appropriate biotype before this step. Select a stable identifier from the GFF3:
+For the ORFs, keep the identifier logic deliberately simple. In Day 2, featureCounts used the GFF3 `ID` attribute (`-g ID`). The `gene_id` column in the DESeq2 result therefore comes from the same GFF3 identifier.
+
+We simply copy the GFF3 `ID` field into a metadata column called `gene_id` so that both objects use the same column name. **We do not modify the identifier values.**
 
 ```r
-candidate_id_columns <- c("ID", "gene_id", "locus_tag", "Name")
-gene_id_column <- intersect(candidate_id_columns, names(mcols(genes)))[1]
-
-if (is.na(gene_id_column)) {
-  stop("No suitable gene identifier found in the GFF3 gene features")
+if (!"ID" %in% names(mcols(genes))) {
+  stop("The GFF3 gene features do not contain an ID attribute")
 }
 
-genes$gene_id <- as.character(mcols(genes)[[gene_id_column]])
+genes$gene_id <- as.character(genes$ID)
 names(genes) <- genes$gene_id
+
+n_matching_ids <- sum(rna$gene_id %in% genes$gene_id)
+cat("RNA-seq gene IDs matching the GFF3:", n_matching_ids, "of", nrow(rna), "\n")
+
+if (n_matching_ids == 0) {
+  stop("RNA-seq gene_id values do not match the GFF3 gene ID values")
+}
 ```
 
 Set chromosome lengths from the FASTA index and verify that the interval objects share sequence names:
@@ -697,7 +699,7 @@ The transferable ideas are more important than the exact thresholds:
 
 - Day 4 deliberately integrates **one RNA-seq contrast at a time**; untreated and treated DESeq2 results are not merged into one table;
 - this case study uses the untreated WT-versus-ΔHP1021 RNA-seq result together with Day 3 peaks already selected as WT-specific versus ΔHP1021;
-- Day 2 and Day 3 results can only be integrated safely when they use the same reference and compatible identifiers;
+- Day 2 gene identifiers come from the GFF3 `ID` attribute, so Day 4 uses that same `ID` directly for annotation matching;
 - genomic interval operations should be done with interval-aware objects;
 - nearest ORF, nearest DEG, ORF overlap and promoter overlap answer different questions;
 - strand changes the location of an upstream promoter window;
@@ -713,7 +715,7 @@ The transferable ideas are more important than the exact thresholds:
 | Symptom | Likely cause | Check |
 |---|---|---|
 | No shared sequence names | files use different assemblies or chromosome labels | GFF3 column 1, BED column 1 and FASTA headers |
-| Most RNA-seq values are missing after matching ORFs | annotation gene IDs differ from the legacy DESeq2 identifiers | GFF3 `ID` attribute and the first / `gene_id` column of `deseq2_results.tsv` |
+| RNA-seq genes do not match the annotation | the RNA-seq `gene_id` values are not the same GFF3 `ID` values used for counting | compare `rna$gene_id` with `genes$ID`; do not rename or strip identifier values |
 | RNA-seq effect signs look reversed | the legacy table was generated with the opposite DESeq2 contrast | confirm whether positive log2FC means WT over ΔHP1021 |
 | Day 3 peak statistics do not join | coordinate-derived BED IDs do not match the Day 3 `peak_id` | `WT_specific_vs_DeltaHP1021.bed` coordinates and matching TSV `peak_id` |
 | Promoter ranges extend outside the chromosome | no sequence lengths were attached before `trim()` | FASTA index and `seqlengths()` |
